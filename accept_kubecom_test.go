@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 // kubecom's default.kdl at bc2fae3 (internal/tui/keymap), as the Doc its
@@ -109,7 +111,7 @@ func TestKubecomKeepsItsOldKeys(t *testing.T) {
 		if !ok {
 			t.Fatalf("golden scenario %q has no path", f[0])
 		}
-		keys, err := ParseSeq(f[1])
+		keys, err := key.ParseSeq(f[1])
 		if err != nil {
 			t.Fatalf("%s: %v", f[1], err)
 		}
@@ -131,7 +133,7 @@ func TestKubecomKeepsItsOldKeys(t *testing.T) {
 				t.Errorf("%s: %s is a prefix of a longer binding", f[0], f[1])
 			}
 			if !km.Match(keys[:1], p).Prefix {
-				t.Errorf("%s: %s does not start a sequence", f[0], FormatKey(keys[0]))
+				t.Errorf("%s: %s does not start a sequence", f[0], key.Format(keys[0]))
 			}
 		}
 	}
@@ -148,8 +150,8 @@ func TestKubecomMenu(t *testing.T) {
 	var keys []string
 	groups := map[string]bool{}
 	for _, it := range m.Items {
-		keys = append(keys, DisplayKey(it.Key))
-		groups[DisplayKey(it.Key)] = it.Group
+		keys = append(keys, key.Display(it.Key))
+		groups[key.Display(it.Key)] = it.Group
 	}
 	if got := strings.Join(keys[:6], " "); got != "k ↑ j ↓ h ←" {
 		t.Errorf("the menu starts %s", got)

@@ -219,93 +219,36 @@ fmt.Println("x matches nothing:", res.Dropped)
 `Arm` returns the state as if the leader had been typed, for a tap or a
 touch-screen button that opens the leader's menu.
 
-## In a Bubble Tea program
+## Keys from your input
 
-`myelintea.Key` turns a Bubble Tea v2 key into myelin's. Feed it from
-`Update`, and use `tea.Tick` to wake at a deadline, with the tick's time as
-now:
+myelin compares keys by name: a `key.Key` is a keystroke's canonical name
+in the HOTTY protocol. Whatever reads your input names the key, and
+`key.ParseHotty` makes that name canonical, its modifiers in any order:
 
-<!-- example:myelintea/example_test.go -->
+<!-- example:key.ExampleParseHotty -->
 
 ```go
-package myelintea_test
-
-import (
-	"fmt"
-	"strings"
-	"time"
-
-	tea "charm.land/bubbletea/v2"
-
-	"github.com/neuroplastio/myelin"
-	"github.com/neuroplastio/myelin/myelintea"
-)
-
-// model is a Bubble Tea model whose keys go through a myelin keymap.
-type model struct {
-	km      *myelin.Keymap
-	path    myelin.Path
-	pending myelin.Pending
-	ran     []string
+for _, name := range []string{"Shift+Control+a", "Control+ ", "Alt+Shift+1", "Hyper+x"} {
+	k, ok := key.ParseHotty(name)
+	if !ok {
+		fmt.Printf("%q is not a key\n", name)
+		continue
+	}
+	fmt.Printf("%q is %s, written %s\n", name, k, key.Format(k))
 }
-
-// expire wakes the model at a sequence's deadline.
-type expire struct{ at time.Time }
-
-func (m model) Init() tea.Cmd { return nil }
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var res myelin.Result
-	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
-		k, ok := myelintea.Key(msg.Key())
-		if !ok {
-			return m, nil
-		}
-		m.pending, res = myelin.Feed(m.km, m.pending, k, m.path, time.Now())
-	case expire:
-		m.pending, res = myelin.Expire(m.km, m.pending, msg.at)
-	}
-	switch {
-	case res.Run != nil:
-		m.ran = append(m.ran, res.Run.Action)
-	case !res.Deadline.IsZero():
-		// Wake at the deadline, with the tick's time as now.
-		return m, tea.Tick(time.Until(res.Deadline), func(t time.Time) tea.Msg { return expire{t} })
-	}
-	return m, nil
-}
-
-func (m model) View() tea.View { return tea.NewView(strings.Join(m.ran, "\n")) }
-
-func Example() {
-	env, err := myelin.NewEnv(myelin.Schema{
-		Nodes:   []myelin.NodeType{{Name: "list"}},
-		Layers:  []string{"defaults"},
-		Timeout: 500 * time.Millisecond,
-	})
-	if err != nil {
-		panic(err)
-	}
-	km, problems := env.Build([]myelin.Doc{{Layer: "defaults", Binds: []myelin.Bind{
-		{Keys: "g g", Action: "top"},
-		{Keys: "ctrl+d", Action: "half-page-down"},
-	}}}, nil)
-	if km == nil {
-		panic(fmt.Sprint(problems))
-	}
-	var m tea.Model = model{km: km, path: myelin.Path{{Name: "list"}}}
-	for _, k := range []tea.KeyPressMsg{
-		{Code: 'g', Text: "g"},
-		{Code: 'g', Text: "g"},
-		{Code: 'd', Mod: tea.ModCtrl},
-	} {
-		m, _ = m.Update(k)
-	}
-	fmt.Println(m.(model).ran)
-	// Output: [top half-page-down]
-}
+// Output:
+// "Shift+Control+a" is Control+A, written ctrl+shift+a
+// "Control+ " is Control+Space, written ctrl+space
+// "Alt+Shift+1" is Alt+Shift+1, written alt+shift+1
+// "Hyper+x" is not a key
 ```
+
+- A HOTTY host's key event carries the name.
+- A terminal's bytes are named by hotty-go's `DecodeKeys`.
+- A Bubble Tea v2 key is named by hotty-go's `hottytea.KeyName`.
+
+Feed the key from your event loop. For a `Deadline`, start a timer that
+calls `Expire` with the time it fired; in Bubble Tea that is `tea.Tick`.
 
 ## Draw menus
 
@@ -343,18 +286,18 @@ readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Act
 
 leader, _ := km.Leader()
 show := func(m myelin.Menu) {
-	fmt.Printf("%s (%s)\n", myelin.FormatSeq(m.Seq), m.Label)
+	fmt.Printf("%s (%s)\n", key.FormatSeq(m.Seq), m.Label)
 	for _, it := range m.Items {
 		label := it.Label
 		if label == "" {
 			label = it.Binding.Action // the program words a binding with no label
 		}
-		fmt.Printf("  %s  %s enabled=%v\n", myelin.DisplayKey(it.Key), label, it.Enabled)
+		fmt.Printf("  %s  %s enabled=%v\n", key.Display(it.Key), label, it.Enabled)
 	}
 }
 p := myelin.Path{{Name: "list"}}
-show(km.Menu([]myelin.Key{leader}, p, readOnly))
-show(km.Menu([]myelin.Key{leader, "f"}, p, readOnly))
+show(km.Menu([]key.Key{leader}, p, readOnly))
+show(km.Menu([]key.Key{leader, "f"}, p, readOnly))
 // Output:
 // space ()
 //   f  +file enabled=false

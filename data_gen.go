@@ -5,6 +5,7 @@ package myelin
 import (
 	"time"
 
+	"github.com/neuroplastio/myelin/key"
 	"github.com/tinylib/msgp/msgp"
 )
 
@@ -329,7 +330,7 @@ func (z *Binding) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Seq) >= int(zb0002) {
 				z.Seq = (z.Seq)[:zb0002]
 			} else {
-				z.Seq = make([]Key, zb0002)
+				z.Seq = make([]key.Key, zb0002)
 			}
 			for za0001 := range z.Seq {
 				{
@@ -339,7 +340,7 @@ func (z *Binding) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Seq", za0001)
 						return
 					}
-					z.Seq[za0001] = Key(zb0003)
+					z.Seq[za0001] = key.Key(zb0003)
 				}
 			}
 		case "layer":
@@ -923,7 +924,7 @@ func (z *Item) DecodeMsg(dc *msgp.Reader) (err error) {
 					err = msgp.WrapError(err, "Key")
 					return
 				}
-				z.Key = Key(zb0002)
+				z.Key = key.Key(zb0002)
 			}
 		case "label":
 			z.Label, err = dc.ReadString()
@@ -1123,36 +1124,6 @@ func (z *Item) Msgsize() (s int) {
 }
 
 // DecodeMsg implements msgp.Decodable
-func (z *Key) DecodeMsg(dc *msgp.Reader) (err error) {
-	{
-		var zb0001 string
-		zb0001, err = dc.ReadString()
-		if err != nil {
-			err = msgp.WrapError(err)
-			return
-		}
-		(*z) = Key(zb0001)
-	}
-	return
-}
-
-// EncodeMsg implements msgp.Encodable
-func (z Key) EncodeMsg(en *msgp.Writer) (err error) {
-	err = en.WriteString(string(z))
-	if err != nil {
-		err = msgp.WrapError(err)
-		return
-	}
-	return
-}
-
-// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z Key) Msgsize() (s int) {
-	s = msgp.StringPrefixSize + len(string(z))
-	return
-}
-
-// DecodeMsg implements msgp.Decodable
 func (z *Match) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field
@@ -1302,7 +1273,7 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Seq) >= int(zb0002) {
 				z.Seq = (z.Seq)[:zb0002]
 			} else {
-				z.Seq = make([]Key, zb0002)
+				z.Seq = make([]key.Key, zb0002)
 			}
 			for za0001 := range z.Seq {
 				{
@@ -1312,7 +1283,7 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Seq", za0001)
 						return
 					}
-					z.Seq[za0001] = Key(zb0003)
+					z.Seq[za0001] = key.Key(zb0003)
 				}
 			}
 		case "label":
@@ -1667,7 +1638,7 @@ func (z *Pending) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Seq) >= int(zb0002) {
 				z.Seq = (z.Seq)[:zb0002]
 			} else {
-				z.Seq = make([]Key, zb0002)
+				z.Seq = make([]key.Key, zb0002)
 			}
 			for za0001 := range z.Seq {
 				{
@@ -1677,7 +1648,7 @@ func (z *Pending) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Seq", za0001)
 						return
 					}
-					z.Seq[za0001] = Key(zb0003)
+					z.Seq[za0001] = key.Key(zb0003)
 				}
 			}
 		case "path":
@@ -1969,7 +1940,7 @@ func (z *Result) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Dropped) >= int(zb0002) {
 				z.Dropped = (z.Dropped)[:zb0002]
 			} else {
-				z.Dropped = make([]Key, zb0002)
+				z.Dropped = make([]key.Key, zb0002)
 			}
 			for za0001 := range z.Dropped {
 				{
@@ -1979,7 +1950,7 @@ func (z *Result) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Dropped", za0001)
 						return
 					}
-					z.Dropped[za0001] = Key(zb0003)
+					z.Dropped[za0001] = key.Key(zb0003)
 				}
 			}
 		default:

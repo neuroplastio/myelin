@@ -258,3 +258,30 @@ supersedes D1.2's hotty-go requirement and D3.1's "through hotty-go's
      `TerminalKeys`; `hottytea.KeyName` and `hottyterm.KeyName`.
    - **Step 1 also waits for HOTTY's msgpack release** (the P-3 move in
      hotty-go). myelin messages the hotty agent before it starts.
+
+### D13 — Keys are a module of their own; no Bubble Tea adapter
+**2026-10-11.** The maintainer: "Make the key a submodule. Also, drop
+myelintea package, it doesn't belong in a headless library. Let's do this
+before publishing". This brings D12's step 1 before going public. It
+supersedes D5, D1.2 and D1.4, and D3.1's "through hotty-go's `ParseKey`".
+1. **`github.com/neuroplastio/myelin/key`** is a module in `key/`, package
+   `key`. It holds `Key`, the canonical names (`ParseHotty`, ported from
+   hotty-go's `ParseKey`), the short spelling (`Parse`, `Format`,
+   `Display`, `Named`), sequences (`ParseSeq`, `FormatSeq`, `SplitSeq`) and
+   `TypesText`. `<leader>` stays the keymap's: the root keeps `CheckSeq` and
+   `(*Keymap).ParseSeq`.
+2. **`key` requires nothing,** and its tests pass under TinyGo's wasm with
+   64 KB stacks, which the gate runs (TinyGo is pinned in mise.toml). Its
+   vectors are HOTTY's, from the hotty repository at the commit in
+   `key/testdata/conformance/hotty-commit`, embedded in the tests so that
+   they run without a file system.
+3. **The root requires `key` at a pushed commit** and replaces it with
+   `./key` in the tree. A change to `key` is pushed before the root's
+   requirement moves to it.
+4. **The root requires `key`, cel-go and msgp's runtime,** and no longer
+   hotty-go. Its data types carry a key as `key.Key`, a msgpack string
+   (`//msgp:replace key.Key with:string`); the wire form doesn't change.
+5. **myelin is headless: myelintea is gone,** and no UI toolkit's adapter
+   lives in myelin. A program names its toolkit's keys (for Bubble Tea,
+   hotty-go's `hottytea.KeyName`) and passes the name to `key.ParseHotty`.
+6. **CI checks both modules at the root's go directive,** after the gate.

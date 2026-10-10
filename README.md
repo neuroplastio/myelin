@@ -29,9 +29,9 @@ program built on it.
 go get github.com/neuroplastio/myelin
 ```
 
-For a program built on [Bubble Tea](https://github.com/charmbracelet/bubbletea)
-v2, also `go get github.com/neuroplastio/myelin/myelintea`, which turns
-Bubble Tea's keys into myelin's.
+Keys are named in `github.com/neuroplastio/myelin/key`, a module of its
+own that needs only the standard library. A program that only names keys
+can require it alone.
 
 ## A first keymap
 
@@ -72,7 +72,7 @@ home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir"
 tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
 filter := append(slices.Clone(home), myelin.Step{Name: "field"})
 match := func(keys string, p myelin.Path) string {
-	seq, err := myelin.ParseSeq(keys)
+	seq, err := key.ParseSeq(keys)
 	if err != nil {
 		return err.Error()
 	}
@@ -105,8 +105,9 @@ fmt.Println("g:", match("g", home))
   which binding wins. Programs link their users here.
 - [How myelin works](docs/design.md): why the keymap is data, why time is a
   value, and how depth and layers decide.
-- The API reference is on
-  [pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin).
+- The API reference is on pkg.go.dev:
+  [myelin](https://pkg.go.dev/github.com/neuroplastio/myelin) and
+  [key](https://pkg.go.dev/github.com/neuroplastio/myelin/key).
 
 ## Status
 

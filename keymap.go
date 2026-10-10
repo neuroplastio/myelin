@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 // What wins, for bindings of the same keys whose contexts hold on the path:
@@ -24,13 +26,13 @@ import (
 // queries return are its own: read them, don't change them.
 type Keymap struct {
 	env       *Env
-	leader    Key
+	leader    key.Key
 	hasLeader bool
 	binds     []bound
 	groups    []boundGroup
 	// byFirst indexes binds by their first key, so a key no sequence starts
 	// with costs one map lookup and builds no activation.
-	byFirst map[Key][]int
+	byFirst map[key.Key][]int
 	// unbinds indexes the unbinds in binds.
 	unbinds []int
 }
@@ -46,7 +48,7 @@ type bound struct {
 // boundGroup is a group as the keymap holds it.
 type boundGroup struct {
 	g     Group
-	keys  []Key
+	keys  []key.Key
 	ctx   *Context
 	rank  int
 	order int
@@ -80,7 +82,7 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 	fail := func(src, format string, args ...any) {
 		problems = append(problems, Problem{Source: src, Text: fmt.Sprintf(format, args...)})
 	}
-	km := &Keymap{env: e, leader: e.leader, hasLeader: e.hasLeader, byFirst: map[Key][]int{}}
+	km := &Keymap{env: e, leader: e.leader, hasLeader: e.hasLeader, byFirst: map[key.Key][]int{}}
 
 	// The layers, the leader and the drops, before any keys.
 	dropped := map[string]bool{}
@@ -104,7 +106,7 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 		if d.Leader == "" || rank < leaderRank {
 			continue
 		}
-		k, err := ParseKey(d.Leader)
+		k, err := key.Parse(d.Leader)
 		if err != nil {
 			fail(d.Source, "leader: %v", err)
 			continue
@@ -184,7 +186,7 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 // ParseSeq reads a sequence as a Bind writes it, <leader> included, into
 // this keymap's keys: for a sequence the program meets outside the keymap,
 // such as an extension's manifest, to compare with the keymap's.
-func (km *Keymap) ParseSeq(s string) ([]Key, error) {
+func (km *Keymap) ParseSeq(s string) ([]key.Key, error) {
 	var err error
 	keys, ok := km.resolve(s, "", func(_, format string, args ...any) { err = fmt.Errorf(format, args...) })
 	if !ok {
@@ -193,14 +195,36 @@ func (km *Keymap) ParseSeq(s string) ([]Key, error) {
 	return keys, nil
 }
 
+// leaderToken is how a sequence writes the leader alias.
+const leaderToken = "<leader>"
+
+// CheckSeq checks a sequence as a Bind writes it, <leader> included, with
+// no keymap: for a program that reports every mistake in its file in one
+// pass, before it builds. Build reads the sequence the same way.
+func CheckSeq(s string) error {
+	fields := key.SplitSeq(s)
+	if len(fields) == 0 {
+		return errors.New("an empty key sequence")
+	}
+	for _, f := range fields {
+		if f == leaderToken {
+			continue
+		}
+		if _, err := key.Parse(f); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // resolve reads a sequence as written, the leader put in for <leader>.
-func (km *Keymap) resolve(s, src string, fail func(src, format string, args ...any)) ([]Key, bool) {
-	fields := seqFields(s)
+func (km *Keymap) resolve(s, src string, fail func(src, format string, args ...any)) ([]key.Key, bool) {
+	fields := key.SplitSeq(s)
 	if len(fields) == 0 {
 		fail(src, "an empty key sequence")
 		return nil, false
 	}
-	out := make([]Key, len(fields))
+	out := make([]key.Key, len(fields))
 	for i, f := range fields {
 		if f == leaderToken {
 			if !km.hasLeader {
@@ -210,7 +234,7 @@ func (km *Keymap) resolve(s, src string, fail func(src, format string, args ...a
 			out[i] = km.leader
 			continue
 		}
-		k, err := ParseKey(f)
+		k, err := key.Parse(f)
 		if err != nil {
 			fail(src, "%v", err)
 			return nil, false
@@ -238,20 +262,20 @@ func (km *Keymap) shallowUnbinds() []Problem {
 			}
 			out = append(out, Problem{Source: u.b.Source, Warning: true, Text: fmt.Sprintf(
 				"unbind %q leaves %s → %s in context %q (%s), which wins there; unbind it in that context",
-				FormatSeq(u.b.Seq), FormatSeq(b.b.Seq), b.b.Action, b.b.When, b.b.Source)})
+				key.FormatSeq(u.b.Seq), key.FormatSeq(b.b.Seq), b.b.Action, b.b.When, b.b.Source)})
 		}
 	}
 	return out
 }
 
 // hasPrefix reports whether seq begins with prefix.
-func hasPrefix(seq, prefix []Key) bool {
+func hasPrefix(seq, prefix []key.Key) bool {
 	return len(seq) >= len(prefix) && slices.Equal(seq[:len(prefix)], prefix)
 }
 
 // Leader is the keymap's leader key: the highest layer's that names one,
 // else the schema's. false when neither does.
-func (km *Keymap) Leader() (Key, bool) { return km.leader, km.hasLeader }
+func (km *Keymap) Leader() (key.Key, bool) { return km.leader, km.hasLeader }
 
 // All is every binding and unbind, the leader resolved, in load order: what
 // a listing prints.
@@ -264,4 +288,4 @@ func (km *Keymap) All() []Binding {
 }
 
 // Starts reports whether any binding, in any context, begins with k.
-func (km *Keymap) Starts(k Key) bool { return len(km.byFirst[k]) > 0 }
+func (km *Keymap) Starts(k key.Key) bool { return len(km.byFirst[k]) > 0 }

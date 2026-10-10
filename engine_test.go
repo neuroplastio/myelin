@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 // kubeSchema is kubecom's path, declared to myelin.
@@ -121,9 +123,9 @@ func build(t testing.TB, e *Env, docs ...Doc) *Keymap {
 	return km
 }
 
-func keysOf(t testing.TB, s string) []Key {
+func keysOf(t testing.TB, s string) []key.Key {
 	t.Helper()
-	ks, err := ParseSeq(s)
+	ks, err := key.ParseSeq(s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -344,7 +346,7 @@ func TestFieldsKeepTheirText(t *testing.T) {
 	}
 	var next []string
 	for _, it := range km.Menu(nil, field, nil).Items {
-		next = append(next, FormatKey(it.Key))
+		next = append(next, key.Format(it.Key))
 	}
 	if got := strings.Join(next, " "); got != "down ctrl+a y" {
 		t.Errorf("the menu in a field = %s", got)
@@ -511,9 +513,9 @@ func TestMenu(t *testing.T) {
 	var got []string
 	for _, it := range menu.Items {
 		if it.Group {
-			got = append(got, FormatKey(it.Key)+"="+it.Label)
+			got = append(got, key.Format(it.Key)+"="+it.Label)
 		} else {
-			got = append(got, FormatKey(it.Key)+"="+it.Binding.Action)
+			got = append(got, key.Format(it.Key)+"="+it.Binding.Action)
 		}
 	}
 	if s := strings.Join(got, " "); s != "g=+goto G=nav.bottom" {
@@ -522,7 +524,7 @@ func TestMenu(t *testing.T) {
 	after := km.Menu(keysOf(t, "g"), nil, nil)
 	got = nil
 	for _, it := range after.Items {
-		got = append(got, FormatKey(it.Key)+"="+it.Label)
+		got = append(got, key.Format(it.Key)+"="+it.Label)
 	}
 	if s := strings.Join(got, " "); s != "g= r=relations" || after.Label != "+goto" || len(after.Seq) != 1 {
 		t.Fatalf("menu after g = %s (%q)", s, after.Label)
@@ -553,22 +555,22 @@ func TestKeysFor(t *testing.T) {
 	)
 	var got []string
 	for _, ks := range km.KeysFor("nav.up", nil, nil) {
-		got = append(got, FormatSeq(ks))
+		got = append(got, key.FormatSeq(ks))
 	}
 	if s := strings.Join(got, ","); s != "k" {
 		t.Fatalf("nav.up = %s", s)
 	}
-	if ks := km.KeysFor("resources.switch", []string{"pods"}, nil); len(ks) != 1 || FormatSeq(ks[0]) != "g p" {
+	if ks := km.KeysFor("resources.switch", []string{"pods"}, nil); len(ks) != 1 || key.FormatSeq(ks[0]) != "g p" {
 		t.Fatalf("resources.switch pods = %v", ks)
 	}
-	if ks := km.KeysFor("nav.top", nil, nil); len(ks) != 2 || FormatSeq(ks[0]) != "g g" {
+	if ks := km.KeysFor("nav.top", nil, nil); len(ks) != 2 || key.FormatSeq(ks[0]) != "g g" {
 		t.Fatalf("nav.top is not in load order: %v", ks)
 	}
 	// The key column: as it is before with values, then the shorter.
-	if b := km.KeyFor("resources.switch", nil); b == nil || FormatSeq(b.Seq) != "R" {
+	if b := km.KeyFor("resources.switch", nil); b == nil || key.FormatSeq(b.Seq) != "R" {
 		t.Fatalf("key column for resources.switch = %+v", b)
 	}
-	if b := km.KeyFor("nav.top", nil); b == nil || FormatSeq(b.Seq) != "home" {
+	if b := km.KeyFor("nav.top", nil); b == nil || key.FormatSeq(b.Seq) != "home" {
 		t.Fatalf("key column for nav.top = %+v", b)
 	}
 	if km.KeyFor("nav.none", nil) != nil {
@@ -738,6 +740,19 @@ func TestPartialEvaluation(t *testing.T) {
 		}
 		if got := c.MayDepth(files); got != want {
 			t.Errorf("%q may reach %d, want %d", src, got, want)
+		}
+	}
+}
+
+// CheckSeq reads a Bind's sequence: <leader> is a key there.
+func TestCheckSeq(t *testing.T) {
+	for s, want := range map[string]string{
+		"<leader> p n": "", "g g": "", "<leader>": "",
+		"": "an empty key sequence", "g Escape": "write esc", "<leader> shift+g": "write G", "<Leader> n": "not a key",
+	} {
+		err := CheckSeq(s)
+		if (err == nil) != (want == "") || (err != nil && !strings.Contains(err.Error(), want)) {
+			t.Errorf("CheckSeq(%q) = %v, want %q", s, err, want)
 		}
 	}
 }

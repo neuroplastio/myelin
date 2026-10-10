@@ -3,6 +3,8 @@ package myelin
 import (
 	"testing"
 	"time"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 // What myelin aims to cost: a key no binding starts with is one map lookup;
@@ -49,7 +51,7 @@ func BenchmarkFeedUnboundKey(b *testing.B) {
 
 func BenchmarkMatchContextual(b *testing.B) {
 	km, p := benchKeymap(b)
-	seq := []Key{"Control+k"}
+	seq := []key.Key{"Control+k"}
 	b.ReportAllocs()
 	for b.Loop() {
 		if km.Match(seq, p).Exact == nil {
@@ -60,7 +62,7 @@ func BenchmarkMatchContextual(b *testing.B) {
 
 func BenchmarkMatchLeaderPrefix(b *testing.B) {
 	km, p := benchKeymap(b)
-	seq := []Key{"Control+Space", "k"}
+	seq := []key.Key{"Control+Space", "k"}
 	b.ReportAllocs()
 	for b.Loop() {
 		if !km.Match(seq, p).Prefix {
@@ -84,7 +86,7 @@ func BenchmarkCompile(b *testing.B) {
 
 func BenchmarkMenuLeader(b *testing.B) {
 	km, p := benchKeymap(b)
-	seq := []Key{"Control+Space"}
+	seq := []key.Key{"Control+Space"}
 	b.ReportAllocs()
 	for b.Loop() {
 		km.Menu(seq, p, nil)

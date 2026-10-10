@@ -51,6 +51,10 @@ protocol: `Control+d`, `PageDown`, `A`. A terminal's bytes, a Bubble Tea
 key and a HOTTY host's key event come out as the same name, so one keymap
 serves them all.
 
+Keys are a package of their own, `github.com/neuroplastio/myelin/key`,
+which needs only the standard library and builds with TinyGo. Whatever
+reads input can name keys with it without taking on CEL.
+
 People write keys in one short spelling, `ctrl+d`, `pgdn`, `H`, and every
 key has exactly one. A key written another way is refused with the
 spelling to use. With one spelling, a listing, a menu and an error message

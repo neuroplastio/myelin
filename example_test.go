@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/neuroplastio/myelin"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 // A file manager's keymap: its defaults and a user's config, matched on the
@@ -43,7 +45,7 @@ func Example() {
 	tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
 	filter := append(slices.Clone(home), myelin.Step{Name: "field"})
 	match := func(keys string, p myelin.Path) string {
-		seq, err := myelin.ParseSeq(keys)
+		seq, err := key.ParseSeq(keys)
 		if err != nil {
 			return err.Error()
 		}
@@ -66,26 +68,6 @@ func Example() {
 	// esc in the filter: close-filter
 	// j in the filter: nothing
 	// g: wait for more
-}
-
-// Every key has one spelling, and any other is refused with it.
-func ExampleParseKey() {
-	for _, s := range []string{"ctrl+d", "pgdn", "H", "ctrl+shift+a", "shift+h", "Escape", "alt+ctrl+x"} {
-		k, err := myelin.ParseKey(s)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		fmt.Printf("%s is %s\n", s, k)
-	}
-	// Output:
-	// ctrl+d is Control+d
-	// pgdn is PageDown
-	// H is H
-	// ctrl+shift+a is Control+A
-	// "shift+h": write H
-	// "Escape": write esc
-	// "alt+ctrl+x": write ctrl+alt+x
 }
 
 // A program checks its file's sequences while it parses it, before it has
@@ -240,18 +222,18 @@ func ExampleKeymap_Menu() {
 
 	leader, _ := km.Leader()
 	show := func(m myelin.Menu) {
-		fmt.Printf("%s (%s)\n", myelin.FormatSeq(m.Seq), m.Label)
+		fmt.Printf("%s (%s)\n", key.FormatSeq(m.Seq), m.Label)
 		for _, it := range m.Items {
 			label := it.Label
 			if label == "" {
 				label = it.Binding.Action // the program words a binding with no label
 			}
-			fmt.Printf("  %s  %s enabled=%v\n", myelin.DisplayKey(it.Key), label, it.Enabled)
+			fmt.Printf("  %s  %s enabled=%v\n", key.Display(it.Key), label, it.Enabled)
 		}
 	}
 	p := myelin.Path{{Name: "list"}}
-	show(km.Menu([]myelin.Key{leader}, p, readOnly))
-	show(km.Menu([]myelin.Key{leader, "f"}, p, readOnly))
+	show(km.Menu([]key.Key{leader}, p, readOnly))
+	show(km.Menu([]key.Key{leader, "f"}, p, readOnly))
 	// Output:
 	// space ()
 	//   f  +file enabled=false

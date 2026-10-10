@@ -11,16 +11,16 @@
 //
 // # Keys
 //
-// A [Key] is a keystroke's canonical name in the HOTTY protocol
+// A [key.Key] is a keystroke's canonical name in the HOTTY protocol
 // (https://hotty.neuroplast.io): "a", "A", "Control+d", "PageDown". Two keys
 // are the same keystroke exactly when they are ==, whether they came from a
-// terminal, from Bubble Tea or from a HOTTY host ([ParseHottyKey]).
+// terminal, from Bubble Tea or from a HOTTY host ([key.ParseHotty]).
 //
 // People write keys in one short spelling: "ctrl+d", "pgdn", "H". Every key
-// has exactly one spelling: [ParseKey] reads only what [FormatKey] writes,
+// has exactly one spelling: [key.Parse] reads only what [key.Format] writes,
 // and refuses any other form with the spelling to use ("shift+h": write H).
 // A sequence is keys separated by spaces, "g g", and "<leader>" stands for
-// the keymap's leader key. [DisplayKey] writes a key for a menu, with glyphs
+// the keymap's leader key. [key.Display] writes a key for a menu, with glyphs
 // for the arrows and Tab.
 //
 // # Paths and contexts
@@ -83,8 +83,10 @@
 // [Context] are handles: they hold compiled CEL, are never serialized, and
 // are safe for concurrent use.
 //
-// The module github.com/neuroplastio/myelin/myelintea turns Bubble Tea's
-// keys into myelin's.
+// Keys are named in the package github.com/neuroplastio/myelin/key, a
+// module of its own that needs only the standard library and builds with
+// TinyGo, so a program or a library that reads input can name keys without
+// taking on CEL.
 //
 // docs/keymaps.md in the repository explains, for people writing keymaps,
 // how keys are spelled, how contexts work and which binding wins.

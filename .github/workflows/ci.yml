@@ -35,9 +35,8 @@ jobs:
 
       - run: ./scripts/check.sh
 
-      # The floor importers build with: the root module under go.mod's go
-      # directive. myelintea needs a newer Go for Bubble Tea, so the gate
-      # above is its check.
+      # The floor importers build with: both modules under the root go.mod's
+      # go directive.
       - name: root module at its go.mod floor
         run: |
           export GOTOOLCHAIN=go$(go list -m -f '{{.GoVersion}}')

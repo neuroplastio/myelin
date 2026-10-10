@@ -5,6 +5,8 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 // winner is the precedence of the best candidate so far.
@@ -33,15 +35,15 @@ func (b *bound) at(d int) winner { return winner{depth: d, rank: b.rank, order: 
 // floor is the depth a binding of a sequence that starts with first must
 // reach on the path: a key that types text is a text node's unless a
 // binding at least as deep as it takes the key (the field rule).
-func (km *Keymap) floor(first Key, p Path) int {
-	if d := km.env.textDepth(p); d >= 0 && TypesText(first) {
+func (km *Keymap) floor(first key.Key, p Path) int {
+	if d := km.env.textDepth(p); d >= 0 && key.TypesText(first) {
 		return d
 	}
 	return 0
 }
 
 // Match looks up a sequence on a path.
-func (km *Keymap) Match(seq []Key, p Path) Match {
+func (km *Keymap) Match(seq []key.Key, p Path) Match {
 	m, _ := km.match(seq, p, nil)
 	return m
 }
@@ -49,7 +51,7 @@ func (km *Keymap) Match(seq []Key, p Path) Match {
 // match is Match with the path's activation when the caller has one (nil
 // makes one if a binding needs it), and the index of the bind that won,
 // an unbind included, or -1.
-func (km *Keymap) match(seq []Key, p Path, a *pathAct) (Match, int) {
+func (km *Keymap) match(seq []key.Key, p Path, a *pathAct) (Match, int) {
 	if len(seq) == 0 {
 		return Match{}, -1
 	}
@@ -127,7 +129,7 @@ func (km *Keymap) Effective(p Path) []Binding {
 
 // reached reports whether typing seq on the path gets to its last key: each
 // shorter part of it waits for more.
-func (km *Keymap) reached(seq []Key, p Path, a *pathAct) bool {
+func (km *Keymap) reached(seq []key.Key, p Path, a *pathAct) bool {
 	for n := 1; n < len(seq); n++ {
 		if m, _ := km.match(seq[:n], p, a); !m.Prefix {
 			return false
@@ -139,8 +141,8 @@ func (km *Keymap) reached(seq []Key, p Path, a *pathAct) bool {
 // KeysFor is every sequence that runs action with exactly args on the path,
 // in load order: what a hint shows for it there. nil args are the action's
 // bindings with no values.
-func (km *Keymap) KeysFor(action string, args []string, p Path) [][]Key {
-	var out [][]Key
+func (km *Keymap) KeysFor(action string, args []string, p Path) [][]key.Key {
+	var out [][]key.Key
 	for _, b := range km.Effective(p) {
 		if b.Action == action && slices.Equal(b.Args, args) {
 			out = append(out, b.Seq)
@@ -176,7 +178,7 @@ func (km *Keymap) KeyFor(action string, p Path) *Binding {
 // sequence or longer, the bindings of the sequence first, ranked by
 // precedence with the winner first, then the longer ones, then those whose
 // context does not hold.
-func (km *Keymap) Explain(seq []Key, p Path) []Candidate {
+func (km *Keymap) Explain(seq []key.Key, p Path) []Candidate {
 	a := km.env.act(p)
 	_, won := km.match(seq, p, a)
 	type cand struct {
@@ -237,8 +239,8 @@ func (km *Keymap) Shadowed(paths ...Path) []Problem {
 				if du >= 0 && dd > du {
 					out = append(out, Problem{Source: u.b.Source, Warning: true, Text: fmt.Sprintf(
 						"%s → %s is shadowed where %s: %s's %s → %s (%s) has a deeper context there",
-						FormatSeq(u.b.Seq), describe(&u.b), FormatPath(paths[k]), d.b.Layer,
-						FormatSeq(d.b.Seq), describe(&d.b), d.b.Source)})
+						key.FormatSeq(u.b.Seq), describe(&u.b), FormatPath(paths[k]), d.b.Layer,
+						key.FormatSeq(d.b.Seq), describe(&d.b), d.b.Source)})
 					break
 				}
 			}
@@ -258,7 +260,7 @@ func describe(b *Binding) string {
 // entry is one key that can follow a sequence: a group (more keys follow;
 // label is its group's) or a leaf (b wins there).
 type entry struct {
-	key   Key
+	key   key.Key
 	group bool
 	label string
 	b     *Binding
@@ -267,11 +269,11 @@ type entry struct {
 // next lists what can follow a sequence on the path, one entry per next
 // key, in the order the keymap first binds each. With no keys typed it is
 // every first key.
-func (km *Keymap) next(seq []Key, p Path, a *pathAct) []entry {
+func (km *Keymap) next(seq []key.Key, p Path, a *pathAct) []entry {
 	var out []entry
-	at := map[Key]int{}
-	best := map[Key]winner{}
-	deeper := map[Key]int{} // the deepest longer binding, per key
+	at := map[key.Key]int{}
+	best := map[key.Key]winner{}
+	deeper := map[key.Key]int{} // the deepest longer binding, per key
 	for i := range km.binds {
 		b := &km.binds[i]
 		if len(b.b.Seq) <= len(seq) || !hasPrefix(b.b.Seq, seq) {
@@ -319,7 +321,7 @@ func (km *Keymap) next(seq []Key, p Path, a *pathAct) []entry {
 }
 
 // groupLabel is the winning label of the group at exactly these keys, or "".
-func (km *Keymap) groupLabel(seq []Key, a *pathAct) string {
+func (km *Keymap) groupLabel(seq []key.Key, a *pathAct) string {
 	best := none
 	label := ""
 	for i := range km.groups {

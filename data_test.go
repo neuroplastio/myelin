@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/tinylib/msgp/msgp"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 // codec is what every data type has: msgp's generated streaming codec.
@@ -40,7 +42,7 @@ func TestRoundTrip(t *testing.T) {
 	deadline := time.Date(2026, 10, 10, 21, 30, 0, 123456789, time.UTC)
 	bind := Bind{Keys: "<leader> p n", Action: "pane.new", Args: []string{"right"}, Label: "new pane",
 		When: "pane && !pane.zoomed", Source: "config.kdl:12", Props: map[string]string{"steal": "true"}}
-	binding := Binding{Bind: bind, Seq: []Key{"Control+b", "p", "n"}, Layer: "user"}
+	binding := Binding{Bind: bind, Seq: []key.Key{"Control+b", "p", "n"}, Layer: "user"}
 	for _, tc := range []struct {
 		name    string
 		in, out codec
@@ -61,14 +63,14 @@ func TestRoundTrip(t *testing.T) {
 		{"match", &Match{Exact: &binding, Prefix: true}, &Match{}},
 		{"candidate", &Candidate{Binding: binding, Holds: true, Depth: 2, Wins: true}, &Candidate{}},
 		{"problem", &Problem{Source: "config.kdl:12", Text: "unknown action", Warning: true}, &Problem{}},
-		{"menu", &Menu{Seq: []Key{"Control+b"}, Label: "+leader", Items: []Item{
+		{"menu", &Menu{Seq: []key.Key{"Control+b"}, Label: "+leader", Items: []Item{
 			{Key: "p", Label: "+pane", Group: true, Enabled: true, Items: []Item{
 				{Key: "n", Binding: &binding, Enabled: true},
-				{Key: "x", Label: "close", Binding: &Binding{Bind: Bind{Keys: "<leader> p x", Action: "pane.close"}, Seq: []Key{"Control+b", "p", "x"}, Layer: "core"}},
+				{Key: "x", Label: "close", Binding: &Binding{Bind: Bind{Keys: "<leader> p x", Action: "pane.close"}, Seq: []key.Key{"Control+b", "p", "x"}, Layer: "core"}},
 			}},
 		}}, &Menu{}},
-		{"pending", &Pending{Seq: []Key{"g"}, Path: Path{{Name: "list"}}, Deadline: deadline}, &Pending{}},
-		{"result", &Result{Run: &binding, Deadline: deadline, Dropped: []Key{"g", "x"}}, &Result{}},
+		{"pending", &Pending{Seq: []key.Key{"g"}, Path: Path{{Name: "list"}}, Deadline: deadline}, &Pending{}},
+		{"result", &Result{Run: &binding, Deadline: deadline, Dropped: []key.Key{"g", "x"}}, &Result{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			roundTrip(t, tc.in, tc.out)
@@ -122,7 +124,7 @@ func TestDeadlineIsATimestamp(t *testing.T) {
 	local := time.FixedZone("CEST", 2*60*60)
 	deadline := time.Date(2026, 10, 10, 23, 30, 5, 500, local)
 	var out Pending
-	wire := roundTrip(t, &Pending{Seq: []Key{"g"}, Deadline: deadline}, &out)
+	wire := roundTrip(t, &Pending{Seq: []key.Key{"g"}, Deadline: deadline}, &out)
 	if !out.Deadline.Equal(deadline) || out.Deadline.Location() != time.UTC {
 		t.Errorf("deadline came back %v, want %v in UTC", out.Deadline, deadline)
 	}
@@ -145,7 +147,7 @@ func TestDeadlineIsATimestamp(t *testing.T) {
 		t.Errorf("deadline is extension %d, want -1", int8(typ))
 	}
 	// A zero deadline is left out.
-	wire = roundTrip(t, &Pending{Seq: []Key{"g"}}, &Pending{})
+	wire = roundTrip(t, &Pending{Seq: []key.Key{"g"}}, &Pending{})
 	if bytes.Contains(wire, []byte("deadline")) {
 		t.Errorf("a zero deadline is written: % x", wire)
 	}

@@ -1,6 +1,10 @@
 package myelin
 
-import "time"
+import (
+	"time"
+
+	"github.com/neuroplastio/myelin/key"
+)
 
 // The data types: exported fields, msgpack tags and msgp's generated codec,
 // and no other methods. Each encodes as a msgpack map keyed by its fields'
@@ -9,18 +13,12 @@ import "time"
 // The generator is pinned in mise.toml, not in go.mod: myelin is imported,
 // and a tool directive would put msgp's own dependencies in every importer's
 // module graph. Times are msgpack timestamps (extension −1), read back in
-// UTC.
+// UTC. A key (key.Key) is a msgpack string: its canonical name.
 //
 //go:generate msgp -marshal=false -tests=false
 //msgp:newtime
 //msgp:timezone utc
-
-// Key is a keystroke's canonical name in the HOTTY protocol: "a", "A",
-// "Control+d", "Shift+Tab", "PageDown", "Space". Two keys are the same
-// keystroke exactly when they are ==. [ParseKey] reads the short spelling
-// into one, and [ParseHottyKey] a name from a HOTTY host, a terminal or
-// Bubble Tea.
-type Key string
+//msgp:replace key.Key with:string
 
 // Schema is what a program declares once, for [NewEnv]: what can hold the
 // keyboard, and the keymap's layers.
@@ -136,7 +134,7 @@ type Step struct {
 type Binding struct {
 	Bind `msg:"bind"`
 	// Seq is the sequence with <leader> resolved.
-	Seq []Key `msg:"seq"`
+	Seq []key.Key `msg:"seq"`
 	// Layer is the layer of the document the bind came from.
 	Layer string `msg:"layer"`
 }
@@ -180,7 +178,7 @@ type Problem struct {
 // sequence.
 type Menu struct {
 	// Seq are the keys typed so far, the leader included.
-	Seq []Key `msg:"seq"`
+	Seq []key.Key `msg:"seq"`
 	// Label is the group's label: "+file".
 	Label string `msg:"label,omitempty"`
 	// Items are the keys that can follow, in the order the keymap first
@@ -192,7 +190,7 @@ type Menu struct {
 // binding that wins there.
 type Item struct {
 	// Key is the key that follows the menu's sequence.
-	Key Key `msg:"key"`
+	Key key.Key `msg:"key"`
 	// Label is the group's or the binding's. A binding with none is the
 	// program's to word.
 	Label string `msg:"label,omitempty"`
@@ -211,7 +209,7 @@ type Item struct {
 // when.
 type Pending struct {
 	// Seq are the keys typed so far.
-	Seq []Key `msg:"seq,omitempty"`
+	Seq []key.Key `msg:"seq,omitempty"`
 	// Path is where they were typed: an expiry runs what they finish
 	// there.
 	Path Path `msg:"path,omitempty"`
@@ -228,5 +226,5 @@ type Result struct {
 	Deadline time.Time `msg:"deadline,omitempty"`
 	// Dropped are keys that matched nothing: the program types, forwards
 	// or swallows them.
-	Dropped []Key `msg:"dropped,omitempty"`
+	Dropped []key.Key `msg:"dropped,omitempty"`
 }

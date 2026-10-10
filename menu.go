@@ -1,6 +1,10 @@
 package myelin
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/neuroplastio/myelin/key"
+)
 
 // Menu is the which-key level after a sequence on the path: one item per
 // key that can follow it, in the order the keymap first binds each, a group
@@ -11,7 +15,7 @@ import "slices"
 // anything now. nil means every binding applies. A group is enabled when
 // anything under it is. The program draws the menu, dimming what is not
 // enabled, and words a binding with no label.
-func (km *Keymap) Menu(seq []Key, p Path, applies func(Binding) bool) Menu {
+func (km *Keymap) Menu(seq []key.Key, p Path, applies func(Binding) bool) Menu {
 	a := km.env.act(p)
 	return Menu{Seq: slices.Clone(seq), Label: km.label(seq, p, a), Items: km.items(seq, p, a, applies, false)}
 }
@@ -19,13 +23,13 @@ func (km *Keymap) Menu(seq []Key, p Path, applies func(Binding) bool) Menu {
 // Tree is Menu with every level under the sequence: each group's items
 // nested in it. After the leader it is a card of every binding under the
 // leader.
-func (km *Keymap) Tree(seq []Key, p Path, applies func(Binding) bool) Menu {
+func (km *Keymap) Tree(seq []key.Key, p Path, applies func(Binding) bool) Menu {
 	a := km.env.act(p)
 	return Menu{Seq: slices.Clone(seq), Label: km.label(seq, p, a), Items: km.items(seq, p, a, applies, true)}
 }
 
 // items are the items after seq; with tree, each group's own nested.
-func (km *Keymap) items(seq []Key, p Path, a *pathAct, applies func(Binding) bool, tree bool) []Item {
+func (km *Keymap) items(seq []key.Key, p Path, a *pathAct, applies func(Binding) bool, tree bool) []Item {
 	es := km.next(seq, p, a)
 	out := make([]Item, 0, len(es))
 	for _, e := range es {
@@ -46,7 +50,7 @@ func (km *Keymap) items(seq []Key, p Path, a *pathAct, applies func(Binding) boo
 
 // label is the group label of a sequence, as the level before it lists the
 // group; "" when it is no group there.
-func (km *Keymap) label(seq []Key, p Path, a *pathAct) string {
+func (km *Keymap) label(seq []key.Key, p Path, a *pathAct) string {
 	if len(seq) == 0 {
 		return ""
 	}

@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	cel.dev/cel-go v0.32.0
-	github.com/neuroplastio/hotty-go v0.0.0-20261010165506-8fff1c2c74dd
+	github.com/neuroplastio/myelin/key v0.0.0-20261010232718-57904833fca8
 	github.com/tinylib/msgp v1.6.5
 )
 
@@ -18,3 +18,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240826202546-f6391c0de4c7 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
+
+replace github.com/neuroplastio/myelin/key => ./key

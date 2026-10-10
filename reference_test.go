@@ -8,9 +8,10 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
+
+	"github.com/neuroplastio/myelin/key"
 )
 
 var update = flag.Bool("update", false, "rewrite generated docs")
@@ -47,16 +48,11 @@ func TestReferenceKeys(t *testing.T) {
 func keyTable() string {
 	var b strings.Builder
 	b.WriteString("\n| Write | Key | Menus show |\n|-------|-----|------------|\n")
-	row := func(k Key) {
-		fmt.Fprintf(&b, "| `%s` | %s | `%s` |\n", FormatKey(k), k, DisplayKey(k))
+	row := func(k key.Key) {
+		fmt.Fprintf(&b, "| `%s` | %s | `%s` |\n", key.Format(k), k, key.Display(k))
 	}
-	shorts := make([]string, 0, len(shortNames))
-	for s := range shortNames {
-		shorts = append(shorts, s)
-	}
-	slices.Sort(shorts)
-	for _, s := range shorts {
-		row(Key(shortNames[s]))
+	for _, k := range key.Named() {
+		row(k)
 	}
 	row("Shift+Tab")
 	b.WriteString("| `f1`, `f2`, … | F1, F2, … | `f1`, `f2`, … |\n\n")
@@ -68,7 +64,7 @@ func keyTable() string {
 // function NAME, or the whole of an example file named by its path. The
 // gate fails when a block drifts; -update rewrites them.
 func TestDocsExamples(t *testing.T) {
-	examples := exampleSources(t, "example_test.go", "myelintea/example_test.go")
+	examples := exampleSources(t, "example_test.go", "key/example_test.go")
 	pages, err := filepath.Glob("docs/*.md")
 	if err != nil {
 		t.Fatal(err)
