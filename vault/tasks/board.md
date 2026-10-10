@@ -25,9 +25,10 @@ maintainer's final review._
       status: blocked | owner: — | added: 2026-10-10
       notes: Waits for the maintainer's final review (D8). Then flip the
       visibility, so that CI starts, and tell kubecom the public commit to
-      require. It holds its switch until then and until its own go-ahead,
-      and moves from myelintea to `hottytea.KeyName` + `key.ParseHotty`
-      (D13).
+      require. It holds its switch until then and until its own go-ahead.
+      Its local switch is green on myelin 2ebaa0e with `key` 5790483
+      (kubecom 5d1b2f1, unpushed): live keys go through
+      `hottytea.KeyName` and `key.ParseHotty` (D13).
 
 - [ ] **KEYS-02** hotty-go takes its key names from `key` (D12 step 2)
       status: blocked | owner: — | added: 2026-10-11
