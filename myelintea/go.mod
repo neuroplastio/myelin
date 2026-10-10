@@ -7,7 +7,7 @@ go 1.25.0
 require (
 	charm.land/bubbletea/v2 v2.0.8
 	github.com/neuroplastio/hotty-go/hottytea v0.0.0-20261010165506-8fff1c2c74dd
-	github.com/neuroplastio/myelin v0.0.0-20261010213656-8d05582e04bb
+	github.com/neuroplastio/myelin v0.0.0-20261010224848-b9374bf5bd88
 )
 
 require (
