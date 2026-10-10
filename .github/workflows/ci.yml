@@ -1,0 +1,42 @@
+# CI: myelin's gate, scripts/check.sh (what `make check` runs), on every
+# push to main and every pull request.
+#
+# It runs on GitHub's runners, and only once myelin is public (D8): the
+# org's free minutes for private repositories are spent, and myelin has no
+# self-hosted runner. While myelin is private the job is skipped, and the
+# gate is a green local `make check` before each push. Going public needs no
+# change here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    env:
+      # The root module is checked at its go.mod floor, and myelintea, which
+      # needs a newer Go for Bubble Tea, fetches its own toolchain.
+      GOTOOLCHAIN: auto
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          # The floor importers build with: go.mod's go directive.
+          go-version-file: go.mod
+          check-latest: true
+
+      - run: ./scripts/check.sh
