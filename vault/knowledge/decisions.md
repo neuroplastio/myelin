@@ -194,3 +194,14 @@ format is the org's docs standard, worked out with the Docs Agent.
    them.
 4. **The godoc stands alone:** every exported identifier is documented,
    with runnable Examples, and no comment points at a private document.
+
+### D10 — A fresh history, the old one dropped
+**2026-10-11.** The maintainer: "Just force push, drop the history".
+- `main` starts again at one root commit holding the reviewed tree, and a
+  second one that points myelintea at it. The old history is not kept,
+  locally or on GitHub, by the maintainer's choice rather than by keeping
+  an original copy. Commits cited in other repositories from before this
+  don't exist any more.
+- Another program's test files that myelin no longer carries were handed
+  over outside the repository first.
+- Nothing is force-pushed again (AGENTS.md).
