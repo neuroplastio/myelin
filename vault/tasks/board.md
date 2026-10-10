@@ -27,6 +27,13 @@ maintainer's final review._
       visibility, so that CI starts, and tell kubecom the public commit to
       require. It holds its switch until then and until its own go-ahead.
 
+- [ ] **KEYS-01** myelin owns the keys; hotty-go depends on myelin (D12)
+      status: blocked | owner: — | added: 2026-10-11
+      notes: After PUBLIC-01. Build the dependency-free keys module and
+      take the root off hotty-go; then the hotty agent moves hotty-go onto
+      it, and each consumer bumps. What stays in hotty-go is agreed with the
+      hotty agent first.
+
 ## Todo
 
 - [ ] **RELEASE-01** The first tag, v0.1.0

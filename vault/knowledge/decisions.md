@@ -219,3 +219,25 @@ this special package". Supersedes D1.3 and D5.4.
    and then vets and tests the root module under the toolchain go.mod's go
    directive names (`GOTOOLCHAIN=go1.24.0`), the floor importers build
    with.
+
+### D12 — myelin owns the keys; hotty-go depends on myelin
+**2026-10-11.** The maintainer: "hotty-go will depend on myelin, as myelin
+owns the keys", to be done after myelin goes public. Once done, it
+supersedes D1.2's hotty-go requirement and D3.1's "through hotty-go's
+`ParseKey`".
+1. **The Go code that names keys lives in myelin:** a key's canonical name
+   (what hotty-go's `ParseKey` does today), the short spelling and
+   sequences. hotty-go requires it; myelin requires nothing of hotty-go.
+2. **It is a module of its own with no requirements.** hotty-go's root
+   module needs only the standard library and builds under TinyGo.
+   Requiring myelin's root would put cel-go, protobuf and ANTLR into every
+   hotty-go importer's module graph, even though they would never be linked.
+   The module's name is settled when it is built.
+3. **The names stay HOTTY's.** SPEC §10.4 defines them, and HOTTY's
+   conformance vectors stay the test.
+4. **Order, with no module cycle at any step:** myelin first (the keys
+   module, the root off hotty-go), then hotty-go moves, then each consumer
+   bumps.
+5. **What stays in hotty-go is settled with its owner.** The lean:
+   `DecodeKeys` (a terminal's bytes), SPEC §10.2's text-field keymaps and
+   `hottytea.KeyName` stay there, built on myelin's names.
