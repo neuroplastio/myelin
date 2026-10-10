@@ -1,4 +1,4 @@
-# myelin. In an agent shell, Go runs through mise: `mise exec -- make check`.
+# myelin. Go and msgp are pinned in mise.toml: `mise exec -- make check`.
 GO ?= go
 export GO
 

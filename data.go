@@ -6,12 +6,12 @@ import "time"
 // and no other methods. Each encodes as a msgpack map keyed by its fields'
 // tags. What works on them is functions, in the package's other files.
 
-// The generator is pinned in tools/go.mod, not here: myelin is imported, and
-// a tool directive in this go.mod would put msgp's own dependencies in every
-// importer's module graph. Times are msgpack timestamps (extension −1), read
-// back in UTC.
+// The generator is pinned in mise.toml, not in go.mod: myelin is imported,
+// and a tool directive would put msgp's own dependencies in every importer's
+// module graph. Times are msgpack timestamps (extension −1), read back in
+// UTC.
 //
-//go:generate go tool -modfile=tools/go.mod msgp -marshal=false -tests=false
+//go:generate msgp -marshal=false -tests=false
 //msgp:newtime
 //msgp:timezone utc
 

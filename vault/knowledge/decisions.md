@@ -205,3 +205,17 @@ format is the org's docs standard, worked out with the Docs Agent.
 - Another program's test files that myelin no longer carries were handed
   over outside the repository first.
 - Nothing is force-pushed again (AGENTS.md).
+
+### D11 — Tools are pinned in mise.toml
+**2026-10-11.** The maintainer: "Move the tool into mise toml instead of
+this special package". Supersedes D1.3 and D5.4.
+1. **msgp's generator is pinned in `mise.toml`,** beside Go:
+   `"go:github.com/tinylib/msgp" = "1.6.5"`. `//go:generate` runs it as
+   `msgp -marshal=false -tests=false`. There is no `tools/` module, and no
+   go.mod has a `tool` directive.
+2. **The gate needs mise's tools on PATH** (`mise exec -- make check`), and
+   says so when msgp is missing.
+3. **CI installs the same tools** with `jdx/mise-action`, runs the gate,
+   and then vets and tests the root module under the toolchain go.mod's go
+   directive names (`GOTOOLCHAIN=go1.24.0`), the floor importers build
+   with.

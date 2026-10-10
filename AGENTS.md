@@ -30,8 +30,8 @@ license is Apache-2.0.
   generated with `msgp -marshal=false`, `//msgp:newtime` and
   `//msgp:timezone utc`. Only the three handles have methods (Env, Keymap,
   Context), because they hold compiled CEL.
-- **No `tool` directive in the root go.mod.** msgp's generator is pinned in
-  `tools/go.mod` and run as `go tool -modfile=tools/go.mod msgp` (D1).
+- **No `tool` directive in a go.mod.** msgp's generator is pinned in
+  `mise.toml`, beside Go, and `//go:generate` runs it as `msgp` (D11).
 - **The root module depends only on** hotty-go's root module, msgp's
   runtime and cel-go. Bubble Tea lives in the `myelintea` module (D5).
 - **Never edit a consumer's repository.** Each program makes its own
@@ -63,9 +63,10 @@ license is Apache-2.0.
    `vault/feedback/`.
 2. Take one small leg and claim it on the board. Shared files can be
    changed by other sessions, so pull before editing them.
-3. Implement it. `mise exec -- make check` must pass. Go isn't on PATH in
-   an agent shell, so it runs through mise. While myelin is private, CI is
-   skipped (D8): this local run is the gate, and the journal entry says so.
+3. Implement it. `mise exec -- make check` must pass. Go and msgp aren't
+   on PATH in an agent shell, so they run through mise. While myelin is
+   private, CI is skipped (D8): this local run is the gate, and the journal
+   entry says so.
 4. Record any decision, add a journal bullet, update the board, then commit
    and push to `main`. There are no feature branches, and nothing is ever
    force-pushed.
@@ -83,4 +84,5 @@ mise exec -- make fuzz       # fuzz the short spelling's parser for 60 s
 ```
 
 CI (`.github/workflows/ci.yml`) runs `scripts/check.sh` on `ubuntu-latest`
-once myelin is public (D8).
+once myelin is public (D8), with the tools mise.toml pins, and then tests the
+root module at its go.mod floor (D11).

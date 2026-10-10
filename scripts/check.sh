@@ -38,16 +38,21 @@ if [ "${root##*-}" != "${tea##*-}" ]; then
 fi
 
 echo "== msgp"
+# msgp is pinned in mise.toml, as Go is.
+if ! command -v msgp >/dev/null; then
+	echo "msgp: not on PATH; run the gate through mise: mise exec -- make check"
+	exit 1
+fi
 before=$(mktemp -d)
 trap 'rm -rf "$before"' EXIT
-gens=$(find . -name '*_gen.go' -not -path './tools/*')
+gens=$(find . -name '*_gen.go')
 for f in $gens; do
 	mkdir -p "$before/$(dirname "$f")"
 	cp "$f" "$before/$f"
 done
 "$GO" generate -run msgp ./...
 stale=""
-for f in $(find . -name '*_gen.go' -not -path './tools/*'); do
+for f in $(find . -name '*_gen.go'); do
 	cmp -s "$f" "$before/$f" || stale="$stale $f"
 done
 if [ -n "$stale" ]; then

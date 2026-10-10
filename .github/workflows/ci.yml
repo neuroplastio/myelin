@@ -26,17 +26,19 @@ jobs:
     name: check
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
-    env:
-      # The root module is checked at its go.mod floor, and myelintea, which
-      # needs a newer Go for Bubble Tea, fetches its own toolchain.
-      GOTOOLCHAIN: auto
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v7
-        with:
-          # The floor importers build with: go.mod's go directive.
-          go-version-file: go.mod
-          check-latest: true
+      # Go and msgp at the versions mise.toml pins, as in an agent shell.
+      - uses: jdx/mise-action@v4
 
       - run: ./scripts/check.sh
+
+      # The floor importers build with: the root module under go.mod's go
+      # directive. myelintea needs a newer Go for Bubble Tea, so the gate
+      # above is its check.
+      - name: root module at its go.mod floor
+        run: |
+          export GOTOOLCHAIN=go$(go list -m -f '{{.GoVersion}}')
+          go vet ./...
+          go test ./...
