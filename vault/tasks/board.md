@@ -32,7 +32,8 @@ maintainer's final review._
       notes: After PUBLIC-01. Build the dependency-free keys module and
       take the root off hotty-go; then the hotty agent moves hotty-go onto
       it, and each consumer bumps. What stays in hotty-go is agreed with the
-      hotty agent first.
+      hotty agent first. NEIO-13 records it as pending (gov 06b8611): send
+      gov the commits when it lands.
 
 ## Todo
 
