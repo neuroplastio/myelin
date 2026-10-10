@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# myelin's gate (make check, and CI): gofmt, vet and test (the root module
-# and myelintea), msgp's generated codecs current, and HOTTY's conformance
-# vectors and hottytea from the hotty-go the root pins.
+# myelin's gate (make check, and CI): gofmt, vet and test (the root module,
+# key and myelintea), key under TinyGo, msgp's generated codecs current, and
+# HOTTY's conformance vectors and hottytea from the hotty-go the root pins.
 #
 # A plain script rather than Makefile recipes, so that CI runs the same gate
 # on a runner image without make.
@@ -26,6 +26,24 @@ echo "== test"
 # Re-run msgp and compare with the files as they were, so the check holds
 # for uncommitted work too. A stale file is left regenerated: that is the
 # fix.
+# The key module needs nothing but the standard library and builds with
+# TinyGo, whose web builds run it as 32-bit wasm with 64 KB stacks.
+echo "== key"
+"$GO" -C key vet ./...
+"$GO" -C key test ./...
+if ! command -v tinygo >/dev/null; then
+	echo "key: tinygo is not on PATH; run the gate through mise: mise exec -- make check"
+	exit 1
+fi
+(cd key && tinygo test -target wasm -stack-size=64KB .)
+# Its vectors are HOTTY's, from the hotty repository at hotty-commit.
+commit=$(cat key/testdata/conformance/hotty-commit)
+if ! curl -fsSL "https://raw.githubusercontent.com/neuroplastio/hotty/$commit/conformance/vectors.json" |
+	cmp -s - key/testdata/conformance/vectors.json; then
+	echo "key: testdata/conformance/vectors.json is not hotty $commit's; run make vectors"
+	exit 1
+fi
+
 echo "== myelintea"
 "$GO" -C myelintea vet ./...
 "$GO" -C myelintea test ./...

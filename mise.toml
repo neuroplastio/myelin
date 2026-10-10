@@ -1,3 +1,4 @@
 [tools]
 go = "1.26.8"
 "go:github.com/tinylib/msgp" = "1.6.5"
+tinygo = "0.42.0"

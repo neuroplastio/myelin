@@ -29,7 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Go and msgp at the versions mise.toml pins, as in an agent shell.
+      # Go, msgp and TinyGo at the versions mise.toml pins, as in an agent
+      # shell.
       - uses: jdx/mise-action@v4
 
       - run: ./scripts/check.sh
@@ -42,3 +43,5 @@ jobs:
           export GOTOOLCHAIN=go$(go list -m -f '{{.GoVersion}}')
           go vet ./...
           go test ./...
+          go -C key vet ./...
+          go -C key test ./...
