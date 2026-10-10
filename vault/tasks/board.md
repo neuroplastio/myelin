@@ -29,6 +29,14 @@ maintainer's final review._
 
 ## Todo
 
+- [ ] **RELEASE-01** The first tag, v0.1.0
+      status: todo | owner: — | added: 2026-10-11
+      notes: gov's P-5 (draft): packages use semver. After PUBLIC-01 and on
+      the maintainer's go-ahead, tag v0.1.0 (no public version above
+      0.1.0), and myelintea/v0.1.0 with its myelin requirement moved to
+      v0.1.0. Then tell kubecom, so it can require tags instead of
+      pseudo-versions.
+
 - [ ] **DOCS-CHECK** Add `docs check` to the gate
       status: todo | owner: — | added: 2026-10-11
       notes: When the Docs Agent says the shared docs module has a
