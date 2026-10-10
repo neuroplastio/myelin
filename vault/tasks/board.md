@@ -29,10 +29,12 @@ maintainer's final review._
 
 - [ ] **KEYS-01** myelin owns the keys; hotty-go depends on myelin (D12)
       status: blocked | owner: — | added: 2026-10-11
-      notes: After PUBLIC-01. Build the dependency-free keys module and
-      take the root off hotty-go; then the hotty agent moves hotty-go onto
-      it, and each consumer bumps. What stays in hotty-go is agreed with the
-      hotty agent first. NEIO-13 records it as pending (gov 06b8611): send
+      notes: After PUBLIC-01 and HOTTY's msgpack release. Message the
+      hotty agent before starting. Build the dependency-free keys module
+      (TinyGo-safe, `tinygo test` green, HOTTY's `keys` and `keymap`
+      vectors from the hotty repository) and take the root off hotty-go;
+      then the hotty agent makes `hotty.ParseKey` delegate, and each
+      consumer bumps (D12.6). NEIO-13 records it as pending (gov 06b8611): send
       gov the commits when it lands.
 
 ## Todo

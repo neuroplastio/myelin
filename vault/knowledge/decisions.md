@@ -241,3 +241,20 @@ supersedes D1.2's hotty-go requirement and D3.1's "through hotty-go's
 5. **What stays in hotty-go is settled with its owner.** The lean:
    `DecodeKeys` (a terminal's bytes), SPEC §10.2's text-field keymaps and
    `hottytea.KeyName` stay there, built on myelin's names.
+6. **Settled with the hotty agent** (2026-10-11):
+   - **The key module is safe in hotty-go's root.** It has no requirements,
+     no reflection-heavy code, no large tables or regexps built at init,
+     and ints that fit in 32 bits. It passes `tinygo test` before step 1
+     ends.
+   - **SPEC §10.4 defines the canonical names, and wins.** If myelin's
+     canonical name for a key ever differs from §10.4, the module follows
+     §10.4. The short spelling stays myelin's own (D3); it writes §10.4's
+     names and isn't part of §10.4.
+   - **The module runs HOTTY's vectors** from the hotty repository's
+     `conformance/vectors.json`: all of `keys`, and the key-name part of
+     `keymap`. The text-field keymaps themselves stay in hotty-go.
+   - **hotty-go keeps the rest:** `ParseKey`, as a thin wrapper that
+     delegates; `DecodeKeys`; `Keymap`, `ParseKeymap`, `Resolve` and
+     `TerminalKeys`; `hottytea.KeyName` and `hottyterm.KeyName`.
+   - **Step 1 also waits for HOTTY's msgpack release** (the P-3 move in
+     hotty-go). myelin messages the hotty agent before it starts.
