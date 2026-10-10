@@ -27,7 +27,7 @@ maintainer's final review._
       visibility, so that CI starts, and tell kubecom the public commit to
       require. It holds its switch until then and until its own go-ahead.
       Its local switch is green on myelin 2ebaa0e with `key` 5790483
-      (kubecom 5d1b2f1, unpushed): live keys go through
+      (kubecom 64ca549, unpushed): live keys go through
       `hottytea.KeyName` and `key.ParseHotty` (D13).
 
 - [ ] **KEYS-02** hotty-go takes its key names from `key` (D12 step 2)
