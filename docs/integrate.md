@@ -249,9 +249,14 @@ binding matches only a key of its own kind:
   WASD.
 
 A key that types no character, such as `enter` or `page_down`, is a
-physical key either way. `myelinkey.Parse` reads a name you build from
+physical key either way. A modifier pressed and released on its own is a
+modifier key, `shift`, or its side, `shift_left`: send it on release, and
+only when no other key was pressed since the modifier went down. `myelinkey.Parse` reads a name you build from
 your event's modifiers and its character or its W3C code value:
 `ctrl+w`, `ctrl+KeyW`.
+
+The [key names spec](../myelinkey/SPEC.md) says how each kind is named,
+and its conformance vectors test an implementation in any language.
 
 hotty-go names keys the way HOTTY's key names are written now, and
 `myelinkey.ParseHotty` reads those names:

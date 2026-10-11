@@ -15,7 +15,9 @@
 // vocabulary: "ctrl+d", "shift+g", "page_down", "ctrl+key_w", "?". A key is
 // a character, which follows the keyboard layout, or a physical key, named
 // by its W3C code value, which stays in its place; the program decides which
-// it sends. Two keys are the same keystroke exactly when they are ==,
+// it sends. A modifier tapped on its own is a modifier key: "shift", and a
+// double tap of Shift is the sequence "shift shift". Two keys are the same
+// keystroke exactly when they are ==,
 // whether they came from a terminal, from Bubble Tea or from a HOTTY host.
 //
 // People write keys as they would for Ghostty: modifiers in any order and
@@ -25,7 +27,7 @@
 // sequence is keys separated by spaces, "g g", and "<name>" stands for an
 // alias's keys, such as "<leader>" ([Schema].Aliases, [Doc].Aliases).
 // [myelinkey.Display] writes a key for a menu, with glyphs for the arrows
-// and Tab.
+// and Tab. myelinkey/SPEC.md in the repository specifies the names.
 //
 // # Paths and contexts
 //

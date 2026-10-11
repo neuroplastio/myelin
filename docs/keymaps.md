@@ -39,6 +39,11 @@ A key is written as its modifiers, then the key: `ctrl+d`, `alt+x`,
 - **Your program sends a key one way or the other.** A character binding
   never matches a physical key, or the other way round. Bind characters
   unless your program's docs say it sends physical keys.
+- **A modifier alone is a tap:** `shift` is Shift pressed and released
+  with no other key between, on either side, and `ctrl+shift` is Shift
+  tapped while Ctrl is held. A double tap of Shift is `shift shift`. The
+  sides are physical keys, `shift_left` and `shift_right`. Not every
+  program can see a modifier alone; a plain terminal can't.
 - **Space, Enter, Tab, Backspace and Escape** are physical keys only:
   `space`, `enter`, `tab`, `backspace`, `escape`. A space in a sequence only
   separates keys.
@@ -57,6 +62,9 @@ A key is written as its modifiers, then the key: `ctrl+d`, `alt+x`,
 A program can read keys strictly. Then each key has one spelling, the
 canonical one shown above, and any other is refused with that spelling:
 `Ctrl+D` asks for `ctrl+d`, and `esc` for `escape`.
+
+The [key names spec](../myelinkey/SPEC.md) defines all of this precisely,
+for people implementing it.
 
 ### Physical keys
 

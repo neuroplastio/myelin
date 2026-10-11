@@ -47,7 +47,10 @@ license is Apache-2.0.
   switch, and its own golden proves it. When a consumer needs something, it
   asks here.
 - **Key spelling and precedence are decisions.** A change to either is a
-  new decision in `vault/knowledge/decisions.md`.
+  new decision in `vault/knowledge/decisions.md`. Key names are also a
+  spec, `myelinkey/SPEC.md`, that HOTTY cites: a change to them is a new
+  spec version with its vectors (`myelinkey/conformance/keys.json`), and
+  the hotty agent hears of it first.
 - **Docs are checked like code** (D9). The godoc documents every exported
   identifier. The code in README and `docs/` is the Example functions, and
   the key table is generated: after changing either, run

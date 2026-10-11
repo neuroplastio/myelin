@@ -473,6 +473,9 @@ for _, s := range []string{"ctrl+d", "Shift+Ctrl+A", "cmd+s", "PageDown", "pgdn"
   which binding wins. Programs link their users here.
 - [How myelin works](docs/design.md): why the keymap is data, why time is a
   value, and how depth and layers decide.
+- [Key names](myelinkey/SPEC.md): the spec for key names, version 0.1,
+  with [conformance vectors](myelinkey/conformance/keys.json) for other
+  implementations.
 - The API reference is on pkg.go.dev:
   [myelin](https://pkg.go.dev/github.com/neuroplastio/myelin) and
   [myelinkey](https://pkg.go.dev/github.com/neuroplastio/myelin/myelinkey).

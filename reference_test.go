@@ -68,6 +68,60 @@ func keyTable(t *testing.T) string {
 	return b.String()
 }
 
+// myelinkey/SPEC.md's Appendix A, the physical keys, is generated from
+// myelinkey, and the gate fails when it drifts. Rewrite it with go test -run
+// TestReferenceKeys -update.
+func TestSpecPhysicalKeys(t *testing.T) {
+	const file = "myelinkey/SPEC.md"
+	const begin, end = "<!-- physical:begin -->\n", "<!-- physical:end -->"
+	src, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := string(src)
+	i, j := strings.Index(page, begin), strings.Index(page, end)
+	if i < 0 || j < i {
+		t.Fatalf("%s has no %q … %q", file, begin, end)
+	}
+	got := page[:i+len(begin)] + physicalTable(t) + page[j:]
+	if *update {
+		if err := os.WriteFile(file, []byte(got), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	if got != page {
+		t.Errorf("%s's physical keys are stale: run go test -run TestSpecPhysicalKeys -update", file)
+	}
+}
+
+// physicalTable is every physical key and its W3C code value, under the
+// heading of the section it starts.
+func physicalTable(t *testing.T) string {
+	sections := map[myelinkey.Key]string{
+		"backquote": "Writing system keys", "alt_left": "Functional keys", "delete": "The control pad",
+		"arrow_down": "The arrow pad", "num_lock": "The numpad", "escape": "The function section",
+		"browser_back": "Media keys", "copy": "Legacy keys",
+	}
+	var b strings.Builder
+	for _, k := range myelinkey.Named() {
+		if h, ok := sections[k]; ok {
+			fmt.Fprintf(&b, "\n**%s**\n\n| Key | W3C code value |\n| --- | --- |\n", h)
+			delete(sections, k)
+		}
+		w := w3cName(k)
+		if back, err := myelinkey.Parse(w); err != nil || back != k {
+			t.Fatalf("%s's W3C code value %s reads as %q, %v", k, w, back, err)
+		}
+		fmt.Fprintf(&b, "| `%s` | `%s` |\n", k, w)
+	}
+	if len(sections) > 0 {
+		t.Fatalf("no physical key starts the sections %v", sections)
+	}
+	b.WriteString("\n")
+	return b.String()
+}
+
 // w3cName is a physical key's W3C code value: "page_down" is "PageDown".
 func w3cName(k myelinkey.Key) string {
 	var b strings.Builder

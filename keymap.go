@@ -310,8 +310,8 @@ func (e *Env) readAlias(name, keys string) ([]myelinkey.Key, error) {
 // shiftUnseen reports whether a key is Shift with a character that has no
 // case, which a program sends as the character Shift types: shift+1 as !.
 func shiftUnseen(k myelinkey.Key) bool {
-	mods, value, char := myelinkey.Split(k)
-	return char && mods&myelinkey.Shift != 0 && strings.ToUpper(value) == value
+	mods, value, kind := myelinkey.Split(k)
+	return kind == myelinkey.Character && mods&myelinkey.Shift != 0 && strings.ToUpper(value) == value
 }
 
 // shallowUnbinds warns of an unbind written with no context whose keys a

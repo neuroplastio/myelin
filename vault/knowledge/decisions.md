@@ -372,3 +372,42 @@ myelinkey's), and D13.1's `Format`.
     - `Named`, which lists the physical keys.
 
     `Format` is gone, because a Key is its own spelling.
+
+### D16 — Modifier keys, and the key names as a spec
+**2026-10-11.** The maintainer asked "Does myelin support pure modifier
+keys? Something like double-shift", then chose unsided tap keys. They also
+said "Need a key reference document. Should be published as a spec that
+HOTTY can refer to, v0.1". This supersedes D15.2's "a modifier key alone is
+a sided key", D15.10's lone `Shift` → `shift_left`, and D15.11's `Split`.
+1. **A modifier alone is a key.** It is a tap: pressed and released with
+   no other key between.
+   - **Name:** the modifier's, on either side: `shift`, `ctrl`, `alt`,
+     `super`. Modifiers held during the tap come before it: `ctrl+shift`.
+   - **Reading:** when no part of a spelling is a value, the last modifier
+     written is the key: `shift+ctrl` is Ctrl tapped while Shift is held.
+     `shift+shift` is refused, like any repeated modifier.
+   - **Sides:** the sided keys (`shift_left`) stay physical. A source that
+     has both tries the sided key first, as it tries a physical key before
+     a character.
+   - **When it's sent:** on release, and only if no other key was pressed
+     in between. A double tap of Shift is `shift shift`.
+   - **ParseHotty:** reads HOTTY 0.2's lone `Shift` as `shift`, and refuses
+     `Shift+Shift`.
+2. **Three kinds:** `Split` returns a `Kind`, one of `Character`,
+   `Physical` or `Modifier`, in place of the `char` flag.
+3. **The names are a spec:** `myelinkey/SPEC.md`, version 0.1, with
+   hand-written vectors in `myelinkey/conformance/keys.json`, which
+   myelinkey's tests run under Go and TinyGo.
+   - **Generated parts:** Appendix A, the physical keys, comes from
+     myelinkey, and the gate fails when it drifts.
+   - **Changes:** a change to a name or a rule is a new spec version, with
+     its vectors and a decision here. The hotty agent hears of it first.
+4. **The split with HOTTY,** agreed with the hotty agent.
+   - **This spec:** the names, the readings, the Shift rules, the lookup
+     order for a press with two names, sequences and aliases, and display.
+   - **HOTTY's §10.4:** how a host names a press. That covers the bytes
+     table (legacy, modifyOtherKeys and kitty), the modifier bits, and
+     offering the physical name first.
+   - **Vectors:** HOTTY's `keys` vectors stay bytes → names.
+   - **Order:** hotty-go moves onto myelinkey in the same train as §10.4,
+     and `ParseHotty` goes then.
