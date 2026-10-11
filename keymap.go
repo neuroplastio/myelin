@@ -6,6 +6,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/neuroplastio/myelin/myelinkey"
 )
@@ -33,14 +34,25 @@ type Keymap struct {
 	// byFirst indexes binds by their first key, so a key no sequence starts
 	// with costs one map lookup and builds no activation.
 	byFirst map[myelinkey.Key][]int
+	// byAction indexes the bindings (not the unbinds) by action, for
+	// KeysFor and KeyFor.
+	byAction map[string][]int
 	// unbinds indexes the unbinds in binds.
 	unbinds []int
+	// ctxs are the keymap's contexts, one per distinct source: a bound's
+	// cid indexes them.
+	ctxs []*Context
+	// acts pools the activations queries evaluate contexts on (*pathAct),
+	// each with room for a depth per context.
+	acts sync.Pool
 }
 
-// bound is a binding as the keymap holds it.
+// bound is a binding as the keymap holds it: its context, and that
+// context's index in the keymap's (-1 for none).
 type bound struct {
 	b     Binding
 	ctx   *Context
+	cid   int32
 	rank  int
 	order int
 }
@@ -50,8 +62,30 @@ type boundGroup struct {
 	g     Group
 	keys  []myelinkey.Key
 	ctx   *Context
+	cid   int32
 	rank  int
 	order int
+}
+
+// act is an activation of the path for one query, from the keymap's pool,
+// reset; release puts it back.
+func (km *Keymap) act(p Path) *pathAct {
+	a, _ := km.acts.Get().(*pathAct)
+	if a == nil {
+		a = &pathAct{env: km.env, depths: make([]int32, len(km.ctxs)), keys: map[myelinkey.Key]int{}}
+	}
+	a.path, a.d, a.text = p, len(p), km.env.textDepth(p)
+	for i := range a.depths {
+		a.depths[i] = unknownDepth
+	}
+	return a
+}
+
+// release returns an activation to the pool, holding nothing of its path.
+func (km *Keymap) release(a *pathAct) {
+	a.path = nil
+	clear(a.keys)
+	km.acts.Put(a)
 }
 
 // warning marks an error from a program's check as a warning (Warn).
@@ -82,7 +116,7 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 	fail := func(src, format string, args ...any) {
 		problems = append(problems, Problem{Source: src, Text: fmt.Sprintf(format, args...)})
 	}
-	km := &Keymap{env: e, aliases: maps.Clone(e.aliases), byFirst: map[myelinkey.Key][]int{}}
+	km := &Keymap{env: e, aliases: maps.Clone(e.aliases), byFirst: map[myelinkey.Key][]int{}, byAction: map[string][]int{}}
 
 	// The layers and the drops, then the aliases, before any keys.
 	dropped := map[string]bool{}
@@ -121,18 +155,23 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 		}
 	}
 
-	ctxs := map[string]*Context{}
-	compile := func(src, when string) (*Context, bool) {
-		if c, ok := ctxs[when]; ok {
-			return c, true
+	cids := map[string]int32{}
+	compile := func(src, when string) (*Context, int32, bool) {
+		if strings.TrimSpace(when) == "" {
+			return nil, -1, true
+		}
+		if cid, ok := cids[when]; ok {
+			return km.ctxs[cid], cid, true
 		}
 		c, err := e.Compile(when)
 		if err != nil {
 			fail(src, "%v", err)
-			return nil, false
+			return nil, -1, false
 		}
-		ctxs[when] = c
-		return c, true
+		cid := int32(len(km.ctxs))
+		km.ctxs = append(km.ctxs, c)
+		cids[when] = cid
+		return c, cid, true
 	}
 	order := 0
 	for _, d := range docs {
@@ -150,7 +189,7 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 				continue
 			}
 			keys, ok := km.resolve(b.Keys, b.Source, fail)
-			ctx, cok := compile(b.Source, b.When)
+			ctx, cid, cok := compile(b.Source, b.When)
 			if !ok || !cok {
 				continue
 			}
@@ -175,17 +214,19 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 			km.byFirst[keys[0]] = append(km.byFirst[keys[0]], len(km.binds))
 			if b.Unbind {
 				km.unbinds = append(km.unbinds, len(km.binds))
+			} else {
+				km.byAction[b.Action] = append(km.byAction[b.Action], len(km.binds))
 			}
-			km.binds = append(km.binds, bound{b: bd, ctx: ctx, rank: rank, order: order})
+			km.binds = append(km.binds, bound{b: bd, ctx: ctx, cid: cid, rank: rank, order: order})
 			order++
 		}
 		for _, g := range d.Groups {
 			keys, ok := km.resolve(g.Keys, g.Source, fail)
-			ctx, cok := compile(g.Source, g.When)
+			ctx, cid, cok := compile(g.Source, g.When)
 			if !ok || !cok {
 				continue
 			}
-			km.groups = append(km.groups, boundGroup{g: g, keys: keys, ctx: ctx, rank: rank, order: order})
+			km.groups = append(km.groups, boundGroup{g: g, keys: keys, ctx: ctx, cid: cid, rank: rank, order: order})
 			order++
 		}
 	}

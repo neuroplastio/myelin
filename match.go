@@ -33,29 +33,33 @@ func (w winner) beaten(w2 winner) bool {
 func (b *bound) at(d int) winner { return winner{depth: d, rank: b.rank, order: b.order} }
 
 // floor is the depth a binding of a sequence that starts with first must
-// reach on the path: a key that types text is a text node's unless a
-// binding at least as deep as it takes the key (the field rule).
-func (km *Keymap) floor(first myelinkey.Key, p Path) int {
-	if d := km.env.textDepth(p); d >= 0 && myelinkey.TypesText(first) {
-		return d
+// reach on the activation's path: a key that types text is a text node's
+// unless a binding at least as deep as it takes the key (the field rule).
+func (a *pathAct) floor(first myelinkey.Key) int {
+	if a.text >= 0 && myelinkey.TypesText(first) {
+		return a.text
 	}
 	return 0
 }
 
 // Match looks up a sequence on a path.
 func (km *Keymap) Match(seq []myelinkey.Key, p Path) Match {
-	m, _ := km.match(seq, p, nil)
+	if len(seq) == 0 || !km.Starts(seq[0]) {
+		return Match{}
+	}
+	a := km.act(p)
+	defer km.release(a)
+	m, _ := km.match(seq, a)
 	return m
 }
 
-// match is Match with the path's activation when the caller has one (nil
-// makes one if a binding needs it), and the index of the bind that won,
-// an unbind included, or -1.
-func (km *Keymap) match(seq []myelinkey.Key, p Path, a *pathAct) (Match, int) {
+// match is Match on an activation of the path, with the index of the bind
+// that won, an unbind included, or -1.
+func (km *Keymap) match(seq []myelinkey.Key, a *pathAct) (Match, int) {
 	if len(seq) == 0 {
 		return Match{}, -1
 	}
-	floor := km.floor(seq[0], p)
+	floor := a.floor(seq[0])
 	best, won := none, -1
 	prefix := -1
 	for _, i := range km.byFirst[seq[0]] {
@@ -63,10 +67,7 @@ func (km *Keymap) match(seq []myelinkey.Key, p Path, a *pathAct) (Match, int) {
 		if !hasPrefix(b.b.Seq, seq) {
 			continue
 		}
-		if a == nil {
-			a = km.env.act(p)
-		}
-		d := b.ctx.depth(a)
+		d := a.ctxDepth(b.cid, b.ctx)
 		if d < floor || !km.live(b, d, a) {
 			continue
 		}
@@ -101,7 +102,7 @@ func (km *Keymap) live(b *bound, d int, a *pathAct) bool {
 		if !hasPrefix(b.b.Seq, u.b.Seq) {
 			continue
 		}
-		if du := u.ctx.depth(a); du >= 0 && b.at(d).beaten(u.at(du)) {
+		if du := a.ctxDepth(u.cid, u.ctx); du >= 0 && b.at(d).beaten(u.at(du)) {
 			return false
 		}
 	}
@@ -113,25 +114,33 @@ func (km *Keymap) live(b *bound, d int, a *pathAct) bool {
 // that does not wait for it, is not there: where the leader key itself
 // closes a dialog, nothing under the leader is effective in the dialog.
 func (km *Keymap) Effective(p Path) []Binding {
+	a := km.act(p)
+	defer km.release(a)
 	var out []Binding
-	a := km.env.act(p)
 	for i := range km.binds {
-		b := &km.binds[i]
-		if b.b.Unbind || b.ctx.depth(a) < 0 {
-			continue
-		}
-		if _, won := km.match(b.b.Seq, p, a); won == i && km.reached(b.b.Seq, p, a) {
-			out = append(out, b.b)
+		if km.effective(i, a) {
+			out = append(out, km.binds[i].b)
 		}
 	}
 	return out
 }
 
+// effective reports whether bind i is a binding that wins its keys on the
+// activation's path, and typing them gets to it.
+func (km *Keymap) effective(i int, a *pathAct) bool {
+	b := &km.binds[i]
+	if b.b.Unbind || a.ctxDepth(b.cid, b.ctx) < 0 {
+		return false
+	}
+	_, won := km.match(b.b.Seq, a)
+	return won == i && km.reached(b.b.Seq, a)
+}
+
 // reached reports whether typing seq on the path gets to its last key: each
 // shorter part of it waits for more.
-func (km *Keymap) reached(seq []myelinkey.Key, p Path, a *pathAct) bool {
+func (km *Keymap) reached(seq []myelinkey.Key, a *pathAct) bool {
 	for n := 1; n < len(seq); n++ {
-		if m, _ := km.match(seq[:n], p, a); !m.Prefix {
+		if m, _ := km.match(seq[:n], a); !m.Prefix {
 			return false
 		}
 	}
@@ -140,11 +149,14 @@ func (km *Keymap) reached(seq []myelinkey.Key, p Path, a *pathAct) bool {
 
 // KeysFor is every sequence that runs action with exactly args on the path,
 // in load order: what a hint shows for it there. nil args are the action's
-// bindings with no values.
+// bindings with no values. The sequences are the keymap's own: read them,
+// don't change them.
 func (km *Keymap) KeysFor(action string, args []string, p Path) [][]myelinkey.Key {
+	a := km.act(p)
+	defer km.release(a)
 	var out [][]myelinkey.Key
-	for _, b := range km.Effective(p) {
-		if b.Action == action && slices.Equal(b.Args, args) {
+	for _, i := range km.byAction[action] {
+		if b := &km.binds[i].b; slices.Equal(b.Args, args) && km.effective(i, a) {
 			out = append(out, b.Seq)
 		}
 	}
@@ -153,13 +165,15 @@ func (km *Keymap) KeysFor(action string, args []string, p Path) [][]myelinkey.Ke
 
 // KeyFor is the binding a palette's key column shows for action on the
 // path, or nil: of the bindings that run it there, one that runs it as it
-// is before one that gives it values, then the shorter, then the first.
+// is before one that gives it values, then the shorter, then the first. It
+// is the keymap's own, as a Match's is: read it, don't change it.
 func (km *Keymap) KeyFor(action string, p Path) *Binding {
+	a := km.act(p)
+	defer km.release(a)
 	var best *Binding
-	for _, b := range km.Effective(p) {
+	for _, i := range km.byAction[action] {
+		b := &km.binds[i].b
 		switch {
-		case b.Action != action:
-			continue
 		case best == nil:
 		case (len(best.Args) == 0) != (len(b.Args) == 0):
 			if len(b.Args) > 0 {
@@ -168,8 +182,9 @@ func (km *Keymap) KeyFor(action string, p Path) *Binding {
 		case len(b.Seq) >= len(best.Seq):
 			continue
 		}
-		b := b
-		best = &b
+		if km.effective(i, a) {
+			best = b
+		}
 	}
 	return best
 }
@@ -179,8 +194,9 @@ func (km *Keymap) KeyFor(action string, p Path) *Binding {
 // precedence with the winner first, then the longer ones, then those whose
 // context does not hold.
 func (km *Keymap) Explain(seq []myelinkey.Key, p Path) []Candidate {
-	a := km.env.act(p)
-	_, won := km.match(seq, p, a)
+	a := km.act(p)
+	defer km.release(a)
+	_, won := km.match(seq, a)
 	type cand struct {
 		i, depth int
 	}
@@ -190,7 +206,7 @@ func (km *Keymap) Explain(seq []myelinkey.Key, p Path) []Candidate {
 		if !hasPrefix(b.b.Seq, seq) {
 			continue
 		}
-		c := cand{i, b.ctx.depth(a)}
+		c := cand{i, a.ctxDepth(b.cid, b.ctx)}
 		switch {
 		case c.depth < 0:
 			off = append(off, c)
@@ -221,8 +237,13 @@ func (km *Keymap) Explain(seq []myelinkey.Key, p Path) []Candidate {
 func (km *Keymap) Shadowed(paths ...Path) []Problem {
 	acts := make([]*pathAct, len(paths))
 	for i, p := range paths {
-		acts[i] = km.env.act(p)
+		acts[i] = km.act(p)
 	}
+	defer func() {
+		for _, a := range acts {
+			km.release(a)
+		}
+	}()
 	var out []Problem
 	for i := range km.binds {
 		u := &km.binds[i]
@@ -235,7 +256,7 @@ func (km *Keymap) Shadowed(paths ...Path) []Problem {
 				continue
 			}
 			for k, a := range acts {
-				du, dd := u.ctx.depth(a), d.ctx.depth(a)
+				du, dd := a.ctxDepth(u.cid, u.ctx), a.ctxDepth(d.cid, d.ctx)
 				if du >= 0 && dd > du {
 					out = append(out, Problem{Source: u.b.Source, Warning: true, Text: fmt.Sprintf(
 						"%s → %s is shadowed where %s: %s's %s → %s (%s) has a deeper context there",
@@ -258,58 +279,61 @@ func describe(b *Binding) string {
 }
 
 // entry is one key that can follow a sequence: a group (more keys follow;
-// label is its group's) or a leaf (b wins there).
+// label is its group's) or a leaf (b wins there). best is the key's own
+// winning binding's precedence, deeper the depth of its deepest longer one.
 type entry struct {
-	key   myelinkey.Key
-	group bool
-	label string
-	b     *Binding
+	key    myelinkey.Key
+	group  bool
+	label  string
+	b      *Binding
+	best   winner
+	deeper int
 }
 
 // next lists what can follow a sequence on the path, one entry per next
 // key, in the order the keymap first binds each. With no keys typed it is
-// every first key.
-func (km *Keymap) next(seq []myelinkey.Key, p Path, a *pathAct) []entry {
+// every first key. A key only lists that key's entry alone, if any.
+func (km *Keymap) next(seq []myelinkey.Key, only myelinkey.Key, a *pathAct) []entry {
 	var out []entry
-	at := map[myelinkey.Key]int{}
-	best := map[myelinkey.Key]winner{}
-	deeper := map[myelinkey.Key]int{} // the deepest longer binding, per key
+	at := a.keys
+	clear(at)
 	for i := range km.binds {
 		b := &km.binds[i]
 		if len(b.b.Seq) <= len(seq) || !hasPrefix(b.b.Seq, seq) {
 			continue
 		}
-		d := b.ctx.depth(a)
-		if d < km.floor(b.b.Seq[0], p) || !km.live(b, d, a) || (b.b.Unbind && len(b.b.Seq) > len(seq)+1) {
+		k := b.b.Seq[len(seq)]
+		if only != "" && k != only {
 			continue
 		}
-		k := b.b.Seq[len(seq)]
+		d := a.ctxDepth(b.cid, b.ctx)
+		if d < a.floor(b.b.Seq[0]) || !km.live(b, d, a) || (b.b.Unbind && len(b.b.Seq) > len(seq)+1) {
+			continue
+		}
 		j, seen := at[k]
 		if !seen {
 			j = len(out)
 			at[k] = j
-			out = append(out, entry{key: k})
-			best[k] = none
-			deeper[k] = -1
+			out = append(out, entry{key: k, best: none, deeper: -1})
 		}
+		e := &out[j]
 		if len(b.b.Seq) > len(seq)+1 {
-			deeper[k] = max(deeper[k], d)
+			e.deeper = max(e.deeper, d)
 			continue
 		}
-		if best[k].beaten(b.at(d)) {
-			best[k] = b.at(d)
-			out[j].b = &b.b
+		if e.best.beaten(b.at(d)) {
+			e.best, e.b = b.at(d), &b.b
 		}
 	}
 	kept := out[:0]
 	for _, e := range out {
 		// A group as Match has a prefix: only where its longer bindings are
 		// at least as deep as the key's own.
-		e.group = deeper[e.key] >= 0 && deeper[e.key] >= best[e.key].depth
+		e.group = e.deeper >= 0 && e.deeper >= e.best.depth
 		switch {
 		case e.group:
 			e.b = nil
-			e.label = km.groupLabel(append(slices.Clone(seq), e.key), a)
+			e.label = km.groupLabel(seq, e.key, a)
 		case e.b == nil || e.b.Unbind:
 			continue // unbound here
 		default:
@@ -320,16 +344,17 @@ func (km *Keymap) next(seq []myelinkey.Key, p Path, a *pathAct) []entry {
 	return kept
 }
 
-// groupLabel is the winning label of the group at exactly these keys, or "".
-func (km *Keymap) groupLabel(seq []myelinkey.Key, a *pathAct) string {
+// groupLabel is the winning label of the group at exactly seq and then
+// key, or "".
+func (km *Keymap) groupLabel(seq []myelinkey.Key, key myelinkey.Key, a *pathAct) string {
 	best := none
 	label := ""
 	for i := range km.groups {
 		g := &km.groups[i]
-		if !slices.Equal(g.keys, seq) {
+		if len(g.keys) != len(seq)+1 || g.keys[len(seq)] != key || !hasPrefix(g.keys, seq) {
 			continue
 		}
-		d := g.ctx.depth(a)
+		d := a.ctxDepth(g.cid, g.ctx)
 		if d < 0 {
 			continue
 		}

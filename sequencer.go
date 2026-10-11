@@ -32,16 +32,18 @@ func Feed(km *Keymap, st Pending, k myelinkey.Key, p Path, now time.Time) (Pendi
 	if len(st.Seq) == 0 && !km.Starts(k) {
 		return Pending{}, Result{Dropped: []myelinkey.Key{k}}
 	}
-	seq := append(slices.Clone(st.Seq), k)
+	// seq is on the stack: a state or a Result that keeps it keeps a copy.
+	var buf [8]myelinkey.Key
+	seq := append(append(buf[:0], st.Seq...), k)
 	m := km.Match(seq, p)
 	switch {
 	case m.Prefix:
 		deadline := now.Add(km.env.schema.Timeout)
-		return Pending{Seq: seq, Path: p, Deadline: deadline}, Result{Deadline: deadline}
+		return Pending{Seq: slices.Clone(seq), Path: p, Deadline: deadline}, Result{Deadline: deadline}
 	case m.Exact != nil:
 		return Pending{}, Result{Run: m.Exact}
 	}
-	return Pending{}, Result{Dropped: seq}
+	return Pending{}, Result{Dropped: slices.Clone(seq)}
 }
 
 // Expire is the pending keys timing out. Before the state's deadline it

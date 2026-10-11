@@ -317,14 +317,44 @@ func (c *Context) may(a *pathAct) bool {
 // pathAct is a path as CEL reads it, cut to its first d steps: a node on
 // them is true, any other declared node false, an attribute of a node on
 // them its step's value, and focus the d-th step's name.
+//
+// A keymap's query takes one from the keymap's pool (Keymap.act), and it
+// keeps the depth of each of the keymap's contexts on the whole path once
+// it is known: bindings share contexts, and each is evaluated once per
+// query.
 type pathAct struct {
 	env  *Env
 	path Path
 	d    int
+	// depths are the depths of the keymap's contexts on the whole path, by
+	// index, unknownDepth until asked; nil outside a keymap's query.
+	depths []int32
+	// text is the path's textDepth.
+	text int
+	// keys is next's scratch: the index of each key it has listed.
+	keys map[myelinkey.Key]int
 }
 
-// act is the activation of the whole path.
-func (e *Env) act(p Path) *pathAct { return &pathAct{env: e, path: p, d: len(p)} }
+// unknownDepth marks a context's depth not yet evaluated.
+const unknownDepth = -2
+
+// act is an activation of the whole path, with no memory of depths: for a
+// Context's own methods.
+func (e *Env) act(p Path) *pathAct { return &pathAct{env: e, path: p, d: len(p), text: e.textDepth(p)} }
+
+// ctxDepth is the depth on the whole path of the keymap's context number
+// cid, c: evaluated the first time a query asks.
+func (a *pathAct) ctxDepth(cid int32, c *Context) int {
+	if c == nil {
+		return 0
+	}
+	if d := a.depths[cid]; d != unknownDepth {
+		return int(d)
+	}
+	d := a.depthOf(c.holds)
+	a.depths[cid] = int32(d)
+	return d
+}
 
 // depthOf is the shortest prefix test holds on, given that it holds on the
 // whole path; -1 when it does not. It leaves the activation whole.

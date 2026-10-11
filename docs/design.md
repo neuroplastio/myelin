@@ -115,14 +115,19 @@ under TinyGo, because it relies on protobuf's reflection.
 
 ## What it costs
 
-Measured on a laptop (AMD Ryzen AI 9 HX 370) with a keymap of a hundred
-bindings, half of them in contexts:
+Measured on a busy laptop (AMD Ryzen AI 9 HX 370) with a keymap of a
+hundred bindings, half of them in contexts. The times move with the load;
+the allocations don't:
 
-| Operation | Time |
-|-----------|------|
-| A key no binding starts with | 36 ns |
-| A key matched against bindings with contexts | 0.5 µs |
-| The leader's menu | 47 µs |
-| Compiling a context, once, at load | 30 µs |
+| Operation | Time | Allocations |
+|-----------|------|-------------|
+| A key no binding starts with | 50 ns | 1 |
+| A key matched against bindings with contexts | 0.8 µs | 4 |
+| The leader's menu | 27 µs | 60 |
+| A palette row's key (`KeyFor`) | 0.6 µs | 4 |
+| Compiling a context, once, at load | 50 µs | 385 |
 
-`go test -bench .` in the repository runs these.
+A query evaluates each distinct context once, on an activation the keymap
+pools, and a menu's allocations are its items. The allocations of a match
+are CEL's own. `make bench` runs these, and the gate checks the allocations
+stay where they are.

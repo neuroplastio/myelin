@@ -2,7 +2,7 @@
 GO ?= go
 export GO
 
-.PHONY: check generate vectors fuzz
+.PHONY: check generate vectors fuzz bench
 
 # The gate: gofmt, vet, test (myelinkey under TinyGo too), msgp's codecs and the
 # vectors current.
@@ -25,3 +25,9 @@ vectors:
 fuzz:
 	$(GO) -C myelinkey test -run '^$$' -fuzz FuzzParse -fuzztime 60s .
 	$(GO) -C myelinkey test -run '^$$' -fuzz FuzzHottyName -fuzztime 60s .
+
+# Time, bytes and allocations per operation. Compare two runs with benchstat
+# (golang.org/x/perf/cmd/benchstat).
+bench:
+	$(GO) test -run '^$$' -bench . -benchmem .
+	$(GO) -C myelinkey test -run '^$$' -bench . -benchmem .
