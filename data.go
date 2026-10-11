@@ -15,8 +15,14 @@ import (
 // module graph. Times are msgpack timestamps (extension −1), read back in
 // UTC. A key (myelinkey.Key) is a msgpack string: its canonical name.
 //
+// DecodeMsg reads bytes a program may not have written itself, and msgp
+// sizes an array or a map from its header, so every one is bounded: 1,024
+// elements, 256 entries, and 16,384 bindings in a document. The largest
+// keymaps in use (plx's, kubecom's) hold a few hundred.
+//
 //go:generate msgp -marshal=false -tests=false
 //msgp:newtime
+//msgp:limit arrays:1024 maps:256
 //msgp:timezone utc
 //msgp:replace myelinkey.Key with:string
 
@@ -77,7 +83,8 @@ type Doc struct {
 	// keymap that starts from nothing dropping ["defaults"].
 	Drops []string `msg:"drops,omitempty"`
 	// Binds are in order: at equal depth and layer the later one wins.
-	Binds []Bind `msg:"binds,omitempty"`
+	// DecodeMsg reads at most 16,384.
+	Binds []Bind `msg:"binds,omitempty,limit=16384"`
 	// Groups label key prefixes for the menus.
 	Groups []Group `msg:"groups,omitempty"`
 	// Source is where Aliases and Drops were written.

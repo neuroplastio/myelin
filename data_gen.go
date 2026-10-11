@@ -9,6 +9,12 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
+// Size limits for msgp deserialization
+const (
+	z8b843d16limitArrays = 1024
+	z8b843d16limitMaps   = 256
+)
+
 // DecodeMsg implements msgp.Decodable
 func (z *Bind) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
@@ -17,6 +23,10 @@ func (z *Bind) DecodeMsg(dc *msgp.Reader) (err error) {
 	zb0001, err = dc.ReadMapHeader()
 	if err != nil {
 		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
 		return
 	}
 	for zb0001 > 0 {
@@ -50,6 +60,10 @@ func (z *Bind) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Args")
+				return
+			}
+			if zb0002 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Args) >= int(zb0002) {
@@ -87,6 +101,10 @@ func (z *Bind) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0003, err = dc.ReadMapHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Props")
+				return
+			}
+			if zb0003 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if z.Props == nil {
@@ -306,6 +324,10 @@ func (z *Binding) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -325,6 +347,10 @@ func (z *Binding) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Seq")
+				return
+			}
+			if zb0002 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Seq) >= int(zb0002) {
@@ -421,6 +447,10 @@ func (z *Candidate) DecodeMsg(dc *msgp.Reader) (err error) {
 	zb0001, err = dc.ReadMapHeader()
 	if err != nil {
 		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
 		return
 	}
 	for zb0001 > 0 {
@@ -528,6 +558,10 @@ func (z *Doc) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -547,6 +581,10 @@ func (z *Doc) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadMapHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Aliases")
+				return
+			}
+			if zb0002 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if z.Aliases == nil {
@@ -577,6 +615,10 @@ func (z *Doc) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Drops")
 				return
 			}
+			if zb0003 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
+				return
+			}
 			if cap(z.Drops) >= int(zb0003) {
 				z.Drops = (z.Drops)[:zb0003]
 			} else {
@@ -596,6 +638,10 @@ func (z *Doc) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Binds")
 				return
 			}
+			if zb0004 > 16384 {
+				err = msgp.ErrLimitExceeded
+				return
+			}
 			if cap(z.Binds) >= int(zb0004) {
 				z.Binds = (z.Binds)[:zb0004]
 			} else {
@@ -613,6 +659,10 @@ func (z *Doc) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0005, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Groups")
+				return
+			}
+			if zb0005 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Groups) >= int(zb0005) {
@@ -820,6 +870,10 @@ func (z *Group) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -949,6 +1003,10 @@ func (z *Item) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -1008,6 +1066,10 @@ func (z *Item) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0003, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Items")
+				return
+			}
+			if zb0003 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Items) >= int(zb0003) {
@@ -1174,6 +1236,10 @@ func (z *Match) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -1296,6 +1362,10 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -1309,6 +1379,10 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Seq")
+				return
+			}
+			if zb0002 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Seq) >= int(zb0002) {
@@ -1338,6 +1412,10 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0004, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Items")
+				return
+			}
+			if zb0004 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Items) >= int(zb0004) {
@@ -1454,6 +1532,10 @@ func (z *NodeType) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -1473,6 +1555,10 @@ func (z *NodeType) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadMapHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Attrs")
+				return
+			}
+			if zb0002 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if z.Attrs == nil {
@@ -1610,6 +1696,10 @@ func (z *Path) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0002 > z8b843d16limitArrays {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	if cap((*z)) >= int(zb0002) {
 		(*z) = (*z)[:zb0002]
 	} else {
@@ -1661,6 +1751,10 @@ func (z *Pending) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -1674,6 +1768,10 @@ func (z *Pending) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Seq")
+				return
+			}
+			if zb0002 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Seq) >= int(zb0002) {
@@ -1697,6 +1795,10 @@ func (z *Pending) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0004, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Path")
+				return
+			}
+			if zb0004 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Path) >= int(zb0004) {
@@ -1832,6 +1934,10 @@ func (z *Problem) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -1939,6 +2045,10 @@ func (z *Result) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -1976,6 +2086,10 @@ func (z *Result) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Dropped")
+				return
+			}
+			if zb0002 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Dropped) >= int(zb0002) {
@@ -2110,6 +2224,10 @@ func (z *Schema) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -2123,6 +2241,10 @@ func (z *Schema) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Nodes")
+				return
+			}
+			if zb0002 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if cap(z.Nodes) >= int(zb0002) {
@@ -2144,6 +2266,10 @@ func (z *Schema) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Layers")
 				return
 			}
+			if zb0003 > z8b843d16limitArrays {
+				err = msgp.ErrLimitExceeded
+				return
+			}
 			if cap(z.Layers) >= int(zb0003) {
 				z.Layers = (z.Layers)[:zb0003]
 			} else {
@@ -2161,6 +2287,10 @@ func (z *Schema) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0004, err = dc.ReadMapHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Aliases")
+				return
+			}
+			if zb0004 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if z.Aliases == nil {
@@ -2366,6 +2496,10 @@ func (z *Step) DecodeMsg(dc *msgp.Reader) (err error) {
 		err = msgp.WrapError(err)
 		return
 	}
+	if zb0001 > z8b843d16limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
 	for zb0001 > 0 {
 		zb0001--
 		field, err = dc.ReadMapKeyPtr()
@@ -2385,6 +2519,10 @@ func (z *Step) DecodeMsg(dc *msgp.Reader) (err error) {
 			zb0002, err = dc.ReadMapHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Attrs")
+				return
+			}
+			if zb0002 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
 				return
 			}
 			if z.Attrs == nil {

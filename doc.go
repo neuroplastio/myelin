@@ -89,6 +89,14 @@
 // [Context] are handles: they hold compiled CEL, are never serialized, and
 // are safe for concurrent use.
 //
+// DecodeMsg is bounded for bytes a program did not write itself: an array
+// holds at most 1,024 elements, a map 256 entries, and a [Doc] 16,384
+// Binds. More fails with msgp.ErrLimitExceeded before anything is
+// allocated for it. Strings, and the values of a [Step]'s Attrs, are the
+// reader's to bound: a program that reads a peer's bytes sets
+// SetMaxStringLength, SetMaxElements and SetMaxRecursionDepth on its
+// msgp.Reader.
+//
 // Keys are named in the package github.com/neuroplastio/myelin/myelinkey, a
 // module of its own that needs only the standard library and builds with
 // TinyGo, so a program or a library that reads input can name keys without

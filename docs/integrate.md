@@ -382,6 +382,16 @@ msgpack timestamps. Menus nest, so give the reader a recursion limit that
 fits your deepest menu. `Env`, `Keymap` and `Context` hold compiled CEL,
 so they stay in the process that built them.
 
+Decoding is bounded for bytes you didn't write yourself:
+- an array holds at most 1,024 elements;
+- a map holds at most 256 entries;
+- a document holds at most 16,384 bindings.
+
+More fails with `msgp.ErrLimitExceeded` before anything is allocated for
+it. Strings and a step's attribute values are bounded by the reader. When
+the bytes come from a peer, set `SetMaxStringLength`, `SetMaxElements` and
+`SetMaxRecursionDepth` on your `msgp.Reader`.
+
 The full API is on
 [pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin). For what
 your users read about writing keymaps, link them to
