@@ -699,7 +699,7 @@ func TestIntAttributes(t *testing.T) {
 }
 
 // MayHold and MayDepth evaluate with the attributes the path does not give
-// unknown: "can this hold wherever a buffer has the keyboard?", and how deep
+// unknown: "can this hold wherever a buffer has the focus?", and how deep
 // a context may reach in one extension's panel.
 func TestPartialEvaluation(t *testing.T) {
 	e, err := NewEnv(appSchema)

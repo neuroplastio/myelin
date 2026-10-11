@@ -253,7 +253,7 @@ func (c *Context) Depth(p Path) int {
 // MayHold reports whether the context can hold on the path when the
 // attributes its steps do not give are unknown: it holds, or its answer
 // depends on them. Asked of a path of nodes with no attributes, it says
-// whether a binding can hold wherever those nodes hold the keyboard.
+// whether a binding can hold wherever those nodes have the focus.
 func (c *Context) MayHold(p Path) bool {
 	if c == nil {
 		return true

@@ -7,17 +7,17 @@ Context-bound keymaps and which-key menus for Go programs.
 [![Go version](https://img.shields.io/github/go-mod/go-version/neuroplastio/myelin)](go.mod)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-myelin decides what a key does in your Go program, given what holds the
-keyboard right now. You declare the things that can hold it (a window, a
-list, a text field), bind keys in contexts over them, and layer the user's
-config over your defaults. Sequences like `g g`, a leader key and which-key
+myelin decides what a key does in your Go program, given what is focused
+right now. You declare the things that can be focused (a window, a list, a
+text field), bind keys in contexts over them, and layer the user's config
+over your defaults. Sequences like `g g`, a leader key and which-key
 menus are built in. It has no UI and reads no files, so it works the same in
 a TUI, a GUI or anything else that takes keys.
 
 ## Highlights
 
 - 🧭 **Contexts.** A binding holds where its [CEL](https://cel.dev)
-  expression holds, over the path of what has the keyboard: `list && !field`,
+  expression holds, over the path to what is focused: `list && !field`,
   `list.dir.startsWith('/tmp')`. The deepest context wins.
 - 🧱 **Layers.** Defaults, extensions, the user's config: a higher layer
   overrides a lower one, and a config can start from nothing.
@@ -78,7 +78,7 @@ keys can require it alone.
 A file manager: a window, a list of files, and a filter field over the
 list.
 
-**1. Declare what can hold the keyboard.** Each kind of node can have typed
+**1. Declare what can be focused.** Each kind of node can have typed
 attributes, and a node that takes text keeps the keys that type it.
 
 <!-- example:Example#1 -->
@@ -128,8 +128,8 @@ if km == nil {
 }
 ```
 
-**4. Ask what keys do.** The path is what holds the keyboard right now,
-outermost first.
+**4. Ask what keys do.** The path is the focused node and the nodes around
+it, outermost first.
 
 <!-- example:Example#4 -->
 

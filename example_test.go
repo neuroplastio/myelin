@@ -13,10 +13,10 @@ import (
 	"github.com/neuroplastio/myelin/myelinkey"
 )
 
-// A file manager's keymap: its defaults and a user's config, matched on the
-// paths the keyboard takes.
+// A file manager's keymap: its defaults and a user's config, matched where
+// the focus is.
 func Example() {
-	// 1. Declare what can hold the keyboard: a window, a list of files in a
+	// 1. Declare what can be focused: a window, a list of files in a
 	// directory, and a filter field that takes text.
 	env, err := myelin.NewEnv(myelin.Schema{
 		Nodes: []myelin.NodeType{
@@ -51,7 +51,7 @@ func Example() {
 		panic(fmt.Sprint(problems))
 	}
 
-	// 4. Ask what keys do where the keyboard is.
+	// 4. Ask what keys do where the focus is.
 	home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/home/me"}}}
 	tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
 	filter := append(slices.Clone(home), myelin.Step{Name: "field"})

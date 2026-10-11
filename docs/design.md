@@ -63,8 +63,8 @@ same binding two ways.
 
 ## Depth, then layer, then order
 
-The keyboard is held by a path of nodes, from the outside in, such as
-`window > list > field`. A binding's context is an expression over that
+The focus is a path of nodes, from the outside in, such as
+`window > list > field`: the focused node and the nodes around it. A binding's context is an expression over that
 path. When several bindings of the same keys hold, the one whose context
 reaches deepest wins.
 
@@ -72,7 +72,7 @@ Depth comes first because the deepest context is the most specific. A key
 bound for a text field has to beat the same key bound for the whole
 window, but only while the field is open. A context that only says what
 isn't there, such as `!dialog`, adds no depth, because it says nothing
-about where the keyboard is.
+about where the focus is.
 
 At the same depth, the higher layer wins, so a user's binding overrides a
 default that is just as specific. Within a layer, the later binding wins,
@@ -82,8 +82,8 @@ Two rules follow from depth:
 
 - **An unbind is a binding to nothing,** and wins the same way. To take
   away a key that a default binds in a context, unbind it in that context.
-- **A text field keeps its text.** While a node that takes text holds the
-  keyboard, a key that types text goes to it, unless a binding at least as
+- **A text field keeps its text.** While a node that takes text has the
+  focus, a key that types text goes to it, unless a binding at least as
   deep takes the key. A binding of `x` never stops someone typing an `x`
   into a filter.
 
@@ -101,7 +101,7 @@ keymap loads.
 - **Partial evaluation.** With some attributes unknown, CEL can still say
   whether an expression might hold. `MayHold` and `MayDepth` use that to
   answer questions about every list, not one list: could this binding hold
-  wherever a list has the keyboard, whatever the list shows?
+  wherever a list has the focus, whatever the list shows?
 
 CEL has costs. It adds several megabytes to a binary, and it doesn't run
 under TinyGo, because it relies on protobuf's reflection.

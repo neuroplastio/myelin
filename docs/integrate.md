@@ -2,7 +2,7 @@
 group: Guides
 order: 10
 nav: Using myelin
-description: declaring what holds the keyboard, building a keymap, typing keys and drawing menus
+description: declaring what can be focused, building a keymap, typing keys and drawing menus
 path: integrate
 ---
 
@@ -12,15 +12,15 @@ A program that takes its keys from myelin keeps everything that is its
 own: its config files and their format, its actions, its default keymap,
 how it draws menus, and what happens to a key no binding takes. myelin
 does the part in between. It works out which binding a key sequence runs
-where the keyboard is, and what can follow it.
+where the focus is, and what can follow it.
 
 The code on this page is the package's examples, which `go test` runs, so
 it compiles and prints what it says.
 
-## Declare what holds the keyboard
+## Declare what can be focused
 
-A `Schema` names the kinds of node that can hold the keyboard, outermost
-first, and their attributes. Contexts are written against these names, and
+A `Schema` names the kinds of node that can be focused or hold the focus,
+outermost first, and their attributes. Contexts are written against these names, and
 a context that names anything else fails when the keymap loads.
 
 - **Nodes** are what the program shows: a window, a list, a preview, a
@@ -117,10 +117,10 @@ fmt.Println("loaded:", km != nil)
 // loaded: false
 ```
 
-## Describe where the keyboard is
+## Describe where the focus is
 
-A `Path` is the nodes that hold the keyboard right now, outermost first,
-each with its attributes. Build it from your program's state whenever you
+A `Path` is the focused node and the nodes around it, outermost first, each
+with its attributes. Build it from your program's state whenever you
 look up a key. Building a path is cheap, and matching a key against it
 takes well under a microsecond.
 
@@ -331,7 +331,7 @@ show(km.Menu([]myelinkey.Key{leader, "f"}, p, readOnly))
   always beats in a dialog.
 - `Context.MayHold` and `MayDepth` answer with the attributes a path
   leaves out unknown. For example, they can check whether a binding could
-  hold wherever a list has the keyboard, whatever the list shows.
+  hold wherever a list has the focus, whatever the list shows.
 
 ## A widget's keys inside a host
 

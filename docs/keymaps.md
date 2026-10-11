@@ -83,8 +83,8 @@ key.
 
 ## Contexts
 
-A program describes what holds the keyboard as a **path**, from the
-outside in. In a file manager it might be `window > list`, or
+A program describes where the focus is as a **path**, from the outside
+in. In a file manager it might be `window > list`, or
 `window > list > field` while a filter is open over the list. Each
 program's docs list its nodes and their attributes.
 

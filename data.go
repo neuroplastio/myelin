@@ -20,11 +20,11 @@ import (
 //msgp:timezone utc
 //msgp:replace myelinkey.Key with:string
 
-// Schema is what a program declares once, for [NewEnv]: what can hold the
-// keyboard, and the keymap's layers.
+// Schema is what a program declares once, for [NewEnv]: what can be
+// focused, and the keymap's layers.
 type Schema struct {
-	// Nodes are the path's vocabulary: the kinds of node that can hold
-	// the keyboard, outermost first.
+	// Nodes are the path's vocabulary: the kinds of node that can be
+	// focused or hold the focus, outermost first.
 	Nodes []NodeType `msg:"nodes"`
 	// Layers are the keymap's layers, lowest first: ["defaults", "user"],
 	// or ["extensions", "defaults", "user"].
@@ -114,8 +114,8 @@ type Group struct {
 	Source string `msg:"source,omitempty"`
 }
 
-// Path is what holds the keyboard, outermost first. The last step is the
-// focus.
+// Path is where the focus is: the focused node and the nodes around it,
+// outermost first. The last step is the focus.
 type Path []Step
 
 // Step is one node on the path.

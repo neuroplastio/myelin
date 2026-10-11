@@ -27,10 +27,10 @@
 //
 // # Paths and contexts
 //
-// A program declares what can hold the keyboard in a [Schema]: kinds of
-// node, each with typed attributes, and the keymap's layers. At any moment
-// the keyboard's [Path] is the nodes that hold it, outermost first, such as
-// a window, a list in it, and a filter field over the list.
+// A program declares what can be focused in a [Schema]: kinds of node,
+// each with typed attributes, and the keymap's layers. At any moment the
+// focus is a [Path]: the focused node and the nodes around it, outermost
+// first, such as a window, a list in it, and a filter field over the list.
 //
 // A context is a CEL expression (https://cel.dev) over the path. A node's
 // name is true while the node is on the path, its attributes are
