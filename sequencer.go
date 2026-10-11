@@ -4,7 +4,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/neuroplastio/myelin/key"
+	"github.com/neuroplastio/myelin/myelinkey"
 )
 
 // The sequencer is functions over Pending, a value: a key, the state and
@@ -28,9 +28,9 @@ import (
 //     is cleared.
 //
 // With nothing pending, a key no binding starts with is one map lookup.
-func Feed(km *Keymap, st Pending, k key.Key, p Path, now time.Time) (Pending, Result) {
+func Feed(km *Keymap, st Pending, k myelinkey.Key, p Path, now time.Time) (Pending, Result) {
 	if len(st.Seq) == 0 && !km.Starts(k) {
-		return Pending{}, Result{Dropped: []key.Key{k}}
+		return Pending{}, Result{Dropped: []myelinkey.Key{k}}
 	}
 	seq := append(slices.Clone(st.Seq), k)
 	m := km.Match(seq, p)
@@ -65,5 +65,5 @@ func Arm(km *Keymap, p Path, now time.Time) Pending {
 	if !km.hasLeader {
 		return Pending{}
 	}
-	return Pending{Seq: []key.Key{km.leader}, Path: p, Deadline: now.Add(km.env.schema.Timeout)}
+	return Pending{Seq: []myelinkey.Key{km.leader}, Path: p, Deadline: now.Add(km.env.schema.Timeout)}
 }

@@ -51,7 +51,7 @@ protocol: `Control+d`, `PageDown`, `A`. A terminal's bytes, a Bubble Tea
 key and a HOTTY host's key event come out as the same name, so one keymap
 serves them all.
 
-Keys are a package of their own, `github.com/neuroplastio/myelin/key`,
+Keys are a package of their own, `github.com/neuroplastio/myelin/myelinkey`,
 which needs only the standard library and builds with TinyGo. Whatever
 reads input can name keys with it without taking on CEL.
 

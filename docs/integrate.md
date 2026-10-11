@@ -221,20 +221,21 @@ touch-screen button that opens the leader's menu.
 
 ## Keys from your input
 
-myelin compares keys by name: a `key.Key` is a keystroke's canonical name
-in the HOTTY protocol. Whatever reads your input names the key, and
-`key.ParseHotty` makes that name canonical, its modifiers in any order:
+myelin compares keys by name: a `myelinkey.Key` is a keystroke's
+canonical name in the HOTTY protocol. Whatever reads your input names the
+key, and `myelinkey.ParseHotty` makes that name canonical, its modifiers in
+any order:
 
-<!-- example:key.ExampleParseHotty -->
+<!-- example:myelinkey.ExampleParseHotty -->
 
 ```go
 for _, name := range []string{"Shift+Control+a", "Control+ ", "Alt+Shift+1", "Hyper+x"} {
-	k, ok := key.ParseHotty(name)
+	k, ok := myelinkey.ParseHotty(name)
 	if !ok {
 		fmt.Printf("%q is not a key\n", name)
 		continue
 	}
-	fmt.Printf("%q is %s, written %s\n", name, k, key.Format(k))
+	fmt.Printf("%q is %s, written %s\n", name, k, myelinkey.Format(k))
 }
 // Output:
 // "Shift+Control+a" is Control+A, written ctrl+shift+a
@@ -286,18 +287,18 @@ readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Act
 
 leader, _ := km.Leader()
 show := func(m myelin.Menu) {
-	fmt.Printf("%s (%s)\n", key.FormatSeq(m.Seq), m.Label)
+	fmt.Printf("%s (%s)\n", myelinkey.FormatSeq(m.Seq), m.Label)
 	for _, it := range m.Items {
 		label := it.Label
 		if label == "" {
 			label = it.Binding.Action // the program words a binding with no label
 		}
-		fmt.Printf("  %s  %s enabled=%v\n", key.Display(it.Key), label, it.Enabled)
+		fmt.Printf("  %s  %s enabled=%v\n", myelinkey.Display(it.Key), label, it.Enabled)
 	}
 }
 p := myelin.Path{{Name: "list"}}
-show(km.Menu([]key.Key{leader}, p, readOnly))
-show(km.Menu([]key.Key{leader, "f"}, p, readOnly))
+show(km.Menu([]myelinkey.Key{leader}, p, readOnly))
+show(km.Menu([]myelinkey.Key{leader, "f"}, p, readOnly))
 // Output:
 // space ()
 //   f  +file enabled=false

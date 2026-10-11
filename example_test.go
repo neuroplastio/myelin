@@ -8,7 +8,7 @@ import (
 
 	"github.com/neuroplastio/myelin"
 
-	"github.com/neuroplastio/myelin/key"
+	"github.com/neuroplastio/myelin/myelinkey"
 )
 
 // A file manager's keymap: its defaults and a user's config, matched on the
@@ -45,7 +45,7 @@ func Example() {
 	tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
 	filter := append(slices.Clone(home), myelin.Step{Name: "field"})
 	match := func(keys string, p myelin.Path) string {
-		seq, err := key.ParseSeq(keys)
+		seq, err := myelinkey.ParseSeq(keys)
 		if err != nil {
 			return err.Error()
 		}
@@ -222,18 +222,18 @@ func ExampleKeymap_Menu() {
 
 	leader, _ := km.Leader()
 	show := func(m myelin.Menu) {
-		fmt.Printf("%s (%s)\n", key.FormatSeq(m.Seq), m.Label)
+		fmt.Printf("%s (%s)\n", myelinkey.FormatSeq(m.Seq), m.Label)
 		for _, it := range m.Items {
 			label := it.Label
 			if label == "" {
 				label = it.Binding.Action // the program words a binding with no label
 			}
-			fmt.Printf("  %s  %s enabled=%v\n", key.Display(it.Key), label, it.Enabled)
+			fmt.Printf("  %s  %s enabled=%v\n", myelinkey.Display(it.Key), label, it.Enabled)
 		}
 	}
 	p := myelin.Path{{Name: "list"}}
-	show(km.Menu([]key.Key{leader}, p, readOnly))
-	show(km.Menu([]key.Key{leader, "f"}, p, readOnly))
+	show(km.Menu([]myelinkey.Key{leader}, p, readOnly))
+	show(km.Menu([]myelinkey.Key{leader, "f"}, p, readOnly))
 	// Output:
 	// space ()
 	//   f  +file enabled=false

@@ -285,3 +285,14 @@ supersedes D5, D1.2 and D1.4, and D3.1's "through hotty-go's `ParseKey`".
    lives in myelin. A program names its toolkit's keys (for Bubble Tea,
    hotty-go's `hottytea.KeyName`) and passes the name to `key.ParseHotty`.
 6. **CI checks both modules at the root's go directive,** after the gate.
+
+### D14 — The keys module is myelinkey
+**2026-10-11.** The maintainer: "key package should have "myelinkey" name,
+"key" is a bad import name". Supersedes D13's name for the module; the
+rest of D13 stands.
+- The module is `github.com/neuroplastio/myelin/myelinkey`, in
+  `myelinkey/`, and its package is `myelinkey`, so the import path and the
+  package name agree. Its API is D13's under the new name:
+  `myelinkey.Key`, `myelinkey.Parse`, `myelinkey.ParseHotty`, and so on.
+- The `key` module (5790483) stays in the history only; nothing requires
+  it once consumers move.

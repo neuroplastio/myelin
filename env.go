@@ -11,7 +11,7 @@ import (
 	"cel.dev/cel-go/common/types"
 	"cel.dev/cel-go/interpreter"
 
-	"github.com/neuroplastio/myelin/key"
+	"github.com/neuroplastio/myelin/myelinkey"
 )
 
 // focusVar is the variable that names the innermost node on the path.
@@ -29,7 +29,7 @@ type Env struct {
 	// ranks are the layers' ranks, lowest 0.
 	ranks map[string]int
 	// leader is the schema's leader, if it names one.
-	leader    key.Key
+	leader    myelinkey.Key
 	hasLeader bool
 }
 
@@ -91,7 +91,7 @@ func NewEnv(s Schema) (*Env, error) {
 		e.ranks[l] = i
 	}
 	if s.Leader != "" {
-		k, err := key.Parse(s.Leader)
+		k, err := myelinkey.Parse(s.Leader)
 		if err != nil {
 			return nil, fmt.Errorf("leader: %w", err)
 		}

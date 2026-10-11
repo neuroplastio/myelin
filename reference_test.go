@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/myelin/key"
+	"github.com/neuroplastio/myelin/myelinkey"
 )
 
 var update = flag.Bool("update", false, "rewrite generated docs")
@@ -48,10 +48,10 @@ func TestReferenceKeys(t *testing.T) {
 func keyTable() string {
 	var b strings.Builder
 	b.WriteString("\n| Write | Key | Menus show |\n|-------|-----|------------|\n")
-	row := func(k key.Key) {
-		fmt.Fprintf(&b, "| `%s` | %s | `%s` |\n", key.Format(k), k, key.Display(k))
+	row := func(k myelinkey.Key) {
+		fmt.Fprintf(&b, "| `%s` | %s | `%s` |\n", myelinkey.Format(k), k, myelinkey.Display(k))
 	}
-	for _, k := range key.Named() {
+	for _, k := range myelinkey.Named() {
 		row(k)
 	}
 	row("Shift+Tab")
@@ -64,7 +64,7 @@ func keyTable() string {
 // function NAME, or the whole of an example file named by its path. The
 // gate fails when a block drifts; -update rewrites them.
 func TestDocsExamples(t *testing.T) {
-	examples := exampleSources(t, "example_test.go", "key/example_test.go")
+	examples := exampleSources(t, "example_test.go", "myelinkey/example_test.go")
 	pages, err := filepath.Glob("docs/*.md")
 	if err != nil {
 		t.Fatal(err)

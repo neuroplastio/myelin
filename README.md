@@ -29,9 +29,9 @@ program built on it.
 go get github.com/neuroplastio/myelin
 ```
 
-Keys are named in `github.com/neuroplastio/myelin/key`, a module of its
-own that needs only the standard library. A program that only names keys
-can require it alone.
+Keys are named in `github.com/neuroplastio/myelin/myelinkey`, a module of
+its own that needs only the standard library. A program that only names
+keys can require it alone.
 
 ## A first keymap
 
@@ -72,7 +72,7 @@ home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir"
 tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
 filter := append(slices.Clone(home), myelin.Step{Name: "field"})
 match := func(keys string, p myelin.Path) string {
-	seq, err := key.ParseSeq(keys)
+	seq, err := myelinkey.ParseSeq(keys)
 	if err != nil {
 		return err.Error()
 	}
@@ -107,7 +107,7 @@ fmt.Println("g:", match("g", home))
   value, and how depth and layers decide.
 - The API reference is on pkg.go.dev:
   [myelin](https://pkg.go.dev/github.com/neuroplastio/myelin) and
-  [key](https://pkg.go.dev/github.com/neuroplastio/myelin/key).
+  [myelinkey](https://pkg.go.dev/github.com/neuroplastio/myelin/myelinkey).
 
 ## Status
 

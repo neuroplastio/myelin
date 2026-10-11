@@ -5,7 +5,7 @@ package myelin
 import (
 	"time"
 
-	"github.com/neuroplastio/myelin/key"
+	"github.com/neuroplastio/myelin/myelinkey"
 	"github.com/tinylib/msgp/msgp"
 )
 
@@ -330,7 +330,7 @@ func (z *Binding) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Seq) >= int(zb0002) {
 				z.Seq = (z.Seq)[:zb0002]
 			} else {
-				z.Seq = make([]key.Key, zb0002)
+				z.Seq = make([]myelinkey.Key, zb0002)
 			}
 			for za0001 := range z.Seq {
 				{
@@ -340,7 +340,7 @@ func (z *Binding) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Seq", za0001)
 						return
 					}
-					z.Seq[za0001] = key.Key(zb0003)
+					z.Seq[za0001] = myelinkey.Key(zb0003)
 				}
 			}
 		case "layer":
@@ -924,7 +924,7 @@ func (z *Item) DecodeMsg(dc *msgp.Reader) (err error) {
 					err = msgp.WrapError(err, "Key")
 					return
 				}
-				z.Key = key.Key(zb0002)
+				z.Key = myelinkey.Key(zb0002)
 			}
 		case "label":
 			z.Label, err = dc.ReadString()
@@ -1273,7 +1273,7 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Seq) >= int(zb0002) {
 				z.Seq = (z.Seq)[:zb0002]
 			} else {
-				z.Seq = make([]key.Key, zb0002)
+				z.Seq = make([]myelinkey.Key, zb0002)
 			}
 			for za0001 := range z.Seq {
 				{
@@ -1283,7 +1283,7 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Seq", za0001)
 						return
 					}
-					z.Seq[za0001] = key.Key(zb0003)
+					z.Seq[za0001] = myelinkey.Key(zb0003)
 				}
 			}
 		case "label":
@@ -1638,7 +1638,7 @@ func (z *Pending) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Seq) >= int(zb0002) {
 				z.Seq = (z.Seq)[:zb0002]
 			} else {
-				z.Seq = make([]key.Key, zb0002)
+				z.Seq = make([]myelinkey.Key, zb0002)
 			}
 			for za0001 := range z.Seq {
 				{
@@ -1648,7 +1648,7 @@ func (z *Pending) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Seq", za0001)
 						return
 					}
-					z.Seq[za0001] = key.Key(zb0003)
+					z.Seq[za0001] = myelinkey.Key(zb0003)
 				}
 			}
 		case "path":
@@ -1940,7 +1940,7 @@ func (z *Result) DecodeMsg(dc *msgp.Reader) (err error) {
 			if cap(z.Dropped) >= int(zb0002) {
 				z.Dropped = (z.Dropped)[:zb0002]
 			} else {
-				z.Dropped = make([]key.Key, zb0002)
+				z.Dropped = make([]myelinkey.Key, zb0002)
 			}
 			for za0001 := range z.Dropped {
 				{
@@ -1950,7 +1950,7 @@ func (z *Result) DecodeMsg(dc *msgp.Reader) (err error) {
 						err = msgp.WrapError(err, "Dropped", za0001)
 						return
 					}
-					z.Dropped[za0001] = key.Key(zb0003)
+					z.Dropped[za0001] = myelinkey.Key(zb0003)
 				}
 			}
 		default:

@@ -13,9 +13,9 @@ license is Apache-2.0.
   and parser.
 - **No clock, no goroutines.** `now` goes in and a deadline comes out.
 - **Keys are canonical HOTTY names**, written in one short spelling:
-  `ctrl+d`, `pgdn`, `g g`, `<leader>` (D3). They live in the `key` module,
+  `ctrl+d`, `pgdn`, `g g`, `<leader>` (D3). They live in the `myelinkey` module,
   which requires nothing and builds with TinyGo, so that hotty-go can take
-  its key names from it (D12, D13).
+  its key names from it (D12–D14).
 - **Contexts are CEL** over a path the program declares. The deepest
   context wins, then the layer, then the later binding (D6).
 - **Programs keep what is theirs:** their files, their actions, their
@@ -34,13 +34,14 @@ license is Apache-2.0.
   Context), because they hold compiled CEL.
 - **No `tool` directive in a go.mod.** msgp's generator is pinned in
   `mise.toml`, beside Go, and `//go:generate` runs it as `msgp` (D11).
-- **The root module depends only on** the `key` module, msgp's runtime and
-  cel-go. **The `key` module depends on nothing** and passes its tests
-  under TinyGo's wasm with 64 KB stacks. myelin is headless: no UI
+- **The root module depends only on** the `myelinkey` module, msgp's
+  runtime and cel-go. **`myelinkey` depends on nothing** and passes its
+  tests under TinyGo's wasm with 64 KB stacks. myelin is headless: no UI
   toolkit's adapter lives here (D13).
-- **A change to `key` lands first.** Push it, then move the root's
-  requirement of `key` to that commit; the root replaces it with `./key` in
-  the tree, but an importer gets the version the root requires.
+- **A change to `myelinkey` lands first.** Push it, then move the root's
+  requirement of `myelinkey` to that commit. The root replaces it with
+  `./myelinkey` in the tree, but an importer gets the version the root
+  requires.
 - **Never edit a consumer's repository.** Each program makes its own
   switch, and its own golden proves it. When a consumer needs something, it
   asks here.

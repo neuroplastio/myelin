@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	cel.dev/cel-go v0.32.0
-	github.com/neuroplastio/myelin/key v0.0.0-20261010232718-57904833fca8
+	github.com/neuroplastio/myelin/myelinkey v0.0.0-20261011092849-2f34a939f3ea
 	github.com/tinylib/msgp v1.6.5
 )
 
@@ -19,4 +19,4 @@ require (
 	google.golang.org/protobuf v1.36.10 // indirect
 )
 
-replace github.com/neuroplastio/myelin/key => ./key
+replace github.com/neuroplastio/myelin/myelinkey => ./myelinkey
