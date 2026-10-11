@@ -3,7 +3,6 @@ package myelinkey
 import (
 	_ "embed"
 	"encoding/json"
-	"slices"
 	"strings"
 	"testing"
 )
@@ -40,52 +39,51 @@ func readVectors(t *testing.T) vectors {
 	return v
 }
 
-// The keys section: ParseHotty canonicalizes every name the way the vectors
-// do and refuses the ones they refuse, and every canonical name in them,
-// decoded terminal input included, has a short spelling that reads back.
+// The keys section: ParseHotty refuses the names the vectors refuse, reads
+// a name and its canonical form as the same Key, and makes every name in
+// them, decoded terminal input included, a canonical Key.
 func TestVectorKeys(t *testing.T) {
 	v := readVectors(t)
-	var names []Key
-	canon := 0
+	n := 0
 	for _, x := range v.Keys {
 		if x.Key == nil {
-			for _, k := range x.Keys {
-				if k != "" {
-					names = append(names, Key(k))
+			for _, name := range x.Keys {
+				if name == "" {
+					continue
 				}
+				n++
+				k, ok := ParseHotty(name)
+				if !ok {
+					t.Errorf("%s: ParseHotty(%q) refused a decoded key", x.Name, name)
+					continue
+				}
+				canonical(t, name, k)
 			}
 			continue
 		}
-		canon++
+		n++
 		got, ok := ParseHotty(*x.Key)
 		switch {
 		case x.Canon == nil && ok:
 			t.Errorf("%s: ParseHotty(%q) = %q, want it refused", x.Name, *x.Key, got)
-		case x.Canon != nil && (!ok || string(got) != *x.Canon):
-			t.Errorf("%s: ParseHotty(%q) = %q, %v; want %q", x.Name, *x.Key, got, ok, *x.Canon)
-		case x.Canon != nil:
-			names = append(names, Key(*x.Canon))
+		case x.Canon == nil:
+		case !ok:
+			t.Errorf("%s: ParseHotty(%q) refused, want %q's key", x.Name, *x.Key, *x.Canon)
+		default:
+			if want, _ := ParseHotty(*x.Canon); got != want {
+				t.Errorf("%s: ParseHotty(%q) = %q, and its canonical %q is %q", x.Name, *x.Key, got, *x.Canon, want)
+			}
+			canonical(t, *x.Key, got)
 		}
 	}
-	slices.Sort(names)
-	names = slices.Compact(names)
-	for _, k := range names {
-		if c, ok := ParseHotty(string(k)); !ok || c != k {
-			t.Errorf("ParseHotty(%q) = %q, %v; want it unchanged", k, c, ok)
-		}
-		if back, err := Parse(Format(k)); err != nil || back != k {
-			t.Errorf("%q written %q reads back as %q, %v", k, Format(k), back, err)
-		}
-	}
-	if canon == 0 || len(names) == 0 {
+	if n == 0 {
 		t.Fatal("the vectors name no keys")
 	}
 }
 
-// The keymap section's key names: a data-keys value's keys come out
-// canonical. Which bindings a host keeps is hotty-go's to test; here each
-// key a formatted keymap has is canonical, and is what ParseHotty makes of a
-// key in the value it was parsed from.
+// The keymap section's key names: each key of a formatted keymap reads, and
+// is a key of the value it was parsed from. Which bindings a host keeps is
+// hotty-go's to test.
 func TestVectorKeymapKeys(t *testing.T) {
 	v := readVectors(t)
 	n := 0
@@ -95,20 +93,22 @@ func TestVectorKeymapKeys(t *testing.T) {
 		}
 		parsed := map[Key]bool{}
 		if x.Parse != nil {
-			for _, k := range bindingKeys(*x.Parse) {
-				if c, ok := ParseHotty(k); ok {
-					parsed[c] = true
+			for _, name := range bindingKeys(*x.Parse) {
+				if k, ok := ParseHotty(name); ok {
+					parsed[k] = true
 				}
 			}
 		}
-		for _, k := range bindingKeys(*x.Format) {
+		for _, name := range bindingKeys(*x.Format) {
 			n++
-			c, ok := ParseHotty(k)
-			if !ok || string(c) != k {
-				t.Errorf("%s: %q in the formatted keymap is not canonical (%q, %v)", x.Name, k, c, ok)
+			k, ok := ParseHotty(name)
+			if !ok {
+				t.Errorf("%s: %q in the formatted keymap does not read", x.Name, name)
+				continue
 			}
-			if x.Parse != nil && !parsed[c] {
-				t.Errorf("%s: %q is no key of the value it was parsed from", x.Name, k)
+			canonical(t, name, k)
+			if x.Parse != nil && !parsed[k] {
+				t.Errorf("%s: %q is no key of the value it was parsed from", x.Name, name)
 			}
 		}
 	}

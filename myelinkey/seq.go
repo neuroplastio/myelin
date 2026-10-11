@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-// ParseSeq reads a sequence of keys in the short spelling, separated by
-// ASCII white space: "g g", "ctrl+x d". Other white space, such as a
-// no-break space, is a key. "<leader>" is refused, as [Parse] refuses it.
+// ParseSeq reads a sequence of keys the default way, separated by ASCII
+// white space: "g g", "ctrl+x d". Other white space, such as a no-break
+// space, is a key. An alias, "<leader>", is refused, as [Parse] refuses it.
 func ParseSeq(s string) ([]Key, error) {
 	fields := SplitSeq(s)
 	if len(fields) == 0 {
@@ -25,9 +25,9 @@ func ParseSeq(s string) ([]Key, error) {
 }
 
 // SplitSeq splits a written sequence into its keys, still as written, at
-// ASCII white space, as HOTTY splits a data-keys value. A program that gives
-// a word of its own a meaning in a sequence, as a keymap gives "<leader>",
-// reads the words here and parses the rest with [Parse].
+// ASCII white space. A program that gives a word of its own a meaning in a
+// sequence, as a keymap gives an alias such as "<leader>", reads the words
+// here and parses the rest with [ParseWith].
 func SplitSeq(s string) []string {
 	return strings.FieldsFunc(s, func(r rune) bool { return strings.ContainsRune(" \t\n\f\r", r) })
 }
@@ -36,7 +36,7 @@ func SplitSeq(s string) []string {
 func FormatSeq(seq []Key) string {
 	parts := make([]string, len(seq))
 	for i, k := range seq {
-		parts[i] = Format(k)
+		parts[i] = string(k)
 	}
 	return strings.Join(parts, " ")
 }

@@ -1,20 +1,38 @@
 // Package myelinkey names keystrokes: one name for each, whichever way it came
-// in, and one way for people to write it.
+// in, and one way to write it.
 //
-// A [Key] is a keystroke's canonical name in the HOTTY protocol
-// (https://hotty.neuroplast.io): "a", "A", "Control+d", "Shift+Tab",
-// "PageDown", "Space". Two keys are the same keystroke exactly when they are
-// ==. [ParseHotty] reads a name as a HOTTY host, a terminal decoder or a UI
-// toolkit's adapter writes it, its modifiers in any order, and returns it
-// canonical.
+// A [Key] is a keystroke's canonical name, in Ghostty's vocabulary: its
+// modifiers in the order super+, ctrl+, alt+, shift+, then the key, which is
+// either a physical key or a character:
 //
-// People write keys in the short spelling: modifiers (ctrl+, alt+, meta+,
-// shift+), then one character or a named key: "ctrl+d", "pgdn", "shift+tab",
-// "ctrl+shift+a", "H". Every key has exactly one spelling: [Parse] reads only
-// what [Format] writes, and refuses any other way of writing a key with the
-// spelling to write instead. A sequence is keys separated by ASCII white
-// space, "g g" ([ParseSeq], [FormatSeq]). [Display] writes a key as a menu
-// shows it, with glyphs for the arrows and Tab.
+//   - A physical key is a place on the keyboard, named by its W3C UI Events
+//     code value in snake case: "escape", "enter", "tab", "space",
+//     "page_down", "arrow_up", "f1", "key_a", "digit_1". It is the same key
+//     whatever the layout types there.
+//   - A character is the one the key types: "a", "?", "ö", "+". It follows
+//     the layout. A letter is written small, and Shift with it is written as
+//     a modifier ("shift+g", "ctrl+shift+a"). Any other character shows
+//     Shift itself: Shift with / types "?", so the key is "?". White space
+//     and control characters are keys of their own: "space", "enter",
+//     "tab", "backspace", "escape".
+//
+// Two keys are the same keystroke exactly when they are ==. A program sends
+// whichever of the two its input gives it, and a physical key and a
+// character never match each other: "ctrl+key_w" is the key at the US
+// layout's W, "ctrl+w" is Ctrl with the key that types w.
+//
+// [Parse] reads a key as people write it, the way Ghostty reads a trigger:
+// modifiers in any order and case, with the aliases cmd and command for
+// super, opt and option for alt, and control for ctrl; a physical key by
+// its own name, by its W3C code value ("PageDown", "KeyA") or by another
+// keymap's name for it ("pgdn", "esc", "up"); a letter in either case.
+// [ParseWith] can read more strictly ([Options]). A sequence is keys
+// separated by ASCII white space: "g g" ([ParseSeq], [FormatSeq]).
+// [Display] writes a key as a menu shows it, with glyphs for the arrows and
+// Tab.
+//
+// [ParseHotty] reads a key named by HOTTY's key names (SPEC §10.4) as they
+// are now: "Control+a", "PageDown", "A".
 //
 // The package needs nothing but the standard library, and builds with
 // TinyGo.
@@ -23,199 +41,197 @@ package myelinkey
 import (
 	"errors"
 	"fmt"
-	"slices"
-	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
 
-// Key is a keystroke's canonical name in the HOTTY protocol: "a", "A",
-// "Control+d", "Shift+Tab", "PageDown", "Space". [Parse] reads the short
-// spelling into one, and [ParseHotty] a name from a HOTTY host, a terminal or
-// a UI toolkit.
+// Key is a keystroke's canonical name: "a", "shift+g", "ctrl+d",
+// "page_down", "ctrl+key_w", "super+ctrl+alt+shift+enter", "?", "ctrl++".
 type Key string
 
-// shortNames are the named keys the short spelling writes in its own way,
-// and their HOTTY names. The function keys are spelled by rule: f1 is F1,
-// f13 is F13 (fkey).
-var shortNames = map[string]string{
-	"up": "ArrowUp", "down": "ArrowDown", "left": "ArrowLeft", "right": "ArrowRight",
-	"enter": "Enter", "esc": "Escape", "tab": "Tab", "space": "Space",
-	"home": "Home", "end": "End", "pgup": "PageUp", "pgdn": "PageDown",
-	"backspace": "Backspace", "delete": "Delete", "insert": "Insert",
-	// A modifier alone is that modifier's key.
-	"ctrl": "Control", "alt": "Alt", "meta": "Meta", "shift": "Shift",
-}
+// Mods is a set of modifiers.
+type Mods uint8
 
-// hottyNames are shortNames turned around.
-var hottyNames = func() map[string]string {
-	m := make(map[string]string, len(shortNames))
-	for short, name := range shortNames {
-		m[name] = short
-	}
-	return m
-}()
-
-// The modifiers, in the order HOTTY writes them, and so the order Format
-// writes them: their HOTTY names and their short spelling. A set of them is
-// an int with a bit for each, in this order.
-var (
-	modNames  = [...]string{"Control", "Alt", "Meta", "Shift"}
-	modShorts = [...]string{"ctrl", "alt", "meta", "shift"}
-)
-
+// The modifiers, in the order a key writes them. Super is the platform's
+// command key: Command on macOS, the Windows key or Super elsewhere.
 const (
-	modControl = 1 << iota
-	modAlt
-	modMeta
-	modShift
+	Super Mods = 1 << iota
+	Ctrl
+	Alt
+	Shift
 )
 
-// leader is how a keymap's sequence writes its leader key, which is the
-// keymap's to resolve, not a key.
-const leader = "<leader>"
+// modNames are the modifiers' names, in the order of their bits.
+var modNames = [...]string{"super", "ctrl", "alt", "shift"}
 
-// nameOf is the HOTTY name of a named key written short: "pgdn" is
-// "PageDown", "f13" is "F13".
-func nameOf(short string) (string, bool) {
-	if name, ok := shortNames[short]; ok {
-		return name, true
-	}
-	if n, ok := fkey(short, 'f'); ok {
-		return "F" + n, true
-	}
-	return "", false
+// modAliases are the other names the default reading takes for modifiers,
+// Ghostty's.
+var modAliases = map[string]Mods{
+	"cmd": Super, "command": Super, "opt": Alt, "option": Alt, "control": Ctrl,
 }
 
-// shortOf is how the short spelling writes a HOTTY named key that it
-// writes in its own way: "PageDown" is "pgdn", "F13" is "f13".
-func shortOf(name string) (string, bool) {
-	if short, ok := hottyNames[name]; ok {
-		return short, true
-	}
-	if n, ok := fkey(name, 'F'); ok {
-		return "f" + n, true
-	}
-	return "", false
+// Options are how strictly [ParseWith] reads a key. The zero value is the
+// default reading, [Parse]'s.
+type Options struct {
+	// Strict reads only a key's canonical spelling, and refuses any other
+	// with it: "Ctrl+D" asks for "ctrl+d", "esc" for "escape",
+	// "shift+ctrl+a" for "ctrl+shift+a".
+	Strict bool
+	// ShiftedCapitals reads a capital letter as Shift with its small
+	// letter, as vim does: "G" is "shift+g", "ctrl+A" is "ctrl+shift+a".
+	// Without it a letter's case does not matter: "G" is "g".
+	ShiftedCapitals bool
 }
 
-// fkey reads a function key's number after its letter: a decimal from 1,
-// with no leading zero.
-func fkey(s string, letter byte) (string, bool) {
-	if len(s) < 2 || s[0] != letter || s[1] == '0' {
-		return "", false
-	}
-	if _, err := strconv.ParseUint(s[1:], 10, 16); err != nil {
-		return "", false
-	}
-	return s[1:], true
-}
+// Parse reads a key the default way, which is Ghostty's: "ctrl+d",
+// "Ctrl+D", "control+d" and "d+ctrl" are all "ctrl+d"; "PageDown", "pgdn"
+// and "page_down" are "page_down"; "G" is "g".
+func Parse(s string) (Key, error) { return ParseWith(s, Options{}) }
 
-// Parse reads one key in the short spelling and returns its canonical
-// HOTTY name: "ctrl+d" is "Control+d", "pgdn" is "PageDown", "H" is "H",
-// "ctrl+shift+a" is "Control+A", "shift+1" is "Shift+1".
-//
-// It reads only the spelling [Format] writes. Any other way of writing a key
-// is refused with that spelling: "shift+h" asks for "H", "ctrl+D" for
-// "ctrl+shift+d", "alt+ctrl+x" for "ctrl+alt+x", "Escape" for "esc".
-// "<leader>" is refused too: it stands for a keymap's leader, which the
-// keymap resolves.
-func Parse(s string) (Key, error) {
-	var mods int
-	rest := s
-	for {
-		i := strings.IndexByte(rest, '+')
-		if i <= 0 || i == len(rest)-1 {
-			break
-		}
-		m := modIndex(rest[:i])
-		if m < 0 {
-			if m = modIndexFold(rest[:i]); m >= 0 {
-				return "", fmt.Errorf("%q: modifiers are written in lower case: %s+", s, modShorts[m])
-			}
-			break
-		}
-		if mods&(1<<m) != 0 {
-			return "", fmt.Errorf("%q: %s+ twice", s, modShorts[m])
-		}
-		mods |= 1 << m
-		rest = rest[i+1:]
-	}
-	var value string
-	switch name, short := nameOf(rest); {
-	case rest == "":
+// ParseWith reads a key as [Options] say.
+func ParseWith(s string, o Options) (Key, error) {
+	if s == "" {
 		return "", errors.New("an empty key")
-	case rest == leader:
-		return "", fmt.Errorf("%q: %s is the keymap's to resolve", s, leader)
-	case short:
-		value = name
-	case strings.Contains(rest, "+") && rest != "+":
-		return "", fmt.Errorf("%q is not a key (modifiers are ctrl+, alt+, meta+ and shift+)", s)
-	case looksNamed(rest):
-		// A short name in another case ("ESC", "Up") is HOTTY's to read as a
-		// name of its own, which no host sends: ask for the short name.
-		if _, ok := nameOf(strings.ToLower(rest)); ok {
-			return "", fmt.Errorf("%q: write %s", s, s[:len(s)-len(rest)]+strings.ToLower(rest))
-		}
-		if _, ok := ParseHotty(rest); !ok {
-			return "", fmt.Errorf("%q is not a key (named keys are written short: esc, enter, pgdn, f1; a sequence's keys are separated by spaces: `g g`)", s)
-		}
-		value = rest
-	default:
-		if _, ok := ParseHotty(rest); !ok {
-			return "", fmt.Errorf("%q is not a key", s)
-		}
-		value = rest
 	}
-	k, ok := ParseHotty(join(mods, value))
-	if !ok {
-		return "", fmt.Errorf("%q is not a key", s)
+	if isAliasForm(s) {
+		return "", fmt.Errorf("%q is an alias, which a keymap resolves", s)
 	}
-	if w := Format(k); w != s {
-		return "", fmt.Errorf("%q: write %s", s, w)
+	var (
+		mods    Mods
+		value   string
+		capital bool
+		lastMod string
+	)
+	for rest := s; rest != ""; {
+		part, after, plus := strings.Cut(rest, "+")
+		if plus && after == "" && part != "" {
+			return "", fmt.Errorf("%q: no key after the last +", s)
+		}
+		rest = after
+		if m, ok := modOf(part); ok {
+			if mods&m != 0 {
+				return "", fmt.Errorf("%q: %s twice", s, part)
+			}
+			mods |= m
+			lastMod = part
+			continue
+		}
+		if value != "" {
+			return "", fmt.Errorf("%q is more than one key (a sequence's keys are separated by spaces: `g g`)", s)
+		}
+		switch phys, ok := physicalOf(part); {
+		case part == "":
+			value = "+"
+		case isPhysical[part]:
+			value = part
+		case isChar(part):
+			capital = isCapital(part)
+			value = fold(part)
+		case ok:
+			value = phys
+		default:
+			return "", fmt.Errorf("%q is not a key%s", s, hint(part))
+		}
+	}
+	if value == "" {
+		return "", fmt.Errorf("%q has no key: %s is a modifier", s, lastMod)
+	}
+	if capital && o.ShiftedCapitals {
+		mods |= Shift
+	}
+	k := join(mods, value)
+	if o.Strict && s != string(k) && !(o.ShiftedCapitals && s == capitalSpelling(k)) {
+		if capital && !o.ShiftedCapitals && mods&Shift == 0 {
+			return "", fmt.Errorf("%q: write %s, or %s for Shift with it", s, k, join(mods|Shift, value))
+		}
+		return "", fmt.Errorf("%q: write %s", s, k)
 	}
 	return k, nil
 }
 
-// join writes modifiers and a value as HOTTY does: "Control+Alt+x".
-func join(mods int, value string) string {
+// modOf reads a modifier's name, or one of its aliases, in any case.
+func modOf(s string) (Mods, bool) {
+	lower := strings.ToLower(s)
+	for i, n := range modNames {
+		if lower == n {
+			return 1 << i, true
+		}
+	}
+	m, ok := modAliases[lower]
+	return m, ok
+}
+
+// hint says how to write a key that the reading does not know, where it
+// can tell.
+func hint(part string) string {
+	switch {
+	case strings.EqualFold(part, "meta"):
+		return " (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)"
+	case looksWord(part):
+		return " (a physical key is named by its W3C code value, page_down or PageDown; a sequence's keys are separated by spaces: `g g`)"
+	}
+	return ""
+}
+
+// join writes a key: its modifiers in order, then its value.
+func join(mods Mods, value string) Key {
 	var b strings.Builder
-	for i, m := range modNames {
+	for i, n := range modNames {
 		if mods&(1<<i) != 0 {
-			b.WriteString(m)
+			b.WriteString(n)
 			b.WriteByte('+')
 		}
 	}
 	b.WriteString(value)
-	return b.String()
+	return Key(b.String())
 }
 
-// modIndex is the index of a modifier written short, or -1.
-func modIndex(s string) int {
-	for i, m := range modShorts {
-		if s == m {
-			return i
-		}
+// capitalSpelling is how ShiftedCapitals lets a key with Shift and a
+// letter be written: "ctrl+shift+a" as "ctrl+A". It is "" for any other
+// key.
+func capitalSpelling(k Key) string {
+	mods, value, char := Split(k)
+	if mods&Shift == 0 || !char {
+		return ""
 	}
-	return -1
-}
-
-// modIndexFold is modIndex in any case, for the error that asks for lower
-// case.
-func modIndexFold(s string) int {
-	for i, m := range modShorts {
-		if strings.EqualFold(s, m) {
-			return i
-		}
+	up := strings.ToUpper(value)
+	if !isCapital(up) {
+		return ""
 	}
-	return -1
+	return string(join(mods&^Shift, up))
 }
 
-// looksNamed reports whether s is two or more ASCII letters and digits. No
-// character is, so it can only be a key's name: HOTTY's ("PageDown") or the
-// short spelling's ("pgdn").
-func looksNamed(s string) bool {
+// Split reads a key into its modifiers and its value, and reports whether
+// the value is a character ("?", "a", "+") rather than a physical key
+// ("page_down", "key_a").
+func Split(k Key) (mods Mods, value string, char bool) {
+	s := string(k)
+	for {
+		part, rest, ok := strings.Cut(s, "+")
+		m, isMod := Mods(0), false
+		for i, n := range modNames {
+			if part == n {
+				m, isMod = 1<<i, true
+			}
+		}
+		if !ok || rest == "" || !isMod {
+			return mods, s, !isPhysical[s]
+		}
+		mods |= m
+		s = rest
+	}
+}
+
+// isAliasForm reports whether s is written as an alias: a name between
+// < and >, as "<leader>".
+func isAliasForm(s string) bool {
+	return len(s) > 2 && s[0] == '<' && s[len(s)-1] == '>'
+}
+
+// looksWord reports whether s is two or more ASCII letters and digits:
+// no character, so a name, or keys run together ("gg").
+func looksWord(s string) bool {
 	if len(s) < 2 {
 		return false
 	}
@@ -226,6 +242,16 @@ func looksNamed(s string) bool {
 		}
 	}
 	return true
+}
+
+// isChar reports whether s is a character a key can type: one grapheme
+// cluster, not white space or a control.
+func isChar(s string) bool {
+	if s == "" || clusterLen(s) != len(s) {
+		return false
+	}
+	r, _ := utf8.DecodeRuneInString(s)
+	return r != utf8.RuneError && r != ' ' && !unicode.IsControl(r)
 }
 
 // isCapital reports whether a character is the capital of a small letter,
@@ -239,118 +265,43 @@ func isCapital(v string) bool {
 	return small != r && unicode.ToUpper(small) == r
 }
 
-// split reads a canonical key into its modifiers and its value, as HOTTY
-// writes them: "Control++" is Control and "+".
-func split(k Key) (mods int, value string) {
-	s := string(k)
-	for {
-		i := strings.IndexByte(s, '+')
-		if i <= 0 || i == len(s)-1 {
-			return mods, s
-		}
-		m := -1
-		for j, name := range modNames {
-			if s[:i] == name {
-				m = j
-			}
-		}
-		if m < 0 {
-			return mods, s
-		}
-		mods |= 1 << m
-		s = s[i+1:]
-	}
+// fold writes a character's letters small, so that a letter compares in
+// either case.
+func fold(v string) string { return strings.Map(unicode.ToLower, v) }
+
+// glyphs are how menus show some physical keys.
+var glyphs = map[string]string{
+	"arrow_left": "←", "arrow_right": "→", "arrow_up": "↑", "arrow_down": "↓", "tab": "⇥",
 }
 
-// spell reads a key as the short spelling writes it: its modifiers, with
-// shift written out for a capital that has others ("Control+A" is ctrl,
-// shift and "a"), and its value written short.
-func spell(k Key) (mods int, value string) {
-	mods, value = split(k)
-	if mods != 0 && isCapital(value) {
-		mods |= modShift
-		value = string(unicode.ToLower([]rune(value)[0]))
-	}
-	if short, ok := shortOf(value); ok {
-		value = short
-	}
-	return mods, value
-}
-
-// Format writes a key in the short spelling, which [Parse] reads back:
-// "Control+d" is "ctrl+d", "PageDown" is "pgdn", "Control+A" is
-// "ctrl+shift+a", "Shift+1" is "shift+1", "ContextMenu" is itself.
-func Format(k Key) string {
-	mods, value := spell(k)
-	var b strings.Builder
-	for i, m := range modShorts {
-		if mods&(1<<i) != 0 {
-			b.WriteString(m)
-			b.WriteByte('+')
-		}
-	}
-	b.WriteString(value)
-	return b.String()
-}
-
-// arrowGlyphs are how menus show the arrows, by their short names.
-var arrowGlyphs = map[string]string{"left": "←", "right": "→", "up": "↑", "down": "↓"}
-
-// Display writes a key as a menu shows it: the short spelling, with the
-// arrows and Tab as glyphs ("ctrl+←", "⇥"). Shift+Tab is "⇧⇥", one glyph
-// pair a reader knows, where "shift+⇥" reads as a chord.
+// Display writes a key as a menu shows it: its name, with the arrows and
+// Tab as glyphs ("ctrl+←", "⇥"). Shift+Tab is "⇧⇥", one glyph pair a reader
+// knows, where "shift+⇥" reads as a chord.
 func Display(k Key) string {
-	mods, value := spell(k)
-	var b strings.Builder
-	for i, m := range modShorts[:3] {
-		if mods&(1<<i) != 0 {
-			b.WriteString(m)
-			b.WriteByte('+')
-		}
+	mods, value, char := Split(k)
+	g, ok := glyphs[value]
+	if char || !ok {
+		return string(k)
 	}
-	shift := mods&modShift != 0
-	switch g, arrow := arrowGlyphs[value]; {
-	case value == "tab" && shift:
-		b.WriteString("⇧⇥")
-	case value == "tab":
-		b.WriteString("⇥")
-	case arrow:
-		if shift {
-			b.WriteString("shift+")
-		}
-		b.WriteString(g)
-	default:
-		if shift {
-			b.WriteString("shift+")
-		}
-		b.WriteString(value)
+	if value == "tab" && mods&Shift != 0 {
+		return string(join(mods&^Shift, "⇧⇥"))
 	}
-	return b.String()
+	return string(join(mods, g))
 }
 
-// Named lists the named keys that the short spelling writes in its own way,
-// in the order of that spelling: Alt ("alt"), Backspace, Control ("ctrl"),
-// …, ArrowUp ("up"). The function keys are spelled by rule, "f1" for F1, and
-// are not listed.
+// Named lists the physical keys, section by section of the W3C UI Events
+// code values: "backquote", "backslash", …, "key_a", …, "page_down", ….
 func Named() []Key {
-	shorts := make([]string, 0, len(shortNames))
-	for s := range shortNames {
-		shorts = append(shorts, s)
-	}
-	slices.Sort(shorts)
-	out := make([]Key, len(shorts))
-	for i, s := range shorts {
-		out[i] = Key(shortNames[s])
+	out := make([]Key, len(physicalNames))
+	for i, n := range physicalNames {
+		out[i] = Key(n)
 	}
 	return out
 }
 
 // TypesText reports whether a key types text into a field: a character or
-// Space, with no ctrl, alt or meta.
+// space, with no super, ctrl or alt.
 func TypesText(k Key) bool {
-	mods, value := split(k)
-	if mods&(modControl|modAlt|modMeta) != 0 {
-		return false
-	}
-	return value == "Space" || value != "" && !looksNamed(value)
+	mods, value, char := Split(k)
+	return mods&(Super|Ctrl|Alt) == 0 && (char || value == "space")
 }

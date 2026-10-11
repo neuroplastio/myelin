@@ -6,9 +6,10 @@ import (
 	"github.com/neuroplastio/myelin/myelinkey"
 )
 
-// Every key has one spelling, and any other is refused with it.
+// A key is read the way Ghostty reads one: modifiers in any order, aliases
+// and W3C code values, a letter in either case.
 func ExampleParse() {
-	for _, s := range []string{"ctrl+d", "pgdn", "H", "ctrl+shift+a", "shift+h", "Escape", "alt+ctrl+x"} {
+	for _, s := range []string{"ctrl+d", "Shift+Ctrl+A", "cmd+s", "PageDown", "pgdn", "G", "ctrl+key_w", "?"} {
 		k, err := myelinkey.Parse(s)
 		if err != nil {
 			fmt.Println(err)
@@ -17,42 +18,63 @@ func ExampleParse() {
 		fmt.Printf("%s is %s\n", s, k)
 	}
 	// Output:
-	// ctrl+d is Control+d
-	// pgdn is PageDown
-	// H is H
-	// ctrl+shift+a is Control+A
-	// "shift+h": write H
-	// "Escape": write esc
-	// "alt+ctrl+x": write ctrl+alt+x
+	// ctrl+d is ctrl+d
+	// Shift+Ctrl+A is ctrl+shift+a
+	// cmd+s is super+s
+	// PageDown is page_down
+	// pgdn is page_down
+	// G is g
+	// ctrl+key_w is ctrl+key_w
+	// ? is ?
 }
 
-// A key that comes in named by a HOTTY host, a terminal decoder or a
-// toolkit's adapter is made canonical, and then compares with ==.
+// A program can read more strictly: only the canonical spelling, or a
+// capital as Shift with its letter, as vim writes keys.
+func ExampleParseWith() {
+	strict := myelinkey.Options{Strict: true}
+	vim := myelinkey.Options{ShiftedCapitals: true}
+	for _, s := range []string{"Ctrl+d", "esc", "G"} {
+		if _, err := myelinkey.ParseWith(s, strict); err != nil {
+			fmt.Println(err)
+		}
+	}
+	k, _ := myelinkey.ParseWith("G", vim)
+	fmt.Println("with ShiftedCapitals, G is", k)
+	// Output:
+	// "Ctrl+d": write ctrl+d
+	// "esc": write escape
+	// "G": write g, or shift+g for Shift with it
+	// with ShiftedCapitals, G is shift+g
+}
+
+// A key that comes in named as HOTTY names keys now is read into a Key, and
+// then compares with ==.
 func ExampleParseHotty() {
-	for _, name := range []string{"Shift+Control+a", "Control+ ", "Alt+Shift+1", "Hyper+x"} {
+	for _, name := range []string{"Shift+Control+a", "A", "Control+ ", "Meta+PageDown", "Hyper+x"} {
 		k, ok := myelinkey.ParseHotty(name)
 		if !ok {
 			fmt.Printf("%q is not a key\n", name)
 			continue
 		}
-		fmt.Printf("%q is %s, written %s\n", name, k, myelinkey.Format(k))
+		fmt.Printf("%q is %s\n", name, k)
 	}
 	// Output:
-	// "Shift+Control+a" is Control+A, written ctrl+shift+a
-	// "Control+ " is Control+Space, written ctrl+space
-	// "Alt+Shift+1" is Alt+Shift+1, written alt+shift+1
+	// "Shift+Control+a" is ctrl+shift+a
+	// "A" is shift+a
+	// "Control+ " is ctrl+space
+	// "Meta+PageDown" is super+page_down
 	// "Hyper+x" is not a key
 }
 
 // Menus show keys with glyphs for the arrows and Tab.
 func ExampleDisplay() {
-	for _, s := range []string{"ctrl+left", "shift+tab", "pgdn", "G"} {
+	for _, s := range []string{"ctrl+left", "shift+tab", "pgdn", "shift+g"} {
 		k, _ := myelinkey.Parse(s)
 		fmt.Printf("%s shows as %s\n", s, myelinkey.Display(k))
 	}
 	// Output:
 	// ctrl+left shows as ctrl+←
 	// shift+tab shows as ⇧⇥
-	// pgdn shows as pgdn
-	// G shows as G
+	// pgdn shows as page_down
+	// shift+g shows as shift+g
 }

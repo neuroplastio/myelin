@@ -6,24 +6,58 @@ import (
 	"unicode/utf8"
 )
 
-// ParseHotty reads a key's name as the HOTTY protocol writes it, its
-// modifiers in any order ("Shift+Control+a", "Control+ "), and returns its
-// canonical name ("Control+A", "Control+Space"): the modifiers in the order
-// Control, Alt, Meta, Shift; Shift shown in a letter where it can be; Space
-// for a space. ok is false for a name that does not parse.
+// ParseHotty reads a key named as HOTTY's key names are now (SPEC §10.4),
+// its modifiers in any order, and returns it as a [Key]: "Control+a" is
+// "ctrl+a", "Shift+Control+a" and "Control+A" are "ctrl+shift+a", "A" is
+// "shift+a", "!" is "!", "PageDown" is "page_down", "Meta+Enter" is
+// "super+enter", "Control+ " is "ctrl+space". A modifier alone is its left
+// key: "Shift" is "shift_left". ok is false for a name that does not parse.
 //
-// This is how a key comes in from a HOTTY host, from a terminal's bytes or
-// from a UI toolkit's key event, once something has named it.
+// HOTTY's names are moving to the Key's own; this reads the names hosts,
+// terminal decoders and toolkit adapters write until then.
 func ParseHotty(name string) (Key, bool) {
-	mods, value, ok := splitName(name)
+	hmods, value, ok := splitName(name)
 	if !ok {
 		return "", false
 	}
-	mods, value = canonical(mods, value)
-	if value == " " {
-		value = "Space"
+	hmods, value = shiftInChar(hmods, value)
+	var mods Mods
+	for i, m := range hottyMods {
+		if hmods&(1<<i) != 0 {
+			mods |= m
+		}
 	}
-	return Key(join(mods, value)), true
+	switch {
+	case value == " ":
+		value = "space"
+	case isChar(value):
+		if isCapital(value) {
+			mods |= Shift
+		}
+		value = fold(value)
+	default:
+		if left, ok := hottyModKeys[value]; ok {
+			value = left
+		} else if value, ok = physicalOf(value); !ok {
+			return "", false
+		}
+	}
+	return join(mods, value), true
+}
+
+// HOTTY's modifiers, in the order it writes them, and the modifiers they
+// are.
+var (
+	hottyModNames = [...]string{"Control", "Alt", "Meta", "Shift"}
+	hottyMods     = [...]Mods{Ctrl, Alt, Super, Shift}
+)
+
+const hottyShift = 1 << 3
+
+// hottyModKeys are the physical keys HOTTY's lone modifiers are: their
+// left keys.
+var hottyModKeys = map[string]string{
+	"Control": "control_left", "Alt": "alt_left", "Meta": "meta_left", "Shift": "shift_left",
 }
 
 // splitName reads a key's name, its modifiers in any order. The value of
@@ -43,7 +77,7 @@ func splitName(name string) (mods int, value string, ok bool) {
 	if head != "" {
 	next:
 		for _, m := range strings.Split(head, "+") {
-			for i, known := range modNames {
+			for i, known := range hottyModNames {
 				if m == known && mods&(1<<i) == 0 {
 					mods |= 1 << i
 					continue next
@@ -55,16 +89,17 @@ func splitName(name string) (mods int, value string, ok bool) {
 	if value == "Space" {
 		value = " "
 	}
-	if !isChar(value) && !isNamed(value) {
+	if !isHottyChar(value) && !isHottyNamed(value) {
 		return 0, "", false
 	}
 	return mods, value, true
 }
 
-// canonical shows Shift in a letter where it can: Shift with a small letter
-// is its capital, and Shift with a capital is the capital.
-func canonical(mods int, value string) (int, string) {
-	if mods&modShift == 0 || !isChar(value) {
+// shiftInChar shows Shift in a letter where it can, as HOTTY does: Shift
+// with a small letter is its capital, and Shift with a capital is the
+// capital.
+func shiftInChar(mods int, value string) (int, string) {
+	if mods&hottyShift == 0 || !isHottyChar(value) {
 		return mods, value
 	}
 	r, n := utf8.DecodeRuneInString(value)
@@ -72,17 +107,17 @@ func canonical(mods int, value string) (int, string) {
 		return mods, value
 	}
 	if up := unicode.ToUpper(r); up != r {
-		return mods &^ modShift, string(up)
+		return mods &^ hottyShift, string(up)
 	}
 	if unicode.ToLower(r) != r {
-		return mods &^ modShift, value
+		return mods &^ hottyShift, value
 	}
 	return mods, value
 }
 
-// isChar reports whether a key's value is a character: one grapheme
-// cluster that is not a control.
-func isChar(v string) bool {
+// isHottyChar reports whether a key's value is a character in HOTTY: one
+// grapheme cluster that is not a control, the space bar's " " included.
+func isHottyChar(v string) bool {
 	if v == "" || clusterLen(v) != len(v) {
 		return false
 	}
@@ -90,9 +125,9 @@ func isChar(v string) bool {
 	return r != utf8.RuneError && !unicode.IsControl(r)
 }
 
-// isNamed reports whether a key's value is a named key's value: a capital,
-// then letters and digits ("Enter", "ArrowLeft", "F12").
-func isNamed(v string) bool {
+// isHottyNamed reports whether a key's value is a named key's value in
+// HOTTY: a capital, then letters and digits ("Enter", "ArrowLeft", "F12").
+func isHottyNamed(v string) bool {
 	if len(v) < 2 || v[0] < 'A' || v[0] > 'Z' {
 		return false
 	}
