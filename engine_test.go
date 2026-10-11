@@ -395,7 +395,7 @@ func TestShallowUnbindWarns(t *testing.T) {
 		t.Fatalf("a warning refused the keymap: %+v", problems)
 	}
 	if len(problems) != 1 || !problems[0].Warning || problems[0].Source != "test.kdl:2" ||
-		problems[0].Text != `unbind "shift+x" leaves shift+x → forwards.stopAll in context "forwards" (default.kdl:9), which wins there; unbind it in that context` {
+		problems[0].Text != `unbind "X" leaves X → forwards.stopAll in context "forwards" (default.kdl:9), which wins there; unbind it in that context` {
 		t.Fatalf("problems = %+v", problems)
 	}
 	if exact(t, km, "X", Path{node("forwards")}) != "" {

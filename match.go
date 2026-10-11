@@ -239,8 +239,8 @@ func (km *Keymap) Shadowed(paths ...Path) []Problem {
 				if du >= 0 && dd > du {
 					out = append(out, Problem{Source: u.b.Source, Warning: true, Text: fmt.Sprintf(
 						"%s → %s is shadowed where %s: %s's %s → %s (%s) has a deeper context there",
-						myelinkey.FormatSeq(u.b.Seq), describe(&u.b), FormatPath(paths[k]), d.b.Layer,
-						myelinkey.FormatSeq(d.b.Seq), describe(&d.b), d.b.Source)})
+						written(u.b.Keys), describe(&u.b), FormatPath(paths[k]), d.b.Layer,
+						written(d.b.Keys), describe(&d.b), d.b.Source)})
 					break
 				}
 			}

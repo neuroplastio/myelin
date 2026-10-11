@@ -73,9 +73,8 @@ license is Apache-2.0.
 2. Take one small leg and claim it on the board. Shared files can be
    changed by other sessions, so pull before editing them.
 3. Implement it. `mise exec -- make check` must pass. Go and msgp aren't
-   on PATH in an agent shell, so they run through mise. While myelin is
-   private, CI is skipped (D8): this local run is the gate, and the journal
-   entry says so.
+   on PATH in an agent shell, so they run through mise. CI runs the same
+   gate on every push (D8), so run it locally first.
 4. Record any decision, add a journal bullet, update the board, then commit
    and push to `main`. There are no feature branches, and nothing is ever
    force-pushed.
@@ -93,5 +92,5 @@ mise exec -- make fuzz       # fuzz myelinkey's parsers for 60 s each
 ```
 
 CI (`.github/workflows/ci.yml`) runs `scripts/check.sh` on `ubuntu-latest`
-once myelin is public (D8), with the tools mise.toml pins, and then tests the
+on every push to main (D8), with the tools mise.toml pins, and then tests the
 root module at its go.mod floor (D11).

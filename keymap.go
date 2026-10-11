@@ -332,11 +332,15 @@ func (km *Keymap) shallowUnbinds() []Problem {
 			}
 			out = append(out, Problem{Source: u.b.Source, Warning: true, Text: fmt.Sprintf(
 				"unbind %q leaves %s → %s in context %q (%s), which wins there; unbind it in that context",
-				myelinkey.FormatSeq(u.b.Seq), myelinkey.FormatSeq(b.b.Seq), b.b.Action, b.b.When, b.b.Source)})
+				written(u.b.Keys), written(b.b.Keys), b.b.Action, b.b.When, b.b.Source)})
 		}
 	}
 	return out
 }
+
+// written is a sequence as its Bind writes it, its words separated by one
+// space: what a message quotes, so that it reads as the user's file does.
+func written(keys string) string { return strings.Join(myelinkey.SplitSeq(keys), " ") }
 
 // hasPrefix reports whether seq begins with prefix.
 func hasPrefix(seq, prefix []myelinkey.Key) bool {
