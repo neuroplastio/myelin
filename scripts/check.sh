@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # myelin's gate (make check, and CI): gofmt, vet and test (the root module
-# and key), key under TinyGo, msgp's generated codecs current, and key's
-# HOTTY conformance vectors current.
+# and myelinkey), myelinkey under TinyGo, msgp's generated codecs current,
+# and myelinkey's HOTTY conformance vectors current.
 #
 # A plain script rather than Makefile recipes, so that CI runs the same gate
 # on a runner image without make.
@@ -23,21 +23,21 @@ echo "== vet"
 echo "== test"
 "$GO" test ./...
 
-# The key module needs nothing but the standard library and builds with
+# The myelinkey module needs nothing but the standard library and builds with
 # TinyGo, whose web builds run it as 32-bit wasm with 64 KB stacks.
-echo "== key"
-"$GO" -C key vet ./...
-"$GO" -C key test ./...
+echo "== myelinkey"
+"$GO" -C myelinkey vet ./...
+"$GO" -C myelinkey test ./...
 if ! command -v tinygo >/dev/null; then
-	echo "key: tinygo is not on PATH; run the gate through mise: mise exec -- make check"
+	echo "myelinkey: tinygo is not on PATH; run the gate through mise: mise exec -- make check"
 	exit 1
 fi
-(cd key && tinygo test -target wasm -stack-size=64KB .)
+(cd myelinkey && tinygo test -target wasm -stack-size=64KB .)
 # Its vectors are HOTTY's, from the hotty repository at hotty-commit.
-commit=$(cat key/testdata/conformance/hotty-commit)
+commit=$(cat myelinkey/testdata/conformance/hotty-commit)
 if ! curl -fsSL "https://raw.githubusercontent.com/neuroplastio/hotty/$commit/conformance/vectors.json" |
-	cmp -s - key/testdata/conformance/vectors.json; then
-	echo "key: testdata/conformance/vectors.json is not hotty $commit's; run make vectors"
+	cmp -s - myelinkey/testdata/conformance/vectors.json; then
+	echo "myelinkey: testdata/conformance/vectors.json is not hotty $commit's; run make vectors"
 	exit 1
 fi
 
