@@ -36,8 +36,8 @@ func Example() {
 	defaults := myelin.Doc{Layer: "defaults", Binds: []myelin.Bind{
 		{Keys: "j", Action: "down"},
 		{Keys: "g g", Action: "top"},
-		{Keys: "esc", Action: "back"},
-		{Keys: "esc", Action: "close-filter", When: "field"},
+		{Keys: "escape", Action: "back"},
+		{Keys: "escape", Action: "close-filter", When: "field"},
 		{Keys: "enter", Action: "open", When: "list"},
 	}}
 	user := myelin.Doc{Layer: "user", Binds: []myelin.Bind{
@@ -70,27 +70,31 @@ func Example() {
 	}
 	fmt.Println("enter in a list:", match("enter", home))
 	fmt.Println("enter in /tmp:", match("enter", tmp))
-	fmt.Println("esc in the filter:", match("esc", filter))
+	fmt.Println("escape in the filter:", match("escape", filter))
 	fmt.Println("j in the filter:", match("j", filter))
 	fmt.Println("g:", match("g", home))
 	// Output:
 	// enter in a list: open
 	// enter in /tmp: preview
-	// esc in the filter: close-filter
+	// escape in the filter: close-filter
 	// j in the filter: nothing
 	// g: wait for more
 }
 
 // A program checks its file's sequences while it parses it, before it has
-// a keymap.
-func ExampleCheckSeq() {
-	for _, s := range []string{"<leader> f n", "g g", "ctrl+X"} {
-		fmt.Printf("%s: %v\n", s, myelin.CheckSeq(s))
+// a keymap. An alias is taken on trust: the keymap may name it.
+func ExampleEnv_CheckSeq() {
+	env, err := myelin.NewEnv(myelin.Schema{Nodes: []myelin.NodeType{{Name: "list"}}, Layers: []string{"defaults"}})
+	if err != nil {
+		panic(err)
+	}
+	for _, s := range []string{"<leader> f n", "Ctrl+X g", "meta+x"} {
+		fmt.Printf("%s: %v\n", s, env.CheckSeq(s))
 	}
 	// Output:
 	// <leader> f n: <nil>
-	// g g: <nil>
-	// ctrl+X: "ctrl+X": write ctrl+shift+x
+	// Ctrl+X g: <nil>
+	// meta+x: "meta+x" is not a key (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)
 }
 
 // Build checks each binding with the program's own rules: an error refuses
@@ -115,7 +119,7 @@ func ExampleEnv_Build() {
 	}
 	user := myelin.Doc{Layer: "user", Binds: []myelin.Bind{
 		{Keys: "J", Action: "scroll", Source: "config:2"},
-		{Keys: "shift+k", Action: "up", Source: "config:3"},
+		{Keys: "meta+k", Action: "up", Source: "config:3"},
 		{Keys: "x", Action: "explode", Source: "config:4"},
 		{Keys: "y", Action: "up", When: "lsit", Source: "config:5"},
 	}}
@@ -130,7 +134,7 @@ func ExampleEnv_Build() {
 	fmt.Println("loaded:", km != nil)
 	// Output:
 	// config:2: warning: "scroll" is going away: use "down"
-	// config:3: error: "shift+k": write K
+	// config:3: error: "meta+k" is not a key (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)
 	// config:4: error: "explode" is not an action
 	// config:5: error: context "lsit": undeclared reference to 'lsit' (a context reads focus, list)
 	// loaded: false
@@ -213,11 +217,12 @@ func ExampleFeed() {
 // The leader's menu: one item per key, a group where more keys follow, and
 // what the program says does nothing now dimmed.
 func ExampleKeymap_Menu() {
-	// 1. A leader key, a group that labels a prefix, and labelled bindings.
+	// 1. A leader key, which bindings write as the alias <leader>, a group
+	// that labels a prefix, and labelled bindings.
 	env, err := myelin.NewEnv(myelin.Schema{
-		Nodes:  []myelin.NodeType{{Name: "list"}},
-		Layers: []string{"defaults"},
-		Leader: "space",
+		Nodes:   []myelin.NodeType{{Name: "list"}},
+		Layers:  []string{"defaults"},
+		Aliases: map[string]string{"leader": "space"},
 	})
 	if err != nil {
 		panic(err)
@@ -228,7 +233,7 @@ func ExampleKeymap_Menu() {
 			{Keys: "<leader> f n", Action: "file.new", Label: "New file"},
 			{Keys: "<leader> f d", Action: "file.delete", Label: "Delete"},
 			{Keys: "<leader> q", Action: "quit", Label: "Quit"},
-			{Keys: "<leader> left", Action: "back"},
+			{Keys: "<leader> arrow_left", Action: "back"},
 		},
 	}}, nil)
 	if km == nil {
@@ -239,7 +244,7 @@ func ExampleKeymap_Menu() {
 	// program says what applies here: in a read-only list, not editing.
 	readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Action != "file.delete" }
 
-	leader, _ := km.Leader()
+	leader, _ := km.Alias("leader")
 	show := func(m myelin.Menu) {
 		fmt.Printf("%s (%s)\n", myelinkey.FormatSeq(m.Seq), m.Label)
 		for _, it := range m.Items {
@@ -251,8 +256,8 @@ func ExampleKeymap_Menu() {
 		}
 	}
 	p := myelin.Path{{Name: "list"}}
-	show(km.Menu([]myelinkey.Key{leader}, p, readOnly))
-	show(km.Menu([]myelinkey.Key{leader, "f"}, p, readOnly))
+	show(km.Menu(leader, p, readOnly))
+	show(km.Menu(slices.Concat(leader, []myelinkey.Key{"f"}), p, readOnly))
 	// Output:
 	// space ()
 	//   f  +file enabled=false
@@ -325,7 +330,7 @@ func Example_config() {
 		{"enter", "/tmp", tmp},
 		{"d d", "a list", home},
 		{"ctrl+d", "a list", home},
-		{"esc", "the filter", filter},
+		{"escape", "the filter", filter},
 		{"g g", "a list", home},
 	} {
 		seq, _ := myelinkey.ParseSeq(q.keys)
@@ -340,6 +345,6 @@ func Example_config() {
 	// enter in /tmp: preview
 	// d d in a list: nothing
 	// ctrl+d in a list: delete
-	// esc in the filter: close-filter
+	// escape in the filter: close-filter
 	// g g in a list: top
 }

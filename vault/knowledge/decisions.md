@@ -296,3 +296,79 @@ rest of D13 stands.
   `myelinkey.Key`, `myelinkey.Parse`, `myelinkey.ParseHotty`, and so on.
 - The `key` module (5790483) stays in the history only; nothing requires
   it once consumers move.
+
+### D15 — Ghostty's key names: characters, physical keys and aliases
+**2026-10-11.** The maintainer: "we should follow ghostty's decisions here,
+they are very sound"; "myelin should support both, it's up to the app to
+decide which ones to use / send"; "<leader> should be a registered key
+sequence … Just having <leader> as a magic string is bad"; "let's not
+refuse. For stricter parsing, we should use configuration options"; "I
+would change HOTTY spec to match what we are working on here". Supersedes
+D3 whole, D12.3 and D12.6's "§10.4 wins" (HOTTY's names now follow
+myelinkey's), and D13.1's `Format`.
+1. **A Key is a canonical name in Ghostty's vocabulary,** a string: its
+   modifiers as `super+ctrl+alt+shift+`, in that order, then a physical key
+   or a character. Two Keys are the same keystroke exactly when they are
+   `==`. `super` is the command key: Command, or Windows or Super.
+2. **Physical keys are Ghostty's names:** the W3C UI Events code values in
+   snake case (`escape`, `page_down`, `arrow_up`, `key_a`, `digit_1`,
+   `f1`–`f25`, `numpad_enter`, `context_menu`). A modifier key alone is a
+   sided key, such as `shift_left`.
+3. **A character is one grapheme cluster** that isn't white space or a
+   control, and a letter is written small. Space, Enter, Tab, Backspace
+   and Escape are physical keys only.
+4. **One key per press, physical or character: the program's choice.**
+   myelin never matches one kind against the other. Where something sees
+   both for one press and a keymap binds both, the physical binding wins,
+   as in Ghostty. Feed takes one key; one that takes a press with both
+   kinds may come later, alongside it.
+5. **Shift with a letter is a modifier:** `shift+g`, `ctrl+shift+a`.
+   Otherwise a letter's case doesn't count, so Caps Lock without Shift is
+   `a`. Any other character shows Shift itself: Shift with / is `?`.
+   `shift+1` is a key apart, which a program sends only when it can't tell
+   what Shift types, and Build warns of one in a binding.
+6. **The default reading is Ghostty's.** It reads:
+   - modifiers in any order and case, with Ghostty's aliases (`cmd`,
+     `command`, `opt`, `option`, `control`);
+   - W3C code values (`PageDown`, `KeyA`);
+   - a letter in either case;
+   - other keymaps' names: `esc`, `pgup`, `pgdn`, `pageup`, `pagedown`,
+     `up`, `down`, `left` and `right`.
+
+   It refuses a repeated modifier, and `meta`, which could mean `super` or
+   Emacs's Alt: the error names both.
+7. **Two options, in the Schema.**
+   - `StrictKeys` reads only canonical names, and refuses any other
+     spelling with the canonical one.
+   - `ShiftedCapitals` reads a capital as Shift with its letter, as vim
+     does: `G` is `shift+g`.
+8. **Aliases.** `<name>` in a sequence stands for a whole sequence, from
+   `Schema.Aliases` or `Doc.Aliases`.
+   - For each name, the highest layer's alias wins, then the later
+     document's, then the schema's. A dropped layer's aliases go with it.
+   - A name is ASCII letters, digits, `_` and `-`. An alias's keys can't
+     name an alias, and an unknown alias is a build error.
+   - `<leader>` is just an alias. `Keymap.Alias(name)` and
+     `Arm(km, name, …)` replace `Leader()`.
+   - `CheckSeq` becomes `Env.CheckSeq`, which reads keys with the schema's
+     options and takes an alias on trust.
+9. **Display** is the canonical name, with glyphs for the arrows and Tab:
+   `ctrl+←`, `⇥`, `⇧⇥`.
+10. **HOTTY follows.** SPEC §10.4 is amended in place to these names. The
+    maintainer, relayed by the hotty agent: "Keep your work in 0.2, do not
+    bump the spec. Breaking changes are fine as we control the whole stack
+    today".
+    - Until then, `ParseHotty` reads §10.4's names onto these keys:
+      `Control+A` is `ctrl+shift+a`, `PageDown` is `page_down`, `Meta` is
+      `super`, and a lone `Shift` is `shift_left`. The vectors test that
+      mapping.
+    - When §10.4 moves, `ParseHotty` goes, and the vectors test the names
+      directly.
+11. **myelinkey's API:**
+    - `Parse`, and `ParseWith(s, Options)`;
+    - `Split(k)`, returning the modifiers, the value and whether the value
+      is a character;
+    - `Mods`, with `Super`, `Ctrl`, `Alt` and `Shift`;
+    - `Named`, which lists the physical keys.
+
+    `Format` is gone, because a Key is its own spelling.

@@ -21,8 +21,9 @@ a TUI, a GUI or anything else that takes keys.
   `list.dir.startsWith('/tmp')`. The deepest context wins.
 - 🧱 **Layers.** Defaults, extensions, the user's config: a higher layer
   overrides a lower one, and a config can start from nothing.
-- ⌨️ **One spelling per key.** `ctrl+d`, `pgdn`, `G`, `g g`, `<leader> f n`.
-  Any other way of writing a key is refused with the right one.
+- ⌨️ **Keys named as Ghostty names them.** `ctrl+d`, `shift+g`,
+  `page_down`, `g g`, `<leader> f n`. A key is a character or a physical
+  key, and every way of writing it comes out as one name.
 - 🗂️ **Which-key menus.** One level, or the whole tree, as data that a TUI,
   a GUI or a phone can draw.
 - ⏱️ **Time is a value.** `now` goes in and a deadline comes out. No clock,
@@ -61,7 +62,7 @@ myelin takes the editors' model and makes it a Go library.
 From VS Code it takes flat rules, and a user's config layered over the
 defaults. From Zed it takes contexts over a tree, the rule that the deepest
 wins, and unbinding that wins the same way. The menus under a leader key
-come from Spacemacs.
+come from Spacemacs, and the key names from Ghostty.
 
 ## Install
 
@@ -107,8 +108,8 @@ the user's; here they are literals.
 defaults := myelin.Doc{Layer: "defaults", Binds: []myelin.Bind{
 	{Keys: "j", Action: "down"},
 	{Keys: "g g", Action: "top"},
-	{Keys: "esc", Action: "back"},
-	{Keys: "esc", Action: "close-filter", When: "field"},
+	{Keys: "escape", Action: "back"},
+	{Keys: "escape", Action: "close-filter", When: "field"},
 	{Keys: "enter", Action: "open", When: "list"},
 }}
 user := myelin.Doc{Layer: "user", Binds: []myelin.Bind{
@@ -152,13 +153,13 @@ match := func(keys string, p myelin.Path) string {
 }
 fmt.Println("enter in a list:", match("enter", home))
 fmt.Println("enter in /tmp:", match("enter", tmp))
-fmt.Println("esc in the filter:", match("esc", filter))
+fmt.Println("escape in the filter:", match("escape", filter))
 fmt.Println("j in the filter:", match("j", filter))
 fmt.Println("g:", match("g", home))
 // Output:
 // enter in a list: open
 // enter in /tmp: preview
-// esc in the filter: close-filter
+// escape in the filter: close-filter
 // j in the filter: nothing
 // g: wait for more
 ```
@@ -178,9 +179,9 @@ context and the keys bound in it:
 
 ```json
 [
-  { "bindings": { "j": "down", "k": "up", "g g": "top", "esc": "back" } },
+  { "bindings": { "j": "down", "k": "up", "g g": "top", "escape": "back" } },
   { "context": "list", "bindings": { "enter": "open", "d d": "delete" } },
-  { "context": "field", "bindings": { "esc": "close-filter" } }
+  { "context": "field", "bindings": { "escape": "close-filter" } }
 ]
 ```
 
@@ -255,7 +256,7 @@ for _, q := range []struct {
 	{"enter", "/tmp", tmp},
 	{"d d", "a list", home},
 	{"ctrl+d", "a list", home},
-	{"esc", "the filter", filter},
+	{"escape", "the filter", filter},
 	{"g g", "a list", home},
 } {
 	seq, _ := myelinkey.ParseSeq(q.keys)
@@ -270,7 +271,7 @@ for _, q := range []struct {
 // enter in /tmp: preview
 // d d in a list: nothing
 // ctrl+d in a list: delete
-// esc in the filter: close-filter
+// escape in the filter: close-filter
 // g g in a list: top
 ```
 
@@ -371,15 +372,16 @@ fmt.Println("x matches nothing:", res.Dropped)
 
 ## Which-key menus
 
-A leader key, a group that labels a prefix, and labelled bindings:
+A leader key, which bindings write as the alias `<leader>`, a group that
+labels a prefix, and labelled bindings:
 
 <!-- example:ExampleKeymap_Menu#1 -->
 
 ```go
 env, err := myelin.NewEnv(myelin.Schema{
-	Nodes:  []myelin.NodeType{{Name: "list"}},
-	Layers: []string{"defaults"},
-	Leader: "space",
+	Nodes:   []myelin.NodeType{{Name: "list"}},
+	Layers:  []string{"defaults"},
+	Aliases: map[string]string{"leader": "space"},
 })
 if err != nil {
 	panic(err)
@@ -390,7 +392,7 @@ km, problems := env.Build([]myelin.Doc{{Layer: "defaults",
 		{Keys: "<leader> f n", Action: "file.new", Label: "New file"},
 		{Keys: "<leader> f d", Action: "file.delete", Label: "Delete"},
 		{Keys: "<leader> q", Action: "quit", Label: "Quit"},
-		{Keys: "<leader> left", Action: "back"},
+		{Keys: "<leader> arrow_left", Action: "back"},
 	},
 }}, nil)
 if km == nil {
@@ -406,7 +408,7 @@ program draws it however it likes.
 ```go
 readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Action != "file.delete" }
 
-leader, _ := km.Leader()
+leader, _ := km.Alias("leader")
 show := func(m myelin.Menu) {
 	fmt.Printf("%s (%s)\n", myelinkey.FormatSeq(m.Seq), m.Label)
 	for _, it := range m.Items {
@@ -418,8 +420,8 @@ show := func(m myelin.Menu) {
 	}
 }
 p := myelin.Path{{Name: "list"}}
-show(km.Menu([]myelinkey.Key{leader}, p, readOnly))
-show(km.Menu([]myelinkey.Key{leader, "f"}, p, readOnly))
+show(km.Menu(leader, p, readOnly))
+show(km.Menu(slices.Concat(leader, []myelinkey.Key{"f"}), p, readOnly))
 // Output:
 // space ()
 //   f  +file enabled=false
@@ -430,15 +432,21 @@ show(km.Menu([]myelinkey.Key{leader, "f"}, p, readOnly))
 //   d  Delete enabled=false
 ```
 
-## One spelling per key
+## Keys
 
-Every key has exactly one spelling, and any other is refused with it, so a
-keymap, a menu and an error message always show a key the same way.
+A key is named as [Ghostty](https://ghostty.org/docs/config/keybind) names
+it: its modifiers in the order `super+ctrl+alt+shift+`, then a character
+(`g`, `?`), which follows the keyboard layout, or a physical key
+(`page_down`, `key_w`), which stays in its place. myelin reads keys as
+Ghostty does, and every way of writing a key comes out as one name, so a
+keymap, a menu and an error message show it the same way. A program that
+wants one spelling per key reads strictly, and any other spelling is
+refused with the one to use.
 
 <!-- example:myelinkey.ExampleParse -->
 
 ```go
-for _, s := range []string{"ctrl+d", "pgdn", "H", "ctrl+shift+a", "shift+h", "Escape", "alt+ctrl+x"} {
+for _, s := range []string{"ctrl+d", "Shift+Ctrl+A", "cmd+s", "PageDown", "pgdn", "G", "ctrl+key_w", "?"} {
 	k, err := myelinkey.Parse(s)
 	if err != nil {
 		fmt.Println(err)
@@ -447,13 +455,14 @@ for _, s := range []string{"ctrl+d", "pgdn", "H", "ctrl+shift+a", "shift+h", "Es
 	fmt.Printf("%s is %s\n", s, k)
 }
 // Output:
-// ctrl+d is Control+d
-// pgdn is PageDown
-// H is H
-// ctrl+shift+a is Control+A
-// "shift+h": write H
-// "Escape": write esc
-// "alt+ctrl+x": write ctrl+alt+x
+// ctrl+d is ctrl+d
+// Shift+Ctrl+A is ctrl+shift+a
+// cmd+s is super+s
+// PageDown is page_down
+// pgdn is page_down
+// G is g
+// ctrl+key_w is ctrl+key_w
+// ? is ?
 ```
 
 ## Documentation

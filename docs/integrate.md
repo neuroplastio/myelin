@@ -33,9 +33,15 @@ a context that names anything else fails when the keymap loads.
   takes the key.
 - **Layers** are the keymap's layers, lowest first, such as
   `["defaults", "user"]`. At the same depth, a higher layer's binding wins.
-- **`Leader`** is the leader key that `<leader>` stands for, unless a
-  document names its own. **`Timeout`** is how long a sequence waits for
-  its next key.
+- **`Aliases`** name key sequences that bindings write as `<name>`, such
+  as `{"leader": "space"}` for `<leader>`. A document can name its own,
+  and the highest layer's wins. **`Timeout`** is how long a sequence waits
+  for its next key.
+- **How keys are read.** By default keys are read the way Ghostty reads
+  them: modifiers in any order and case, W3C code values, a letter in
+  either case. **`StrictKeys`** accepts only each key's canonical spelling,
+  and the error names it. **`ShiftedCapitals`** reads a capital as Shift
+  with its letter, as vim writes keys: `G` is `shift+g`.
 
 `NewEnv` compiles the schema once. The `Env` it returns is safe for
 concurrent use.
@@ -51,19 +57,23 @@ reports carries it. Properties of your own go in `Props`, which myelin
 passes back without reading.
 
 To report every mistake in a file in one pass, check each sequence as you
-parse it. `CheckSeq` reads a sequence, `<leader>` included, without a
-keymap:
+parse it. `Env.CheckSeq` reads a sequence as `Build` will, without a
+keymap. It takes an alias on trust, since a document may name it:
 
-<!-- example:ExampleCheckSeq -->
+<!-- example:ExampleEnv_CheckSeq -->
 
 ```go
-for _, s := range []string{"<leader> f n", "g g", "ctrl+X"} {
-	fmt.Printf("%s: %v\n", s, myelin.CheckSeq(s))
+env, err := myelin.NewEnv(myelin.Schema{Nodes: []myelin.NodeType{{Name: "list"}}, Layers: []string{"defaults"}})
+if err != nil {
+	panic(err)
+}
+for _, s := range []string{"<leader> f n", "Ctrl+X g", "meta+x"} {
+	fmt.Printf("%s: %v\n", s, env.CheckSeq(s))
 }
 // Output:
 // <leader> f n: <nil>
-// g g: <nil>
-// ctrl+X: "ctrl+X": write ctrl+shift+x
+// Ctrl+X g: <nil>
+// meta+x: "meta+x" is not a key (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)
 ```
 
 ## Build the keymap
@@ -96,7 +106,7 @@ check := func(b myelin.Binding) error {
 }
 user := myelin.Doc{Layer: "user", Binds: []myelin.Bind{
 	{Keys: "J", Action: "scroll", Source: "config:2"},
-	{Keys: "shift+k", Action: "up", Source: "config:3"},
+	{Keys: "meta+k", Action: "up", Source: "config:3"},
 	{Keys: "x", Action: "explode", Source: "config:4"},
 	{Keys: "y", Action: "up", When: "lsit", Source: "config:5"},
 }}
@@ -111,7 +121,7 @@ for _, p := range problems {
 fmt.Println("loaded:", km != nil)
 // Output:
 // config:2: warning: "scroll" is going away: use "down"
-// config:3: error: "shift+k": write K
+// config:3: error: "meta+k" is not a key (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)
 // config:4: error: "explode" is not an action
 // config:5: error: context "lsit": undeclared reference to 'lsit' (a context reads focus, list)
 // loaded: false
@@ -220,37 +230,54 @@ fmt.Println("x matches nothing:", res.Dropped)
 // x matches nothing: [x]
 ```
 
-`Arm` returns the state as if the leader had been typed, for a tap or a
-touch-screen button that opens the leader's menu.
+`Arm` returns the state as if an alias's keys had been typed, such as
+`Arm(km, "leader", path, now)`, for a tap or a touch-screen button that
+opens the leader's menu.
 
 ## Keys from your input
 
-myelin compares keys by name: a `myelinkey.Key` is a keystroke's
-canonical name in the HOTTY protocol. Whatever reads your input names the
-key, and `myelinkey.ParseHotty` makes that name canonical, its modifiers in
-any order:
+A `myelinkey.Key` is a keystroke's canonical name, and two keys are the
+same keystroke exactly when they are `==`. Name each key from your input
+as either a character or a physical key. Which one is your choice, and a
+binding matches only a key of its own kind:
+
+- **A character** follows the layout. Ctrl with the key that types w is
+  `ctrl+w` on any layout. Send characters when a key's letter matters, as
+  in `ctrl+w` to delete a word.
+- **A physical key** stays where it is. `ctrl+key_w` is the key where a
+  US keyboard has W. Send physical keys when position matters, as with
+  WASD.
+
+A key that types no character, such as `enter` or `page_down`, is a
+physical key either way. `myelinkey.Parse` reads a name you build from
+your event's modifiers and its character or its W3C code value:
+`ctrl+w`, `ctrl+KeyW`.
+
+hotty-go names keys the way HOTTY's key names are written now, and
+`myelinkey.ParseHotty` reads those names:
 
 <!-- example:myelinkey.ExampleParseHotty -->
 
 ```go
-for _, name := range []string{"Shift+Control+a", "Control+ ", "Alt+Shift+1", "Hyper+x"} {
+for _, name := range []string{"Shift+Control+a", "A", "Control+ ", "Meta+PageDown", "Hyper+x"} {
 	k, ok := myelinkey.ParseHotty(name)
 	if !ok {
 		fmt.Printf("%q is not a key\n", name)
 		continue
 	}
-	fmt.Printf("%q is %s, written %s\n", name, k, myelinkey.Format(k))
+	fmt.Printf("%q is %s\n", name, k)
 }
 // Output:
-// "Shift+Control+a" is Control+A, written ctrl+shift+a
-// "Control+ " is Control+Space, written ctrl+space
-// "Alt+Shift+1" is Alt+Shift+1, written alt+shift+1
+// "Shift+Control+a" is ctrl+shift+a
+// "A" is shift+a
+// "Control+ " is ctrl+space
+// "Meta+PageDown" is super+page_down
 // "Hyper+x" is not a key
 ```
 
 - A HOTTY host's key event carries the name.
-- A terminal's bytes are named by hotty-go's `DecodeKeys`.
-- A Bubble Tea v2 key is named by hotty-go's `hottytea.KeyName`.
+- hotty-go's `DecodeKeys` names a terminal's bytes.
+- hotty-go's `hottytea.KeyName` names a Bubble Tea v2 key.
 
 Feed the key from your event loop. For a `Deadline`, start a timer that
 calls `Expire` with the time it fired; in Bubble Tea that is `tea.Tick`.
@@ -262,16 +289,18 @@ key that can follow it, a group where more keys follow, or the binding
 that wins there. `Keymap.Tree` nests every level, for a card of every
 binding. Your `applies` function says whether a binding would do anything
 now, and a group is enabled when anything under it is. You word a binding
-that has no label, and you draw the menu, with `DisplayKey` for the keys.
+that has no label, and you draw the menu, with `myelinkey.Display` for
+the keys.
 
 <!-- example:ExampleKeymap_Menu -->
 
 ```go
-// 1. A leader key, a group that labels a prefix, and labelled bindings.
+// 1. A leader key, which bindings write as the alias <leader>, a group
+// that labels a prefix, and labelled bindings.
 env, err := myelin.NewEnv(myelin.Schema{
-	Nodes:  []myelin.NodeType{{Name: "list"}},
-	Layers: []string{"defaults"},
-	Leader: "space",
+	Nodes:   []myelin.NodeType{{Name: "list"}},
+	Layers:  []string{"defaults"},
+	Aliases: map[string]string{"leader": "space"},
 })
 if err != nil {
 	panic(err)
@@ -282,7 +311,7 @@ km, problems := env.Build([]myelin.Doc{{Layer: "defaults",
 		{Keys: "<leader> f n", Action: "file.new", Label: "New file"},
 		{Keys: "<leader> f d", Action: "file.delete", Label: "Delete"},
 		{Keys: "<leader> q", Action: "quit", Label: "Quit"},
-		{Keys: "<leader> left", Action: "back"},
+		{Keys: "<leader> arrow_left", Action: "back"},
 	},
 }}, nil)
 if km == nil {
@@ -293,7 +322,7 @@ if km == nil {
 // program says what applies here: in a read-only list, not editing.
 readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Action != "file.delete" }
 
-leader, _ := km.Leader()
+leader, _ := km.Alias("leader")
 show := func(m myelin.Menu) {
 	fmt.Printf("%s (%s)\n", myelinkey.FormatSeq(m.Seq), m.Label)
 	for _, it := range m.Items {
@@ -305,8 +334,8 @@ show := func(m myelin.Menu) {
 	}
 }
 p := myelin.Path{{Name: "list"}}
-show(km.Menu([]myelinkey.Key{leader}, p, readOnly))
-show(km.Menu([]myelinkey.Key{leader, "f"}, p, readOnly))
+show(km.Menu(leader, p, readOnly))
+show(km.Menu(slices.Concat(leader, []myelinkey.Key{"f"}), p, readOnly))
 // Output:
 // space ()
 //   f  +file enabled=false

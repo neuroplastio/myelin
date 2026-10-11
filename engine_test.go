@@ -9,7 +9,8 @@ import (
 	"github.com/neuroplastio/myelin/myelinkey"
 )
 
-// kubeSchema is kubecom's path, declared to myelin.
+// kubeSchema is kubecom's path, declared to myelin. Its keymaps write keys
+// as vim does, G for shift+g.
 var kubeSchema = Schema{
 	Nodes: []NodeType{
 		{Name: "cluster", Attrs: map[string]Type{"context": "string", "namespace": "string"}},
@@ -27,8 +28,9 @@ var kubeSchema = Schema{
 		{Name: "prompt"}, {Name: "confirm"},
 		{Name: "field", Text: true},
 	},
-	Layers:  []string{"default", "user"},
-	Timeout: 500 * time.Millisecond,
+	Layers:          []string{"default", "user"},
+	ShiftedCapitals: true,
+	Timeout:         500 * time.Millisecond,
 }
 
 // appSchema is an imagined editor's path, for what kubecom's doesn't
@@ -47,7 +49,7 @@ var appSchema = Schema{
 		{Name: "palette", Attrs: map[string]Type{"stage": "string"}},
 	},
 	Layers:  []string{"ext", "core", "user"},
-	Leader:  "ctrl+space",
+	Aliases: map[string]string{"leader": "ctrl+space"},
 	Timeout: time.Second,
 }
 
@@ -123,11 +125,16 @@ func build(t testing.TB, e *Env, docs ...Doc) *Keymap {
 	return km
 }
 
+// keysOf reads a sequence as kubecom's schema does, G as shift+g.
 func keysOf(t testing.TB, s string) []myelinkey.Key {
 	t.Helper()
-	ks, err := myelinkey.ParseSeq(s)
-	if err != nil {
-		t.Fatal(err)
+	var ks []myelinkey.Key
+	for _, w := range myelinkey.SplitSeq(s) {
+		k, err := myelinkey.ParseWith(w, myelinkey.Options{ShiftedCapitals: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		ks = append(ks, k)
 	}
 	return ks
 }
@@ -346,9 +353,9 @@ func TestFieldsKeepTheirText(t *testing.T) {
 	}
 	var next []string
 	for _, it := range km.Menu(nil, field, nil).Items {
-		next = append(next, myelinkey.Format(it.Key))
+		next = append(next, string(it.Key))
 	}
-	if got := strings.Join(next, " "); got != "down ctrl+a y" {
+	if got := strings.Join(next, " "); got != "arrow_down ctrl+a y" {
 		t.Errorf("the menu in a field = %s", got)
 	}
 }
@@ -388,7 +395,7 @@ func TestShallowUnbindWarns(t *testing.T) {
 		t.Fatalf("a warning refused the keymap: %+v", problems)
 	}
 	if len(problems) != 1 || !problems[0].Warning || problems[0].Source != "test.kdl:2" ||
-		problems[0].Text != `unbind "X" leaves X → forwards.stopAll in context "forwards" (default.kdl:9), which wins there; unbind it in that context` {
+		problems[0].Text != `unbind "shift+x" leaves shift+x → forwards.stopAll in context "forwards" (default.kdl:9), which wins there; unbind it in that context` {
 		t.Fatalf("problems = %+v", problems)
 	}
 	if exact(t, km, "X", Path{node("forwards")}) != "" {
@@ -396,37 +403,56 @@ func TestShallowUnbindWarns(t *testing.T) {
 	}
 }
 
-// The leader is an alias: the highest layer's that names one, else the
-// schema's. With none, a <leader> binding is an error.
-func TestTheLeaderIsAnAlias(t *testing.T) {
+// An alias names a sequence, which bindings write as <name>: the highest
+// layer's, the later document's within a layer, else the schema's. A
+// binding that names no alias is an error, and an alias's keys name none.
+func TestAliases(t *testing.T) {
 	e := kubeEnv(t)
-	def := doc("default", b("<leader> n", "ns.switch"))
-	user := Doc{Layer: "user", Leader: "space"}
+	def := doc("default", b("<leader> n", "ns.switch"), b("<go> p", "pods"))
+	user := Doc{Layer: "user", Aliases: map[string]string{"leader": "space", "go": "g o"}}
 	km := build(t, e, def, user)
-	if l, ok := km.Leader(); !ok || l != "Space" {
+	if l, ok := km.Alias("leader"); !ok || len(l) != 1 || l[0] != "space" {
 		t.Fatalf("leader = %q, %v", l, ok)
 	}
-	if exact(t, km, "space n", nil) != "ns.switch" {
-		t.Fatal("<leader> n did not follow the leader to space")
+	if exact(t, km, "space n", nil) != "ns.switch" || exact(t, km, "g o p", nil) != "pods" {
+		t.Fatal("the aliases did not resolve to the user's keys")
 	}
-	// A lower layer's leader loses to a higher one's.
-	km = build(t, e, Doc{Layer: "default", Leader: "ctrl+b", Binds: def.Binds}, user)
-	if l, _ := km.Leader(); l != "Space" {
+	// A lower layer's alias loses to a higher one's, and within a layer the
+	// later document's wins.
+	low := Doc{Layer: "default", Aliases: map[string]string{"leader": "ctrl+b", "go": "x"}, Binds: def.Binds}
+	km = build(t, e, low, user)
+	if l, _ := km.Alias("leader"); l[0] != "space" {
 		t.Fatalf("leader = %q", l)
 	}
-	km, problems := e.Build([]Doc{def}, nil)
-	if km != nil || len(problems) != 1 || problems[0].Source != "test.kdl:1" || problems[0].Text != "<leader> n names <leader>, and no leader is set" {
+	km = build(t, e, user, Doc{Layer: "user", Aliases: map[string]string{"leader": "ctrl+x"}}, low)
+	if l, _ := km.Alias("leader"); l[0] != "ctrl+x" {
+		t.Fatalf("the later document's leader lost: %q", l)
+	}
+	// A dropped layer's aliases go with it.
+	km, problems := e.Build([]Doc{low, {Layer: "user", Drops: []string{"default"}, Binds: []Bind{{Keys: "<go>", Action: "x", Source: "u.kdl:1"}}}}, nil)
+	if km != nil || len(problems) != 1 || problems[0].Text != `"<go>": no alias <go>` {
+		t.Fatalf("a dropped alias: %v, %+v", km, problems)
+	}
+	km, problems = e.Build([]Doc{def}, nil)
+	if km != nil || len(problems) != 2 || problems[0].Source != "test.kdl:1" || problems[0].Text != `"<leader> n": no alias <leader>` {
 		t.Fatalf("no leader: %v, %+v", km, problems)
 	}
-	// The schema's leader stands when no document names one.
+	// The schema's alias stands when no document names one.
 	s := kubeSchema
-	s.Leader = "ctrl+b"
+	s.Aliases = map[string]string{"leader": "ctrl+b"}
 	e2, err := NewEnv(s)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if exact(t, build(t, e2, def), "ctrl+b n", nil) != "ns.switch" {
+	if exact(t, build(t, e2, def, user), "space n", nil) != "ns.switch" ||
+		exact(t, build(t, e2, doc("default", b("<leader> n", "ns.switch"))), "ctrl+b n", nil) != "ns.switch" {
 		t.Fatal("the schema's leader did not stand")
+	}
+	for name, keys := range map[string]string{"leader": "<go> x", "lead er": "x", "": "x", "x": " ", "y": "meta+x"} {
+		s.Aliases = map[string]string{name: keys}
+		if _, err := NewEnv(s); err == nil {
+			t.Errorf("alias %q = %q was declared", name, keys)
+		}
 	}
 }
 
@@ -460,7 +486,7 @@ func TestBuildProblems(t *testing.T) {
 		says    string
 		warning bool
 	}{
-		{"a bad key", doc("user", b("Escape", "x")), "test.kdl:1", `"Escape": write esc`, false},
+		{"a bad key", doc("user", b("meta+x", "x")), "test.kdl:1", `meta is no modifier`, false},
 		{"a bad context", doc("user", Bind{Keys: "x", Action: "x", When: "tabel", Source: "c.kdl:4"}), "c.kdl:4", "undeclared reference", false},
 		{"an unknown action", doc("user", b("x", "nope")), "test.kdl:1", `"nope" is not an action`, false},
 		{"a deprecated action", doc("user", b("x", "old")), "test.kdl:1", `"old" is deprecated`, true},
@@ -469,7 +495,9 @@ func TestBuildProblems(t *testing.T) {
 		{"an empty sequence", doc("user", b(" ", "x")), "test.kdl:1", "an empty key sequence", false},
 		{"an unknown layer", Doc{Layer: "plugin", Source: "p.kdl"}, "p.kdl", `layer "plugin" is not one of default, user`, false},
 		{"a drop upward", Doc{Layer: "default", Drops: []string{"user"}, Source: "d.kdl"}, "d.kdl", "not below it", false},
-		{"a bad leader", Doc{Layer: "user", Leader: "Ctrl+b", Source: "l.kdl"}, "l.kdl", "leader:", false},
+		{"a bad alias", Doc{Layer: "user", Aliases: map[string]string{"leader": "hyper+b"}, Source: "l.kdl"}, "l.kdl", "alias <leader>: ", false},
+		{"an alias's bad name", Doc{Layer: "user", Aliases: map[string]string{"a.b": "x"}, Source: "l.kdl"}, "l.kdl", "an alias's name is", false},
+		{"Shift with no case", doc("user", b("shift+1", "x")), "test.kdl:1", "shift+1: Shift with a character that has no case", true},
 		{"a bad group", Doc{Layer: "user", Groups: []Group{{Keys: "g", Label: "+go", When: "1", Source: "g.kdl:2"}}}, "g.kdl:2", "not a boolean", false},
 	} {
 		km, problems := e.Build([]Doc{tc.doc}, check)
@@ -513,18 +541,18 @@ func TestMenu(t *testing.T) {
 	var got []string
 	for _, it := range menu.Items {
 		if it.Group {
-			got = append(got, myelinkey.Format(it.Key)+"="+it.Label)
+			got = append(got, string(it.Key)+"="+it.Label)
 		} else {
-			got = append(got, myelinkey.Format(it.Key)+"="+it.Binding.Action)
+			got = append(got, string(it.Key)+"="+it.Binding.Action)
 		}
 	}
-	if s := strings.Join(got, " "); s != "g=+goto G=nav.bottom" {
+	if s := strings.Join(got, " "); s != "g=+goto shift+g=nav.bottom" {
 		t.Fatalf("menu = %s", s)
 	}
 	after := km.Menu(keysOf(t, "g"), nil, nil)
 	got = nil
 	for _, it := range after.Items {
-		got = append(got, myelinkey.Format(it.Key)+"="+it.Label)
+		got = append(got, string(it.Key)+"="+it.Label)
 	}
 	if s := strings.Join(got, " "); s != "g= r=relations" || after.Label != "+goto" || len(after.Seq) != 1 {
 		t.Fatalf("menu after g = %s (%q)", s, after.Label)
@@ -567,7 +595,7 @@ func TestKeysFor(t *testing.T) {
 		t.Fatalf("nav.top is not in load order: %v", ks)
 	}
 	// The key column: as it is before with values, then the shorter.
-	if b := km.KeyFor("resources.switch", nil); b == nil || myelinkey.FormatSeq(b.Seq) != "R" {
+	if b := km.KeyFor("resources.switch", nil); b == nil || myelinkey.FormatSeq(b.Seq) != "shift+r" {
 		t.Fatalf("key column for resources.switch = %+v", b)
 	}
 	if b := km.KeyFor("nav.top", nil); b == nil || myelinkey.FormatSeq(b.Seq) != "home" {
@@ -661,17 +689,17 @@ func TestSequencer(t *testing.T) {
 		t.Fatalf("z timed out: %+v", res)
 	}
 
-	// Arm is the leader as if typed.
+	// Arm is an alias as if typed.
 	e := kubeEnv(t)
-	km = build(t, e, Doc{Layer: "default", Leader: "ctrl+b", Binds: []Bind{b("<leader> n", "ns.switch")}})
-	st = Arm(km, nil, t0)
-	if len(st.Seq) != 1 || st.Seq[0] != "Control+b" {
+	km = build(t, e, Doc{Layer: "default", Aliases: map[string]string{"leader": "ctrl+b"}, Binds: []Bind{b("<leader> n", "ns.switch")}})
+	st = Arm(km, "leader", nil, t0)
+	if len(st.Seq) != 1 || st.Seq[0] != "ctrl+b" {
 		t.Fatalf("Arm = %+v", st)
 	}
 	if _, res := Feed(km, st, "n", nil, t0); res.Run == nil || res.Run.Action != "ns.switch" {
 		t.Fatalf("armed n: %+v", res)
 	}
-	if st := Arm(build(t, e, doc("default", b("x", "y"))), nil, t0); len(st.Seq) != 0 {
+	if st := Arm(build(t, e, doc("default", b("x", "y"))), "leader", nil, t0); len(st.Seq) != 0 {
 		t.Fatalf("armed with no leader: %+v", st)
 	}
 }
@@ -744,15 +772,32 @@ func TestPartialEvaluation(t *testing.T) {
 	}
 }
 
-// CheckSeq reads a Bind's sequence: <leader> is a key there.
+// CheckSeq reads a Bind's sequence as Build does, an alias on trust.
 func TestCheckSeq(t *testing.T) {
-	for s, want := range map[string]string{
-		"<leader> p n": "", "g g": "", "<leader>": "",
-		"": "an empty key sequence", "g Escape": "write esc", "<leader> shift+g": "write G", "<Leader> n": "not a key",
+	strict := kubeSchema
+	strict.StrictKeys = true
+	se, err := NewEnv(strict)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		e       *Env
+		s, says string
+	}{
+		{kubeEnv(t), "<leader> p n", ""},
+		{kubeEnv(t), "g g", ""},
+		{kubeEnv(t), "<any_name> G", ""},
+		{kubeEnv(t), "Ctrl+X esc", ""},
+		{kubeEnv(t), "", "an empty key sequence"},
+		{kubeEnv(t), "g meta+x", "meta is no modifier"},
+		{kubeEnv(t), "<a.b> n", "an alias's name is"},
+		{se, "<leader> G ctrl+x", ""},
+		{se, "g Escape", `"Escape": write escape`},
+		{se, "shift+G", `"shift+G": write shift+g`},
 	} {
-		err := CheckSeq(s)
-		if (err == nil) != (want == "") || (err != nil && !strings.Contains(err.Error(), want)) {
-			t.Errorf("CheckSeq(%q) = %v, want %q", s, err, want)
+		err := tc.e.CheckSeq(tc.s)
+		if (err == nil) != (tc.says == "") || (err != nil && !strings.Contains(err.Error(), tc.says)) {
+			t.Errorf("CheckSeq(%q) = %v, want %q", tc.s, err, tc.says)
 		}
 	}
 }

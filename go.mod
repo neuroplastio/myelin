@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	cel.dev/cel-go v0.32.0
-	github.com/neuroplastio/myelin/myelinkey v0.0.0-20261011092849-2f34a939f3ea
+	github.com/neuroplastio/myelin/myelinkey v0.0.0-20261011103422-0036c3fd18ac
 	github.com/tinylib/msgp v1.6.5
 )
 

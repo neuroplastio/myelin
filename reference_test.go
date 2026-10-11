@@ -16,8 +16,8 @@ import (
 
 var update = flag.Bool("update", false, "rewrite generated docs")
 
-// docs/keymaps.md's table of named keys is generated from the spelling, and
-// the gate fails when it drifts. Rewrite it with go test -run
+// docs/keymaps.md's table of physical keys is generated from myelinkey,
+// and the gate fails when it drifts. Rewrite it with go test -run
 // TestReferenceKeys -update.
 func TestReferenceKeys(t *testing.T) {
 	const file = "docs/keymaps.md"
@@ -31,7 +31,7 @@ func TestReferenceKeys(t *testing.T) {
 	if i < 0 || j < i {
 		t.Fatalf("%s has no %q … %q", file, begin, end)
 	}
-	got := page[:i+len(begin)] + keyTable() + page[j:]
+	got := page[:i+len(begin)] + keyTable(t) + page[j:]
 	if *update {
 		if err := os.WriteFile(file, []byte(got), 0o644); err != nil {
 			t.Fatal(err)
@@ -43,19 +43,37 @@ func TestReferenceKeys(t *testing.T) {
 	}
 }
 
-// keyTable is the named keys as the page lists them: each short name, its
-// HOTTY name and how menus show it, then the ones spelled by rule.
-func keyTable() string {
+// keyTable is the physical keys as the page lists them: the ones keymaps
+// bind most, each with its W3C code value and how menus show it, then
+// every name.
+func keyTable(t *testing.T) string {
 	var b strings.Builder
-	b.WriteString("\n| Write | Key | Menus show |\n|-------|-----|------------|\n")
-	row := func(k myelinkey.Key) {
-		fmt.Fprintf(&b, "| `%s` | %s | `%s` |\n", myelinkey.Format(k), k, myelinkey.Display(k))
+	b.WriteString("\n| Write | W3C code value | Menus show |\n|-------|----------------|------------|\n")
+	for _, k := range []myelinkey.Key{"escape", "enter", "tab", "space", "backspace", "delete", "insert",
+		"home", "end", "page_up", "page_down", "arrow_up", "arrow_down", "arrow_left", "arrow_right"} {
+		w := w3cName(k)
+		if back, err := myelinkey.Parse(w); err != nil || back != k {
+			t.Fatalf("%s's W3C code value %s reads as %q, %v", k, w, back, err)
+		}
+		fmt.Fprintf(&b, "| `%s` | `%s` | `%s` |\n", k, w, myelinkey.Display(k))
 	}
-	for _, k := range myelinkey.Named() {
-		row(k)
+	b.WriteString("| `f1` … `f25` | `F1` … `F25` | `f1` … `f25` |\n\nEvery physical key:")
+	for i, k := range myelinkey.Named() {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		fmt.Fprintf(&b, " `%s`", k)
 	}
-	row("Shift+Tab")
-	b.WriteString("| `f1`, `f2`, … | F1, F2, … | `f1`, `f2`, … |\n\n")
+	b.WriteString(".\n\n")
+	return b.String()
+}
+
+// w3cName is a physical key's W3C code value: "page_down" is "PageDown".
+func w3cName(k myelinkey.Key) string {
+	var b strings.Builder
+	for _, w := range strings.Split(string(k), "_") {
+		b.WriteString(strings.ToUpper(w[:1]) + w[1:])
+	}
 	return b.String()
 }
 

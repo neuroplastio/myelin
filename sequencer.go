@@ -58,12 +58,13 @@ func Expire(km *Keymap, st Pending, now time.Time) (Pending, Result) {
 	return Pending{}, Result{Dropped: st.Seq}
 }
 
-// Arm is the leader as if it had been typed on the path at now: a tap, or a
-// phone's button where there is no ctrl to press. With no leader it is the
-// empty state.
-func Arm(km *Keymap, p Path, now time.Time) Pending {
-	if !km.hasLeader {
+// Arm is an alias's keys as if they had been typed on the path at now, by
+// the alias's name: a tap, or a phone's button where there is no ctrl to
+// press, arms "leader". With no such alias it is the empty state.
+func Arm(km *Keymap, alias string, p Path, now time.Time) Pending {
+	seq, ok := km.aliases[alias]
+	if !ok {
 		return Pending{}
 	}
-	return Pending{Seq: []myelinkey.Key{km.leader}, Path: p, Deadline: now.Add(km.env.schema.Timeout)}
+	return Pending{Seq: slices.Clone(seq), Path: p, Deadline: now.Add(km.env.schema.Timeout)}
 }

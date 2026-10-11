@@ -18,68 +18,77 @@ what a context is, and which binding wins.
 
 A key is written as its modifiers, then the key: `ctrl+d`, `alt+x`,
 `ctrl+alt+delete`. A sequence is keys separated by spaces: `g g`,
-`ctrl+x d`, `<leader> f n`.
+`ctrl+x d`, `<leader> f n`. Keys are named as
+[Ghostty](https://ghostty.org/docs/config/keybind) names them.
 
-Every key has exactly one spelling:
+- **Modifiers** are `super`, `ctrl`, `alt` and `shift`. `super` is the
+  command key: Command on macOS, the Windows key elsewhere. They can be
+  written in any order and case, and `cmd`, `command`, `opt`, `option` and
+  `control` work too. Keys are shown with them in the order
+  `super+ctrl+alt+shift+`.
+- **A key is a character or a physical key.**
+  - A character is what the key types: `a`, `:`, `?`, `ä`. It follows the
+    keyboard layout, so `ctrl+z` is Ctrl with whichever key types z.
+  - A physical key is a place on the keyboard, named by its [W3C code
+    value](https://www.w3.org/TR/uievents-code/) in snake case: `escape`,
+    `page_down`, `arrow_up`, `f5`, `key_z`, `digit_1`. `ctrl+key_z` is the
+    key where a US keyboard has Z, whatever the layout types there.
+  - The W3C spelling works too (`PageDown`, `KeyZ`), and so do some names
+    other keymaps use: `esc`, `pgup`, `pgdn`, `pageup`, `pagedown`, `up`,
+    `down`, `left` and `right`.
+- **Your program sends a key one way or the other.** A character binding
+  never matches a physical key, or the other way round. Bind characters
+  unless your program's docs say it sends physical keys.
+- **Space, Enter, Tab, Backspace and Escape** are physical keys only:
+  `space`, `enter`, `tab`, `backspace`, `escape`. A space in a sequence only
+  separates keys.
+- **Shift with a letter is written out:** `shift+g`, `ctrl+shift+d`.
+  Otherwise a letter's case doesn't matter: `G` is `g`, and `ctrl+D` is
+  `ctrl+d`. A program can read a capital as Shift with its letter instead,
+  as vim does (`G` is `shift+g`); its docs say so.
+- **Any other character already includes Shift.** Shift with `/` types
+  `?`, so bind `?`. `shift+1` is a different key from `!`, and only a
+  program that can't tell what Shift types sends it. The keymap warns you
+  about one.
+- **`<name>` is an alias** for a sequence that the program or your keymap
+  names. `<leader>` is often `space` or `ctrl+x`. A keymap can redefine an
+  alias, and the bindings that use it follow.
 
-- **Modifiers** are `ctrl`, `alt`, `meta` and `shift`, in that order and in
-  lower case: `ctrl+alt+x`, not `alt+ctrl+x`.
-- **A character is itself:** `a`, `:`, `!`, `ä`. Write the character the
-  key types: `!`, not `shift+1`.
-- **A capital letter is written as the capital,** with no `shift+`: `G`,
-  not `shift+g`. With another modifier, write `shift+` and the small
-  letter: `ctrl+shift+d`, not `ctrl+D`.
-- **Named keys** are written as in the table below. A named key that isn't
-  in it is written as the browser names it: `ContextMenu`,
-  `ctrl+PrintScreen`.
-- **A modifier alone** is that modifier's key: `shift`, or `ctrl+shift`
-  for Control and Shift together.
-- **Space is `space`.** A space in a sequence only separates keys.
-- **`<leader>`** stands for the program's leader key, such as `space` or
-  `ctrl+x`. A keymap can name its own leader, and `<leader>` follows it.
+A program can read keys strictly. Then each key has one spelling, the
+canonical one shown above, and any other is refused with that spelling:
+`Ctrl+D` asks for `ctrl+d`, and `esc` for `escape`.
 
-A key written any other way is refused, with the spelling to use:
-`shift+h` asks for `H`, `Escape` for `esc`, `alt+ctrl+x` for `ctrl+alt+x`,
-`F5` for `f5`.
-
-`shift+1` is a key apart from `!`, which a few terminals send when they
-report Shift with the unshifted key. Bind `!`, the key as you type it,
-unless your program says otherwise.
-
-### Named keys
+### Physical keys
 
 <!-- keys:begin -->
 
-| Write | Key | Menus show |
-|-------|-----|------------|
-| `alt` | Alt | `alt` |
-| `backspace` | Backspace | `backspace` |
-| `ctrl` | Control | `ctrl` |
-| `delete` | Delete | `delete` |
-| `down` | ArrowDown | `↓` |
-| `end` | End | `end` |
-| `enter` | Enter | `enter` |
-| `esc` | Escape | `esc` |
-| `home` | Home | `home` |
-| `insert` | Insert | `insert` |
-| `left` | ArrowLeft | `←` |
-| `meta` | Meta | `meta` |
-| `pgdn` | PageDown | `pgdn` |
-| `pgup` | PageUp | `pgup` |
-| `right` | ArrowRight | `→` |
-| `shift` | Shift | `shift` |
-| `space` | Space | `space` |
-| `tab` | Tab | `⇥` |
-| `up` | ArrowUp | `↑` |
-| `shift+tab` | Shift+Tab | `⇧⇥` |
-| `f1`, `f2`, … | F1, F2, … | `f1`, `f2`, … |
+| Write | W3C code value | Menus show |
+|-------|----------------|------------|
+| `escape` | `Escape` | `escape` |
+| `enter` | `Enter` | `enter` |
+| `tab` | `Tab` | `⇥` |
+| `space` | `Space` | `space` |
+| `backspace` | `Backspace` | `backspace` |
+| `delete` | `Delete` | `delete` |
+| `insert` | `Insert` | `insert` |
+| `home` | `Home` | `home` |
+| `end` | `End` | `end` |
+| `page_up` | `PageUp` | `page_up` |
+| `page_down` | `PageDown` | `page_down` |
+| `arrow_up` | `ArrowUp` | `↑` |
+| `arrow_down` | `ArrowDown` | `↓` |
+| `arrow_left` | `ArrowLeft` | `←` |
+| `arrow_right` | `ArrowRight` | `→` |
+| `f1` … `f25` | `F1` … `F25` | `f1` … `f25` |
+
+Every physical key: `backquote`, `backslash`, `bracket_left`, `bracket_right`, `comma`, `digit_0`, `digit_1`, `digit_2`, `digit_3`, `digit_4`, `digit_5`, `digit_6`, `digit_7`, `digit_8`, `digit_9`, `equal`, `intl_backslash`, `intl_ro`, `intl_yen`, `key_a`, `key_b`, `key_c`, `key_d`, `key_e`, `key_f`, `key_g`, `key_h`, `key_i`, `key_j`, `key_k`, `key_l`, `key_m`, `key_n`, `key_o`, `key_p`, `key_q`, `key_r`, `key_s`, `key_t`, `key_u`, `key_v`, `key_w`, `key_x`, `key_y`, `key_z`, `minus`, `period`, `quote`, `semicolon`, `slash`, `alt_left`, `alt_right`, `backspace`, `caps_lock`, `context_menu`, `control_left`, `control_right`, `enter`, `meta_left`, `meta_right`, `shift_left`, `shift_right`, `space`, `tab`, `convert`, `kana_mode`, `non_convert`, `delete`, `end`, `help`, `home`, `insert`, `page_down`, `page_up`, `arrow_down`, `arrow_left`, `arrow_right`, `arrow_up`, `num_lock`, `numpad_0`, `numpad_1`, `numpad_2`, `numpad_3`, `numpad_4`, `numpad_5`, `numpad_6`, `numpad_7`, `numpad_8`, `numpad_9`, `numpad_add`, `numpad_backspace`, `numpad_clear`, `numpad_clear_entry`, `numpad_comma`, `numpad_decimal`, `numpad_divide`, `numpad_enter`, `numpad_equal`, `numpad_memory_add`, `numpad_memory_clear`, `numpad_memory_recall`, `numpad_memory_store`, `numpad_memory_subtract`, `numpad_multiply`, `numpad_paren_left`, `numpad_paren_right`, `numpad_subtract`, `numpad_separator`, `numpad_up`, `numpad_down`, `numpad_right`, `numpad_left`, `numpad_begin`, `numpad_home`, `numpad_end`, `numpad_insert`, `numpad_delete`, `numpad_page_up`, `numpad_page_down`, `escape`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`, `f10`, `f11`, `f12`, `f13`, `f14`, `f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `f25`, `fn`, `fn_lock`, `print_screen`, `scroll_lock`, `pause`, `browser_back`, `browser_favorites`, `browser_forward`, `browser_home`, `browser_refresh`, `browser_search`, `browser_stop`, `eject`, `launch_app_1`, `launch_app_2`, `launch_mail`, `media_play_pause`, `media_select`, `media_stop`, `media_track_next`, `media_track_previous`, `power`, `sleep`, `audio_volume_down`, `audio_volume_mute`, `audio_volume_up`, `wake_up`, `copy`, `cut`, `paste`.
 
 <!-- keys:end -->
 
-The middle column is the key's name in the [HOTTY
-protocol](https://hotty.neuroplast.io), which is how myelin compares keys.
-So a key from a terminal, from Bubble Tea or from a HOTTY host is the same
-key.
+Menus show `shift+tab` as `⇧⇥`.
+
+A key from a terminal, from Bubble Tea or from a HOTTY host is the same
+key however it was named, so one keymap serves them all.
 
 ## Contexts
 
@@ -141,12 +150,13 @@ Some keys need more than one binding or a binding to nothing:
 - **Text fields keep their text.** In a program with text fields, such as
   a filter or a search box, a key that types text goes into the field
   while one is open.
-  That means a character or `space`, with no `ctrl`, `alt` or `meta`. It
+  That means a character or `space`, with no `super`, `ctrl` or `alt`. It
   doesn't if a binding reaches at least as deep as the field, such as one
   in the context `field`. So binding `x` never stops you typing an `x` into a
   filter.
-- **The leader.** `<leader>` is the leader key wherever it's written. If
-  more than one layer names a leader, the highest one's applies.
+- **Aliases.** `<leader>`, or any `<name>`, is the alias's keys wherever
+  it's written. If more than one layer names an alias, the highest one's
+  applies.
 - **Dropping the defaults.** A keymap can leave the layers below it out
   entirely, so that every key is yours to bind. Each program's docs say
   how its file writes that.

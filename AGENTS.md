@@ -12,8 +12,9 @@ license is Apache-2.0.
 - **No files, no file format, no IO.** Every program keeps its own files
   and parser.
 - **No clock, no goroutines.** `now` goes in and a deadline comes out.
-- **Keys are canonical HOTTY names**, written in one short spelling:
-  `ctrl+d`, `pgdn`, `g g`, `<leader>` (D3). They live in the `myelinkey` module,
+- **Keys are named in Ghostty's vocabulary** (D15): `ctrl+d`, `shift+g`,
+  `page_down`, `ctrl+key_w`, `g g`, `<leader>`. A key is a character or a
+  physical key, and `<name>` is an alias. They live in the `myelinkey` module,
   which requires nothing and builds with TinyGo, so that hotty-go can take
   its key names from it (D12–D14).
 - **Contexts are CEL** over a path the program declares. The deepest
@@ -85,10 +86,10 @@ set `--author`, `GIT_AUTHOR_*` or `user.*`.
 ## Toolchain
 
 ```
-mise exec -- make check      # the gate: gofmt, vet, test (key under TinyGo too), msgp and vectors current
+mise exec -- make check      # the gate: gofmt, vet, test (myelinkey under TinyGo too), msgp and vectors current
 mise exec -- make generate   # regenerate data_gen.go after changing data.go
-mise exec -- make vectors    # copy HOTTY's conformance vectors at key's pinned hotty commit
-mise exec -- make fuzz       # fuzz key's parsers for 60 s each
+mise exec -- make vectors    # copy HOTTY's conformance vectors at myelinkey's pinned hotty commit
+mise exec -- make fuzz       # fuzz myelinkey's parsers for 60 s each
 ```
 
 CI (`.github/workflows/ci.yml`) runs `scripts/check.sh` on `ubuntu-latest`

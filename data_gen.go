@@ -542,66 +542,88 @@ func (z *Doc) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Layer")
 				return
 			}
-		case "leader":
-			z.Leader, err = dc.ReadString()
+		case "aliases":
+			var zb0002 uint32
+			zb0002, err = dc.ReadMapHeader()
 			if err != nil {
-				err = msgp.WrapError(err, "Leader")
+				err = msgp.WrapError(err, "Aliases")
 				return
 			}
+			if z.Aliases == nil {
+				z.Aliases = make(map[string]string, zb0002)
+			} else if len(z.Aliases) > 0 {
+				clear(z.Aliases)
+			}
+			for zb0002 > 0 {
+				zb0002--
+				var za0001 string
+				za0001, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases")
+					return
+				}
+				var za0002 string
+				za0002, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases", za0001)
+					return
+				}
+				z.Aliases[za0001] = za0002
+			}
 		case "drops":
-			var zb0002 uint32
-			zb0002, err = dc.ReadArrayHeader()
+			var zb0003 uint32
+			zb0003, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Drops")
 				return
 			}
-			if cap(z.Drops) >= int(zb0002) {
-				z.Drops = (z.Drops)[:zb0002]
+			if cap(z.Drops) >= int(zb0003) {
+				z.Drops = (z.Drops)[:zb0003]
 			} else {
-				z.Drops = make([]string, zb0002)
+				z.Drops = make([]string, zb0003)
 			}
-			for za0001 := range z.Drops {
-				z.Drops[za0001], err = dc.ReadString()
+			for za0003 := range z.Drops {
+				z.Drops[za0003], err = dc.ReadString()
 				if err != nil {
-					err = msgp.WrapError(err, "Drops", za0001)
+					err = msgp.WrapError(err, "Drops", za0003)
 					return
 				}
 			}
 		case "binds":
-			var zb0003 uint32
-			zb0003, err = dc.ReadArrayHeader()
+			var zb0004 uint32
+			zb0004, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Binds")
 				return
 			}
-			if cap(z.Binds) >= int(zb0003) {
-				z.Binds = (z.Binds)[:zb0003]
+			if cap(z.Binds) >= int(zb0004) {
+				z.Binds = (z.Binds)[:zb0004]
 			} else {
-				z.Binds = make([]Bind, zb0003)
+				z.Binds = make([]Bind, zb0004)
 			}
-			for za0002 := range z.Binds {
-				err = z.Binds[za0002].DecodeMsg(dc)
+			for za0004 := range z.Binds {
+				err = z.Binds[za0004].DecodeMsg(dc)
 				if err != nil {
-					err = msgp.WrapError(err, "Binds", za0002)
+					err = msgp.WrapError(err, "Binds", za0004)
 					return
 				}
 			}
 		case "groups":
-			var zb0004 uint32
-			zb0004, err = dc.ReadArrayHeader()
+			var zb0005 uint32
+			zb0005, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Groups")
 				return
 			}
-			if cap(z.Groups) >= int(zb0004) {
-				z.Groups = (z.Groups)[:zb0004]
+			if cap(z.Groups) >= int(zb0005) {
+				z.Groups = (z.Groups)[:zb0005]
 			} else {
-				z.Groups = make([]Group, zb0004)
+				z.Groups = make([]Group, zb0005)
 			}
-			for za0003 := range z.Groups {
-				err = z.Groups[za0003].DecodeMsg(dc)
+			for za0005 := range z.Groups {
+				err = z.Groups[za0005].DecodeMsg(dc)
 				if err != nil {
-					err = msgp.WrapError(err, "Groups", za0003)
+					err = msgp.WrapError(err, "Groups", za0005)
 					return
 				}
 			}
@@ -628,7 +650,7 @@ func (z *Doc) EncodeMsg(en *msgp.Writer) (err error) {
 	zb0001Len := uint32(6)
 	var zb0001Mask uint8 /* 6 bits */
 	_ = zb0001Mask
-	if z.Leader == "" {
+	if z.Aliases == nil {
 		zb0001Len--
 		zb0001Mask |= 0x2
 	}
@@ -667,15 +689,27 @@ func (z *Doc) EncodeMsg(en *msgp.Writer) (err error) {
 			return
 		}
 		if (zb0001Mask & 0x2) == 0 { // if not omitted
-			// write "leader"
-			err = en.Append(0xa6, 0x6c, 0x65, 0x61, 0x64, 0x65, 0x72)
+			// write "aliases"
+			err = en.Append(0xa7, 0x61, 0x6c, 0x69, 0x61, 0x73, 0x65, 0x73)
 			if err != nil {
 				return
 			}
-			err = en.WriteString(z.Leader)
+			err = en.WriteMapHeader(uint32(len(z.Aliases)))
 			if err != nil {
-				err = msgp.WrapError(err, "Leader")
+				err = msgp.WrapError(err, "Aliases")
 				return
+			}
+			for za0001, za0002 := range z.Aliases {
+				err = en.WriteString(za0001)
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases")
+					return
+				}
+				err = en.WriteString(za0002)
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases", za0001)
+					return
+				}
 			}
 		}
 		if (zb0001Mask & 0x4) == 0 { // if not omitted
@@ -689,10 +723,10 @@ func (z *Doc) EncodeMsg(en *msgp.Writer) (err error) {
 				err = msgp.WrapError(err, "Drops")
 				return
 			}
-			for za0001 := range z.Drops {
-				err = en.WriteString(z.Drops[za0001])
+			for za0003 := range z.Drops {
+				err = en.WriteString(z.Drops[za0003])
 				if err != nil {
-					err = msgp.WrapError(err, "Drops", za0001)
+					err = msgp.WrapError(err, "Drops", za0003)
 					return
 				}
 			}
@@ -708,10 +742,10 @@ func (z *Doc) EncodeMsg(en *msgp.Writer) (err error) {
 				err = msgp.WrapError(err, "Binds")
 				return
 			}
-			for za0002 := range z.Binds {
-				err = z.Binds[za0002].EncodeMsg(en)
+			for za0004 := range z.Binds {
+				err = z.Binds[za0004].EncodeMsg(en)
 				if err != nil {
-					err = msgp.WrapError(err, "Binds", za0002)
+					err = msgp.WrapError(err, "Binds", za0004)
 					return
 				}
 			}
@@ -727,10 +761,10 @@ func (z *Doc) EncodeMsg(en *msgp.Writer) (err error) {
 				err = msgp.WrapError(err, "Groups")
 				return
 			}
-			for za0003 := range z.Groups {
-				err = z.Groups[za0003].EncodeMsg(en)
+			for za0005 := range z.Groups {
+				err = z.Groups[za0005].EncodeMsg(en)
 				if err != nil {
-					err = msgp.WrapError(err, "Groups", za0003)
+					err = msgp.WrapError(err, "Groups", za0005)
 					return
 				}
 			}
@@ -753,17 +787,24 @@ func (z *Doc) EncodeMsg(en *msgp.Writer) (err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Doc) Msgsize() (s int) {
-	s = 1 + 6 + msgp.StringPrefixSize + len(z.Layer) + 7 + msgp.StringPrefixSize + len(z.Leader) + 6 + msgp.ArrayHeaderSize
-	for za0001 := range z.Drops {
-		s += msgp.StringPrefixSize + len(z.Drops[za0001])
+	s = 1 + 6 + msgp.StringPrefixSize + len(z.Layer) + 8 + msgp.MapHeaderSize
+	if z.Aliases != nil {
+		for za0001, za0002 := range z.Aliases {
+			_ = za0002
+			s += msgp.StringPrefixSize + len(za0001) + msgp.StringPrefixSize + len(za0002)
+		}
 	}
 	s += 6 + msgp.ArrayHeaderSize
-	for za0002 := range z.Binds {
-		s += z.Binds[za0002].Msgsize()
+	for za0003 := range z.Drops {
+		s += msgp.StringPrefixSize + len(z.Drops[za0003])
+	}
+	s += 6 + msgp.ArrayHeaderSize
+	for za0004 := range z.Binds {
+		s += z.Binds[za0004].Msgsize()
 	}
 	s += 7 + msgp.ArrayHeaderSize
-	for za0003 := range z.Groups {
-		s += z.Groups[za0003].Msgsize()
+	for za0005 := range z.Groups {
+		s += z.Groups[za0005].Msgsize()
 	}
 	s += 7 + msgp.StringPrefixSize + len(z.Source)
 	return
@@ -2115,10 +2156,44 @@ func (z *Schema) DecodeMsg(dc *msgp.Reader) (err error) {
 					return
 				}
 			}
-		case "leader":
-			z.Leader, err = dc.ReadString()
+		case "aliases":
+			var zb0004 uint32
+			zb0004, err = dc.ReadMapHeader()
 			if err != nil {
-				err = msgp.WrapError(err, "Leader")
+				err = msgp.WrapError(err, "Aliases")
+				return
+			}
+			if z.Aliases == nil {
+				z.Aliases = make(map[string]string, zb0004)
+			} else if len(z.Aliases) > 0 {
+				clear(z.Aliases)
+			}
+			for zb0004 > 0 {
+				zb0004--
+				var za0003 string
+				za0003, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases")
+					return
+				}
+				var za0004 string
+				za0004, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases", za0003)
+					return
+				}
+				z.Aliases[za0003] = za0004
+			}
+		case "strict_keys":
+			z.StrictKeys, err = dc.ReadBool()
+			if err != nil {
+				err = msgp.WrapError(err, "StrictKeys")
+				return
+			}
+		case "shifted_capitals":
+			z.ShiftedCapitals, err = dc.ReadBool()
+			if err != nil {
+				err = msgp.WrapError(err, "ShiftedCapitals")
 				return
 			}
 		case "timeout":
@@ -2141,12 +2216,20 @@ func (z *Schema) DecodeMsg(dc *msgp.Reader) (err error) {
 // EncodeMsg implements msgp.Encodable
 func (z *Schema) EncodeMsg(en *msgp.Writer) (err error) {
 	// check for omitted fields
-	zb0001Len := uint32(4)
-	var zb0001Mask uint8 /* 4 bits */
+	zb0001Len := uint32(6)
+	var zb0001Mask uint8 /* 6 bits */
 	_ = zb0001Mask
-	if z.Leader == "" {
+	if z.Aliases == nil {
 		zb0001Len--
 		zb0001Mask |= 0x4
+	}
+	if z.StrictKeys == false {
+		zb0001Len--
+		zb0001Mask |= 0x8
+	}
+	if z.ShiftedCapitals == false {
+		zb0001Len--
+		zb0001Mask |= 0x10
 	}
 	// variable map header, size zb0001Len
 	err = en.Append(0x80 | uint8(zb0001Len))
@@ -2191,14 +2274,50 @@ func (z *Schema) EncodeMsg(en *msgp.Writer) (err error) {
 			}
 		}
 		if (zb0001Mask & 0x4) == 0 { // if not omitted
-			// write "leader"
-			err = en.Append(0xa6, 0x6c, 0x65, 0x61, 0x64, 0x65, 0x72)
+			// write "aliases"
+			err = en.Append(0xa7, 0x61, 0x6c, 0x69, 0x61, 0x73, 0x65, 0x73)
 			if err != nil {
 				return
 			}
-			err = en.WriteString(z.Leader)
+			err = en.WriteMapHeader(uint32(len(z.Aliases)))
 			if err != nil {
-				err = msgp.WrapError(err, "Leader")
+				err = msgp.WrapError(err, "Aliases")
+				return
+			}
+			for za0003, za0004 := range z.Aliases {
+				err = en.WriteString(za0003)
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases")
+					return
+				}
+				err = en.WriteString(za0004)
+				if err != nil {
+					err = msgp.WrapError(err, "Aliases", za0003)
+					return
+				}
+			}
+		}
+		if (zb0001Mask & 0x8) == 0 { // if not omitted
+			// write "strict_keys"
+			err = en.Append(0xab, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x5f, 0x6b, 0x65, 0x79, 0x73)
+			if err != nil {
+				return
+			}
+			err = en.WriteBool(z.StrictKeys)
+			if err != nil {
+				err = msgp.WrapError(err, "StrictKeys")
+				return
+			}
+		}
+		if (zb0001Mask & 0x10) == 0 { // if not omitted
+			// write "shifted_capitals"
+			err = en.Append(0xb0, 0x73, 0x68, 0x69, 0x66, 0x74, 0x65, 0x64, 0x5f, 0x63, 0x61, 0x70, 0x69, 0x74, 0x61, 0x6c, 0x73)
+			if err != nil {
+				return
+			}
+			err = en.WriteBool(z.ShiftedCapitals)
+			if err != nil {
+				err = msgp.WrapError(err, "ShiftedCapitals")
 				return
 			}
 		}
@@ -2226,7 +2345,14 @@ func (z *Schema) Msgsize() (s int) {
 	for za0002 := range z.Layers {
 		s += msgp.StringPrefixSize + len(z.Layers[za0002])
 	}
-	s += 7 + msgp.StringPrefixSize + len(z.Leader) + 8 + msgp.DurationSize
+	s += 8 + msgp.MapHeaderSize
+	if z.Aliases != nil {
+		for za0003, za0004 := range z.Aliases {
+			_ = za0004
+			s += msgp.StringPrefixSize + len(za0003) + msgp.StringPrefixSize + len(za0004)
+		}
+	}
+	s += 12 + msgp.BoolSize + 17 + msgp.BoolSize + 8 + msgp.DurationSize
 	return
 }
 

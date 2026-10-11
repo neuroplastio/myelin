@@ -28,9 +28,10 @@ type Env struct {
 	attrs map[string]attrInfo
 	// ranks are the layers' ranks, lowest 0.
 	ranks map[string]int
-	// leader is the schema's leader, if it names one.
-	leader    myelinkey.Key
-	hasLeader bool
+	// keys is how the schema reads keys.
+	keys myelinkey.Options
+	// aliases are the schema's, read.
+	aliases map[string][]myelinkey.Key
 }
 
 // nodeInfo is a declared node type.
@@ -50,7 +51,7 @@ type attrInfo struct {
 // variable (is it on the path?), every attribute a typed variable under its
 // node ("list.dir"), and focus the innermost node's name. A name that isn't
 // a CEL identifier, a node declared twice, a type it can't read, no layers,
-// a layer named twice and a leader that isn't a key are errors.
+// a layer named twice and an alias that doesn't read are errors.
 func NewEnv(s Schema) (*Env, error) {
 	e := &Env{schema: s, nodes: map[string]*nodeInfo{}, attrs: map[string]attrInfo{}, ranks: map[string]int{}}
 	opts := []cel.EnvOption{cel.Variable(focusVar, cel.StringType)}
@@ -90,12 +91,14 @@ func NewEnv(s Schema) (*Env, error) {
 		}
 		e.ranks[l] = i
 	}
-	if s.Leader != "" {
-		k, err := myelinkey.Parse(s.Leader)
+	e.keys = myelinkey.Options{Strict: s.StrictKeys, ShiftedCapitals: s.ShiftedCapitals}
+	e.aliases = make(map[string][]myelinkey.Key, len(s.Aliases))
+	for name, keys := range s.Aliases {
+		seq, err := e.readAlias(name, keys)
 		if err != nil {
-			return nil, fmt.Errorf("leader: %w", err)
+			return nil, err
 		}
-		e.leader, e.hasLeader = k, true
+		e.aliases[name] = seq
 	}
 	env, err := cel.NewEnv(opts...)
 	if err != nil {

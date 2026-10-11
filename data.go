@@ -21,7 +21,7 @@ import (
 //msgp:replace myelinkey.Key with:string
 
 // Schema is what a program declares once, for [NewEnv]: what can be
-// focused, and the keymap's layers.
+// focused, the keymap's layers, and how its keys are read.
 type Schema struct {
 	// Nodes are the path's vocabulary: the kinds of node that can be
 	// focused or hold the focus, outermost first.
@@ -29,9 +29,18 @@ type Schema struct {
 	// Layers are the keymap's layers, lowest first: ["defaults", "user"],
 	// or ["extensions", "defaults", "user"].
 	Layers []string `msg:"layers"`
-	// Leader is the leader key, written short, when no Doc names one:
-	// "ctrl+x", "space". Empty means no leader.
-	Leader string `msg:"leader,omitempty"`
+	// Aliases name key sequences, which a sequence writes as <name>:
+	// {"leader": "space"} makes "<leader> f" "space f". A Doc's alias of
+	// the same name wins. An alias's keys name no alias.
+	Aliases map[string]string `msg:"aliases,omitempty"`
+	// StrictKeys reads keys only in their canonical spelling, and refuses
+	// any other with it: "Ctrl+D" asks for "ctrl+d". Without it keys are
+	// read as Ghostty reads them (myelinkey.Parse).
+	StrictKeys bool `msg:"strict_keys,omitempty"`
+	// ShiftedCapitals reads a capital letter as Shift with its letter, as
+	// vim does: "G" is "shift+g". Without it a letter's case does not
+	// matter.
+	ShiftedCapitals bool `msg:"shifted_capitals,omitempty"`
 	// Timeout is how long a buffered sequence waits for its next key. Half
 	// a second suits vim-like sequences; a menu people read wants seconds.
 	Timeout time.Duration `msg:"timeout"`
@@ -60,9 +69,10 @@ type Type string
 type Doc struct {
 	// Layer is one of the schema's layers. Several documents may share one.
 	Layer string `msg:"layer"`
-	// Leader is the leader key, written short; the highest layer's wins
-	// over the schema's.
-	Leader string `msg:"leader,omitempty"`
+	// Aliases name key sequences, as the schema's do. For each name the
+	// highest layer's wins, and within a layer the later document's; the
+	// schema's is the lowest.
+	Aliases map[string]string `msg:"aliases,omitempty"`
 	// Drops are the lower layers this one leaves out, such as a user's
 	// keymap that starts from nothing dropping ["defaults"].
 	Drops []string `msg:"drops,omitempty"`
@@ -70,7 +80,7 @@ type Doc struct {
 	Binds []Bind `msg:"binds,omitempty"`
 	// Groups label key prefixes for the menus.
 	Groups []Group `msg:"groups,omitempty"`
-	// Source is where Leader and Drops were written.
+	// Source is where Aliases and Drops were written.
 	Source string `msg:"source,omitempty"`
 }
 
@@ -129,11 +139,11 @@ type Step struct {
 	Attrs map[string]any `msg:"attrs,omitempty"`
 }
 
-// Binding is a [Bind] as the keymap holds it: its sequence resolved and its
-// layer named.
+// Binding is a [Bind] as the keymap holds it: its sequence read, its
+// aliases resolved, and its layer named.
 type Binding struct {
 	Bind `msg:"bind"`
-	// Seq is the sequence with <leader> resolved.
+	// Seq is the sequence's keys, its aliases resolved.
 	Seq []myelinkey.Key `msg:"seq"`
 	// Layer is the layer of the document the bind came from.
 	Layer string `msg:"layer"`
@@ -177,7 +187,7 @@ type Problem struct {
 // Menu is a which-key level, or with nested items every level under a
 // sequence.
 type Menu struct {
-	// Seq are the keys typed so far, the leader included.
+	// Seq are the keys typed so far.
 	Seq []myelinkey.Key `msg:"seq"`
 	// Label is the group's label: "+file".
 	Label string `msg:"label,omitempty"`

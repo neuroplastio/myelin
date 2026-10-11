@@ -46,20 +46,27 @@ deadline and calls `Expire`.
 
 ## A key is a name
 
-A key is its canonical name in the [HOTTY](https://hotty.neuroplast.io)
-protocol: `Control+d`, `PageDown`, `A`. A terminal's bytes, a Bubble Tea
-key and a HOTTY host's key event come out as the same name, so one keymap
-serves them all.
+A key is its canonical name, in [Ghostty](https://ghostty.org)'s
+vocabulary: `ctrl+d`, `shift+g`, `page_down`, `ctrl+key_w`. Two keys are
+the same keystroke exactly when their names are equal. A terminal's bytes,
+a Bubble Tea key and a HOTTY host's key event come out as the same name,
+so one keymap serves them all.
+
+A key is a character, which follows the keyboard layout, or a physical
+key, which stays in its place. The program decides which it sends for
+each key. That keeps a key one name: `ctrl+w` means "the key that types
+w" on every layout, and a game's `key_w` means the same place on every
+layout.
 
 Keys are a package of their own, `github.com/neuroplastio/myelin/myelinkey`,
 which needs only the standard library and builds with TinyGo. Whatever
 reads input can name keys with it without taking on CEL.
 
-People write keys in one short spelling, `ctrl+d`, `pgdn`, `H`, and every
-key has exactly one. A key written another way is refused with the
-spelling to use. With one spelling, a listing, a menu and an error message
-always show a key the way it was written, and two people never write the
-same binding two ways.
+People write keys as they would for Ghostty, which reads modifiers in any
+order and case, W3C code values and a letter in either case. A program
+that wants one spelling per key reads strictly, and then every other
+spelling is refused with the one to use. Either way a listing, a menu and
+an error message show a key by its canonical name.
 
 ## Depth, then layer, then order
 

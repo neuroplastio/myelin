@@ -1,5 +1,5 @@
 [
-  { "bindings": { "j": "down", "k": "up", "g g": "top", "esc": "back" } },
+  { "bindings": { "j": "down", "k": "up", "g g": "top", "escape": "back" } },
   { "context": "list", "bindings": { "enter": "open", "d d": "delete" } },
-  { "context": "field", "bindings": { "esc": "close-filter" } }
+  { "context": "field", "bindings": { "escape": "close-filter" } }
 ]

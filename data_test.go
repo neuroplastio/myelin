@@ -42,7 +42,7 @@ func TestRoundTrip(t *testing.T) {
 	deadline := time.Date(2026, 10, 10, 21, 30, 0, 123456789, time.UTC)
 	bind := Bind{Keys: "<leader> p n", Action: "pane.new", Args: []string{"right"}, Label: "new pane",
 		When: "pane && !pane.zoomed", Source: "config.kdl:12", Props: map[string]string{"steal": "true"}}
-	binding := Binding{Bind: bind, Seq: []myelinkey.Key{"Control+b", "p", "n"}, Layer: "user"}
+	binding := Binding{Bind: bind, Seq: []myelinkey.Key{"ctrl+b", "p", "n"}, Layer: "user"}
 	for _, tc := range []struct {
 		name    string
 		in, out codec
@@ -53,9 +53,11 @@ func TestRoundTrip(t *testing.T) {
 				{Name: "pane", Attrs: map[string]Type{"zoomed": "bool", "cols": "int", "env": "map<string,string>"}},
 				{Name: "input", Text: true},
 			},
-			Layers: []string{"plugin", "core", "user"}, Leader: "ctrl+b", Timeout: 5 * time.Second,
+			Layers:  []string{"plugin", "core", "user"},
+			Aliases: map[string]string{"leader": "ctrl+b", "window": "ctrl+w"}, StrictKeys: true, ShiftedCapitals: true,
+			Timeout: 5 * time.Second,
 		}, &Schema{}},
-		{"doc", &Doc{Layer: "user", Leader: "ctrl+a", Drops: []string{"core"}, Source: "config.kdl:3",
+		{"doc", &Doc{Layer: "user", Aliases: map[string]string{"leader": "ctrl+a"}, Drops: []string{"core"}, Source: "config.kdl:3",
 			Binds:  []Bind{bind, {Keys: "g g", Unbind: true}},
 			Groups: []Group{{Keys: "<leader> p", Label: "+pane", When: "pane", Source: "config.kdl:9"}},
 		}, &Doc{}},
@@ -63,10 +65,10 @@ func TestRoundTrip(t *testing.T) {
 		{"match", &Match{Exact: &binding, Prefix: true}, &Match{}},
 		{"candidate", &Candidate{Binding: binding, Holds: true, Depth: 2, Wins: true}, &Candidate{}},
 		{"problem", &Problem{Source: "config.kdl:12", Text: "unknown action", Warning: true}, &Problem{}},
-		{"menu", &Menu{Seq: []myelinkey.Key{"Control+b"}, Label: "+leader", Items: []Item{
+		{"menu", &Menu{Seq: []myelinkey.Key{"ctrl+b"}, Label: "+leader", Items: []Item{
 			{Key: "p", Label: "+pane", Group: true, Enabled: true, Items: []Item{
 				{Key: "n", Binding: &binding, Enabled: true},
-				{Key: "x", Label: "close", Binding: &Binding{Bind: Bind{Keys: "<leader> p x", Action: "pane.close"}, Seq: []myelinkey.Key{"Control+b", "p", "x"}, Layer: "core"}},
+				{Key: "x", Label: "close", Binding: &Binding{Bind: Bind{Keys: "<leader> p x", Action: "pane.close"}, Seq: []myelinkey.Key{"ctrl+b", "p", "x"}, Layer: "core"}},
 			}},
 		}}, &Menu{}},
 		{"pending", &Pending{Seq: []myelinkey.Key{"g"}, Path: Path{{Name: "list"}}, Deadline: deadline}, &Pending{}},

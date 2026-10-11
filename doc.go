@@ -11,17 +11,19 @@
 //
 // # Keys
 //
-// A [myelinkey.Key] is a keystroke's canonical name in the HOTTY protocol
-// (https://hotty.neuroplast.io): "a", "A", "Control+d", "PageDown". Two
-// keys are the same keystroke exactly when they are ==, whether they came
-// from a terminal, from Bubble Tea or from a HOTTY host
-// ([myelinkey.ParseHotty]).
+// A [myelinkey.Key] is a keystroke's canonical name, in Ghostty's
+// vocabulary: "ctrl+d", "shift+g", "page_down", "ctrl+key_w", "?". A key is
+// a character, which follows the keyboard layout, or a physical key, named
+// by its W3C code value, which stays in its place; the program decides which
+// it sends. Two keys are the same keystroke exactly when they are ==,
+// whether they came from a terminal, from Bubble Tea or from a HOTTY host.
 //
-// People write keys in one short spelling: "ctrl+d", "pgdn", "H". Every key
-// has exactly one spelling: [myelinkey.Parse] reads only what
-// [myelinkey.Format] writes, and refuses any other form with the spelling
-// to use ("shift+h": write H). A sequence is keys separated by spaces,
-// "g g", and "<leader>" stands for the keymap's leader key.
+// People write keys as they would for Ghostty: modifiers in any order and
+// case, W3C code values, a letter in either case. A [Schema] can read them
+// strictly instead, with one spelling per key (StrictKeys), or read a
+// capital as Shift with its letter, as vim does (ShiftedCapitals). A
+// sequence is keys separated by spaces, "g g", and "<name>" stands for an
+// alias's keys, such as "<leader>" ([Schema].Aliases, [Doc].Aliases).
 // [myelinkey.Display] writes a key for a menu, with glyphs for the arrows
 // and Tab.
 //

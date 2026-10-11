@@ -14,20 +14,22 @@ Item template:
 Statuses: `todo`, `in-progress`, `blocked`.
 
 _Last updated: 2026-10-11. myelin is public: the engine, the docs and the
-godoc are done, and keys are their own module, myelinkey (D13, D14)._
+godoc are done, and keys are their own module, myelinkey, named in
+Ghostty's vocabulary (D13–D15)._
 
 ## In progress
 
 ## Blocked
 
-- [ ] **KEYS-02** hotty-go takes its key names from `myelinkey` (D12 step 2)
+- [ ] **KEYS-02** HOTTY's key names follow myelinkey's; hotty-go takes them from it (D12 step 2, D15.10)
       status: blocked | owner: — | added: 2026-10-11
-      notes: myelin's step is done (D13, D14). The hotty agent makes
-      `hotty.ParseKey` delegate to `myelinkey.ParseHotty` after HOTTY's
-      msgpack release; it reports changes to its key code or vectors
-      before then, and `make vectors HOTTY=main` follows a vectors bump.
-      When it lands, report the commits to the org's design record, which
-      describes step 2 as pending.
+      notes: myelin's side is done (D13–D15). The hotty agent amends SPEC
+      §10.4 and the vectors to D15's names in place, then hotty-go takes
+      its names from `myelinkey`. It plans this after its msgpack consumer
+      bumps. hotty-go is public, so it can require `myelinkey` only once
+      myelin is public. When the vectors move, run `make vectors HOTTY=main`,
+      test the names directly and drop `ParseHotty`. When it lands, report
+      the commits to the org's design record.
 
 ## Todo
 
