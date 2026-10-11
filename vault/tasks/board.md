@@ -33,13 +33,13 @@ Ghostty's vocabulary (D13–D15)._
 
 ## Todo
 
-- [ ] **RELEASE-01** The first tag, v0.1.0
-      status: todo | owner: — | added: 2026-10-11
-      notes: The org's versioning policy (draft): packages use semver. On
-      the maintainer's go-ahead, tag myelinkey/v0.1.0, move the root's
-      myelinkey requirement to it, and tag v0.1.0 there (no public version
-      above 0.1.0). Then tell kubecom, so it can require tags instead of
-      pseudo-versions.
+- [x] **RELEASE-01** The first tags, v0.1.0-next.1
+      status: done | owner: myelin | added: 2026-10-11
+      notes: On the maintainer's go-ahead ("Tag both packages"), and as gov
+      P-5 has packages stay on 0.1.0 as `0.1.0-next.N` prereleases:
+      myelinkey/v0.1.0-next.1, then the root's myelinkey requirement moved
+      to it and v0.1.0-next.1 tagged there, each a GitHub prerelease.
+      kubecom told, so it can require tags instead of pseudo-versions.
 
 - [ ] **DOCS-CHECK** Add `docs check` to the gate
       status: todo | owner: — | added: 2026-10-11
