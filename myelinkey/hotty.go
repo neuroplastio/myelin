@@ -10,8 +10,9 @@ import (
 // its modifiers in any order, and returns it as a [Key]: "Control+a" is
 // "ctrl+a", "Shift+Control+a" and "Control+A" are "ctrl+shift+a", "A" is
 // "shift+a", "!" is "!", "PageDown" is "page_down", "Meta+Enter" is
-// "super+enter", "Control+ " is "ctrl+space". A modifier alone is its left
-// key: "Shift" is "shift_left". ok is false for a name that does not parse.
+// "super+enter", "Control+ " is "ctrl+space". A modifier alone is its
+// modifier key: "Shift" is "shift", "Control+Shift" is "ctrl+shift". ok is
+// false for a name that does not parse.
 //
 // HOTTY's names are moving to the Key's own; this reads the names hosts,
 // terminal decoders and toolkit adapters write until then.
@@ -36,8 +37,11 @@ func ParseHotty(name string) (Key, bool) {
 		}
 		value = fold(value)
 	default:
-		if left, ok := hottyModKeys[value]; ok {
-			value = left
+		if m, ok := hottyModKeys[value]; ok {
+			if mods&m != 0 {
+				return "", false
+			}
+			value = modName(m)
 		} else if value, ok = physicalOf(value); !ok {
 			return "", false
 		}
@@ -54,11 +58,8 @@ var (
 
 const hottyShift = 1 << 3
 
-// hottyModKeys are the physical keys HOTTY's lone modifiers are: their
-// left keys.
-var hottyModKeys = map[string]string{
-	"Control": "control_left", "Alt": "alt_left", "Meta": "meta_left", "Shift": "shift_left",
-}
+// hottyModKeys are HOTTY's lone modifiers, the modifier keys.
+var hottyModKeys = map[string]Mods{"Control": Ctrl, "Alt": Alt, "Meta": Super, "Shift": Shift}
 
 // splitName reads a key's name, its modifiers in any order. The value of
 // the space bar is " ".

@@ -3,7 +3,7 @@
 //
 // A [Key] is a keystroke's canonical name, in Ghostty's vocabulary: its
 // modifiers in the order super+, ctrl+, alt+, shift+, then the key, which is
-// either a physical key or a character:
+// a physical key, a character or a modifier key:
 //
 //   - A physical key is a place on the keyboard, named by its W3C UI Events
 //     code value in snake case: "escape", "enter", "tab", "space",
@@ -15,11 +15,17 @@
 //     Shift itself: Shift with / types "?", so the key is "?". White space
 //     and control characters are keys of their own: "space", "enter",
 //     "tab", "backspace", "escape".
+//   - A modifier key is a modifier tapped on its own, pressed and released
+//     with no other key between, on either side: "shift", "ctrl+shift". Its
+//     sides are physical keys: "shift_left", "shift_right".
 //
 // Two keys are the same keystroke exactly when they are ==. A program sends
-// whichever of the two its input gives it, and a physical key and a
-// character never match each other: "ctrl+key_w" is the key at the US
-// layout's W, "ctrl+w" is Ctrl with the key that types w.
+// whichever its input gives it, and keys of different kinds never match
+// each other: "ctrl+key_w" is the key at the US layout's W, "ctrl+w" is Ctrl
+// with the key that types w; "shift_left" is the left Shift, "shift" either.
+//
+// SPEC.md in this module specifies the names, and conformance/keys.json
+// holds its test vectors.
 //
 // [Parse] reads a key as people write it, the way Ghostty reads a trigger:
 // modifiers in any order and case, with the aliases cmd and command for
@@ -47,8 +53,24 @@ import (
 )
 
 // Key is a keystroke's canonical name: "a", "shift+g", "ctrl+d",
-// "page_down", "ctrl+key_w", "super+ctrl+alt+shift+enter", "?", "ctrl++".
+// "page_down", "ctrl+key_w", "super+ctrl+alt+shift+enter", "?", "ctrl++",
+// "shift".
 type Key string
+
+// Kind is what a key's value is.
+type Kind uint8
+
+// The kinds of key.
+const (
+	// Character is a key named by the character it types: "a", "?", "+".
+	Character Kind = iota
+	// Physical is a place on the keyboard: "page_down", "key_a",
+	// "shift_left".
+	Physical
+	// Modifier is a modifier key tapped on its own, either side: "shift",
+	// "ctrl".
+	Modifier
+)
 
 // Mods is a set of modifiers.
 type Mods uint8
@@ -101,7 +123,7 @@ func ParseWith(s string, o Options) (Key, error) {
 		mods    Mods
 		value   string
 		capital bool
-		lastMod string
+		lastMod Mods
 	)
 	for rest := s; rest != ""; {
 		part, after, plus := strings.Cut(rest, "+")
@@ -114,7 +136,7 @@ func ParseWith(s string, o Options) (Key, error) {
 				return "", fmt.Errorf("%q: %s twice", s, part)
 			}
 			mods |= m
-			lastMod = part
+			lastMod = m
 			continue
 		}
 		if value != "" {
@@ -135,7 +157,9 @@ func ParseWith(s string, o Options) (Key, error) {
 		}
 	}
 	if value == "" {
-		return "", fmt.Errorf("%q has no key: %s is a modifier", s, lastMod)
+		// Modifiers alone: the last one written is the key, tapped.
+		mods &^= lastMod
+		value = modName(lastMod)
 	}
 	if capital && o.ShiftedCapitals {
 		mods |= Shift
@@ -148,6 +172,16 @@ func ParseWith(s string, o Options) (Key, error) {
 		return "", fmt.Errorf("%q: write %s", s, k)
 	}
 	return k, nil
+}
+
+// modName is the name of one modifier.
+func modName(m Mods) string {
+	for i, n := range modNames {
+		if m == 1<<i {
+			return n
+		}
+	}
+	return ""
 }
 
 // modOf reads a modifier's name, or one of its aliases, in any case.
@@ -191,8 +225,8 @@ func join(mods Mods, value string) Key {
 // letter be written: "ctrl+shift+a" as "ctrl+A". It is "" for any other
 // key.
 func capitalSpelling(k Key) string {
-	mods, value, char := Split(k)
-	if mods&Shift == 0 || !char {
+	mods, value, kind := Split(k)
+	if mods&Shift == 0 || kind != Character {
 		return ""
 	}
 	up := strings.ToUpper(value)
@@ -202,10 +236,10 @@ func capitalSpelling(k Key) string {
 	return string(join(mods&^Shift, up))
 }
 
-// Split reads a key into its modifiers and its value, and reports whether
-// the value is a character ("?", "a", "+") rather than a physical key
-// ("page_down", "key_a").
-func Split(k Key) (mods Mods, value string, char bool) {
+// Split reads a key into its modifiers, its value and the value's kind: a
+// character ("?", "a", "+"), a physical key ("page_down", "key_a") or a
+// modifier key ("shift").
+func Split(k Key) (mods Mods, value string, kind Kind) {
 	s := string(k)
 	for {
 		part, rest, ok := strings.Cut(s, "+")
@@ -216,11 +250,24 @@ func Split(k Key) (mods Mods, value string, char bool) {
 			}
 		}
 		if !ok || rest == "" || !isMod {
-			return mods, s, !isPhysical[s]
+			return mods, s, kindOf(s)
 		}
 		mods |= m
 		s = rest
 	}
+}
+
+// kindOf is the kind of a canonical key's value.
+func kindOf(value string) Kind {
+	if isPhysical[value] {
+		return Physical
+	}
+	for _, n := range modNames {
+		if value == n {
+			return Modifier
+		}
+	}
+	return Character
 }
 
 // isAliasForm reports whether s is written as an alias: a name between
@@ -278,9 +325,9 @@ var glyphs = map[string]string{
 // Tab as glyphs ("ctrl+←", "⇥"). Shift+Tab is "⇧⇥", one glyph pair a reader
 // knows, where "shift+⇥" reads as a chord.
 func Display(k Key) string {
-	mods, value, char := Split(k)
+	mods, value, _ := Split(k)
 	g, ok := glyphs[value]
-	if char || !ok {
+	if !ok {
 		return string(k)
 	}
 	if value == "tab" && mods&Shift != 0 {
@@ -302,6 +349,6 @@ func Named() []Key {
 // TypesText reports whether a key types text into a field: a character or
 // space, with no super, ctrl or alt.
 func TypesText(k Key) bool {
-	mods, value, char := Split(k)
-	return mods&(Super|Ctrl|Alt) == 0 && (char || value == "space")
+	mods, value, kind := Split(k)
+	return mods&(Super|Ctrl|Alt) == 0 && (kind == Character || value == "space")
 }

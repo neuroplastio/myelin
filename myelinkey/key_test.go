@@ -76,6 +76,16 @@ func TestParse(t *testing.T) {
 		{"中", "中"},
 		{"👩‍💻", "👩‍💻"},
 		{" ", " "},
+		// A modifier alone is its key, tapped; with others, the last one
+		// written is the key.
+		{"shift", "shift"},
+		{"Shift", "shift"},
+		{"ctrl+shift", "ctrl+shift"},
+		{"shift+ctrl", "shift+ctrl"},
+		{"cmd", "super"},
+		{"control", "ctrl"},
+		{"alt+super+ctrl", "super+alt+ctrl"},
+		{"shift_left", "shift_left"},
 	} {
 		got, err := Parse(tc.in)
 		if err != nil || got != tc.want {
@@ -89,8 +99,7 @@ func TestParseRefuses(t *testing.T) {
 		{"", "empty"},
 		{"ctrl+", "no key after the last +"},
 		{"a+", "no key after the last +"},
-		{"ctrl", "ctrl is a modifier"},
-		{"ctrl+shift", "shift is a modifier"},
+		{"shift+shift", "shift twice"},
 		{"ctrl+ctrl+a", "ctrl twice"},
 		{"ctrl+control+a", "control twice"},
 		{"meta+a", "write super+ for the command or Windows key"},
@@ -125,7 +134,7 @@ func TestParseRefuses(t *testing.T) {
 func TestParseStrict(t *testing.T) {
 	strict := Options{Strict: true}
 	for _, s := range []string{"a", "ctrl+d", "shift+g", "super+ctrl+alt+shift+enter", "page_down", "ctrl++", "+",
-		"?", "shift+1", "key_a", "ctrl+arrow_left", "é"} {
+		"?", "shift+1", "key_a", "ctrl+arrow_left", "é", "shift", "ctrl+shift", "shift+ctrl"} {
 		if k, err := ParseWith(s, strict); err != nil || string(k) != s {
 			t.Errorf("strict %q = %q, %v", s, k, err)
 		}
@@ -143,6 +152,8 @@ func TestParseStrict(t *testing.T) {
 		{"G", "write g, or shift+g for Shift with it"},
 		{"ctrl+É", "write ctrl+é, or ctrl+shift+é for Shift with it"},
 		{"shift+G", `"shift+G": write shift+g`},
+		{"Shift", "write shift"},
+		{"control", "write ctrl"},
 	} {
 		got, err := ParseWith(tc.in, strict)
 		if err == nil {
@@ -196,9 +207,9 @@ func TestPhysicalKeys(t *testing.T) {
 			if err != nil || string(k) != mod+n {
 				t.Errorf("strict %q = %q, %v", mod+n, k, err)
 			}
-			mods, value, char := Split(k)
-			if value != n || char || join(mods, value) != k {
-				t.Errorf("Split(%q) = %v, %q, %v", k, mods, value, char)
+			mods, value, kind := Split(k)
+			if value != n || kind != Physical || join(mods, value) != k {
+				t.Errorf("Split(%q) = %v, %q, %v", k, mods, value, kind)
 			}
 		}
 		if k, err := Parse(w3c(n)); err != nil || string(k) != n {
@@ -222,19 +233,23 @@ func TestSplit(t *testing.T) {
 		k     Key
 		mods  Mods
 		value string
-		char  bool
+		kind  Kind
 	}{
-		{"a", 0, "a", true},
-		{"ctrl+shift+a", Ctrl | Shift, "a", true},
-		{"+", 0, "+", true},
-		{"ctrl++", Ctrl, "+", true},
-		{"super+ctrl+alt+shift+enter", Super | Ctrl | Alt | Shift, "enter", false},
-		{"page_down", 0, "page_down", false},
-		{"ctrl+key_w", Ctrl, "key_w", false},
+		{"a", 0, "a", Character},
+		{"ctrl+shift+a", Ctrl | Shift, "a", Character},
+		{"+", 0, "+", Character},
+		{"ctrl++", Ctrl, "+", Character},
+		{"super+ctrl+alt+shift+enter", Super | Ctrl | Alt | Shift, "enter", Physical},
+		{"page_down", 0, "page_down", Physical},
+		{"ctrl+key_w", Ctrl, "key_w", Physical},
+		{"shift_left", 0, "shift_left", Physical},
+		{"shift", 0, "shift", Modifier},
+		{"ctrl+shift", Ctrl, "shift", Modifier},
+		{"shift+ctrl", Shift, "ctrl", Modifier},
 	} {
-		mods, value, char := Split(tc.k)
-		if mods != tc.mods || value != tc.value || char != tc.char {
-			t.Errorf("Split(%q) = %v, %q, %v; want %v, %q, %v", tc.k, mods, value, char, tc.mods, tc.value, tc.char)
+		mods, value, kind := Split(tc.k)
+		if mods != tc.mods || value != tc.value || kind != tc.kind {
+			t.Errorf("Split(%q) = %v, %q, %v; want %v, %q, %v", tc.k, mods, value, kind, tc.mods, tc.value, tc.kind)
 		}
 	}
 }
@@ -289,6 +304,7 @@ func TestTypesText(t *testing.T) {
 		{"escape", false},
 		{"key_a", false},
 		{"shift_left", false},
+		{"shift", false},
 	} {
 		if got := TypesText(tc.k); got != tc.want {
 			t.Errorf("TypesText(%q) = %v, want %v", tc.k, got, tc.want)
@@ -368,16 +384,17 @@ func TestParseHotty(t *testing.T) {
 		{"Control++", "ctrl++"},
 		{"+", "+"},
 		{"Alt+<", "alt+<"},
-		{"Shift", "shift_left"},
-		{"Control+Shift", "ctrl+shift_left"},
-		{"Meta", "meta_left"},
+		{"Shift", "shift"},
+		{"Control+Shift", "ctrl+shift"},
+		{"Meta", "super"},
+		{"Shift+Control", "shift+ctrl"},
 	} {
 		got, ok := ParseHotty(tc.name)
 		if !ok || got != tc.want {
 			t.Errorf("ParseHotty(%q) = %q, %v; want %q", tc.name, got, ok, tc.want)
 		}
 	}
-	for _, bad := range []string{"", "Hyper+x", "ab", "enter", "Control+Control+a", "\x01", "Shift+"} {
+	for _, bad := range []string{"", "Hyper+x", "ab", "enter", "Control+Control+a", "\x01", "Shift+", "Shift+Shift"} {
 		if got, ok := ParseHotty(bad); ok {
 			t.Errorf("ParseHotty(%q) = %q, want it refused", bad, got)
 		}

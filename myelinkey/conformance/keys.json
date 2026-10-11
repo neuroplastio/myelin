@@ -1,0 +1,981 @@
+{
+ "version": "0.1",
+ "spec": "myelinkey/SPEC.md version 0.1",
+ "physical": [
+  "backquote",
+  "backslash",
+  "bracket_left",
+  "bracket_right",
+  "comma",
+  "digit_0",
+  "digit_1",
+  "digit_2",
+  "digit_3",
+  "digit_4",
+  "digit_5",
+  "digit_6",
+  "digit_7",
+  "digit_8",
+  "digit_9",
+  "equal",
+  "intl_backslash",
+  "intl_ro",
+  "intl_yen",
+  "key_a",
+  "key_b",
+  "key_c",
+  "key_d",
+  "key_e",
+  "key_f",
+  "key_g",
+  "key_h",
+  "key_i",
+  "key_j",
+  "key_k",
+  "key_l",
+  "key_m",
+  "key_n",
+  "key_o",
+  "key_p",
+  "key_q",
+  "key_r",
+  "key_s",
+  "key_t",
+  "key_u",
+  "key_v",
+  "key_w",
+  "key_x",
+  "key_y",
+  "key_z",
+  "minus",
+  "period",
+  "quote",
+  "semicolon",
+  "slash",
+  "alt_left",
+  "alt_right",
+  "backspace",
+  "caps_lock",
+  "context_menu",
+  "control_left",
+  "control_right",
+  "enter",
+  "meta_left",
+  "meta_right",
+  "shift_left",
+  "shift_right",
+  "space",
+  "tab",
+  "convert",
+  "kana_mode",
+  "non_convert",
+  "delete",
+  "end",
+  "help",
+  "home",
+  "insert",
+  "page_down",
+  "page_up",
+  "arrow_down",
+  "arrow_left",
+  "arrow_right",
+  "arrow_up",
+  "num_lock",
+  "numpad_0",
+  "numpad_1",
+  "numpad_2",
+  "numpad_3",
+  "numpad_4",
+  "numpad_5",
+  "numpad_6",
+  "numpad_7",
+  "numpad_8",
+  "numpad_9",
+  "numpad_add",
+  "numpad_backspace",
+  "numpad_clear",
+  "numpad_clear_entry",
+  "numpad_comma",
+  "numpad_decimal",
+  "numpad_divide",
+  "numpad_enter",
+  "numpad_equal",
+  "numpad_memory_add",
+  "numpad_memory_clear",
+  "numpad_memory_recall",
+  "numpad_memory_store",
+  "numpad_memory_subtract",
+  "numpad_multiply",
+  "numpad_paren_left",
+  "numpad_paren_right",
+  "numpad_subtract",
+  "numpad_separator",
+  "numpad_up",
+  "numpad_down",
+  "numpad_right",
+  "numpad_left",
+  "numpad_begin",
+  "numpad_home",
+  "numpad_end",
+  "numpad_insert",
+  "numpad_delete",
+  "numpad_page_up",
+  "numpad_page_down",
+  "escape",
+  "f1",
+  "f2",
+  "f3",
+  "f4",
+  "f5",
+  "f6",
+  "f7",
+  "f8",
+  "f9",
+  "f10",
+  "f11",
+  "f12",
+  "f13",
+  "f14",
+  "f15",
+  "f16",
+  "f17",
+  "f18",
+  "f19",
+  "f20",
+  "f21",
+  "f22",
+  "f23",
+  "f24",
+  "f25",
+  "fn",
+  "fn_lock",
+  "print_screen",
+  "scroll_lock",
+  "pause",
+  "browser_back",
+  "browser_favorites",
+  "browser_forward",
+  "browser_home",
+  "browser_refresh",
+  "browser_search",
+  "browser_stop",
+  "eject",
+  "launch_app_1",
+  "launch_app_2",
+  "launch_mail",
+  "media_play_pause",
+  "media_select",
+  "media_stop",
+  "media_track_next",
+  "media_track_previous",
+  "power",
+  "sleep",
+  "audio_volume_down",
+  "audio_volume_mute",
+  "audio_volume_up",
+  "wake_up",
+  "copy",
+  "cut",
+  "paste"
+ ],
+ "read": [
+  {
+   "in": "a",
+   "key": "a"
+  },
+  {
+   "in": "ctrl+d",
+   "key": "ctrl+d"
+  },
+  {
+   "in": "Ctrl+D",
+   "key": "ctrl+d"
+  },
+  {
+   "in": "shift+ctrl+d",
+   "key": "ctrl+shift+d"
+  },
+  {
+   "in": "d+ctrl",
+   "key": "ctrl+d"
+  },
+  {
+   "in": "control+d",
+   "key": "ctrl+d"
+  },
+  {
+   "in": "CONTROL+d",
+   "key": "ctrl+d"
+  },
+  {
+   "in": "cmd+s",
+   "key": "super+s"
+  },
+  {
+   "in": "command+s",
+   "key": "super+s"
+  },
+  {
+   "in": "opt+b",
+   "key": "alt+b"
+  },
+  {
+   "in": "option+b",
+   "key": "alt+b"
+  },
+  {
+   "in": "super+ctrl+alt+shift+enter",
+   "key": "super+ctrl+alt+shift+enter"
+  },
+  {
+   "in": "shift+alt+ctrl+super+enter",
+   "key": "super+ctrl+alt+shift+enter"
+  },
+  {
+   "in": "G",
+   "key": "g"
+  },
+  {
+   "in": "shift+G",
+   "key": "shift+g"
+  },
+  {
+   "in": "ctrl+É",
+   "key": "ctrl+é"
+  },
+  {
+   "in": "ǅ",
+   "key": "ǆ"
+  },
+  {
+   "in": "Σ",
+   "key": "σ"
+  },
+  {
+   "in": "?",
+   "key": "?"
+  },
+  {
+   "in": "!",
+   "key": "!"
+  },
+  {
+   "in": ",",
+   "key": ","
+  },
+  {
+   "in": "<",
+   "key": "<"
+  },
+  {
+   "in": ">",
+   "key": ">"
+  },
+  {
+   "in": "1",
+   "key": "1"
+  },
+  {
+   "in": "shift+1",
+   "key": "shift+1"
+  },
+  {
+   "in": "+",
+   "key": "+"
+  },
+  {
+   "in": "ctrl++",
+   "key": "ctrl++"
+  },
+  {
+   "in": "alt+=",
+   "key": "alt+="
+  },
+  {
+   "in": "é",
+   "key": "é"
+  },
+  {
+   "in": "é",
+   "key": "é"
+  },
+  {
+   "in": "中",
+   "key": "中"
+  },
+  {
+   "in": "👩‍💻",
+   "key": "👩‍💻"
+  },
+  {
+   "in": " ",
+   "key": " "
+  },
+  {
+   "in": "escape",
+   "key": "escape"
+  },
+  {
+   "in": "Escape",
+   "key": "escape"
+  },
+  {
+   "in": "ESCAPE",
+   "key": "escape"
+  },
+  {
+   "in": "esc",
+   "key": "escape"
+  },
+  {
+   "in": "page_down",
+   "key": "page_down"
+  },
+  {
+   "in": "PageDown",
+   "key": "page_down"
+  },
+  {
+   "in": "pagedown",
+   "key": "page_down"
+  },
+  {
+   "in": "pgdn",
+   "key": "page_down"
+  },
+  {
+   "in": "pgup",
+   "key": "page_up"
+  },
+  {
+   "in": "pageup",
+   "key": "page_up"
+  },
+  {
+   "in": "up",
+   "key": "arrow_up"
+  },
+  {
+   "in": "down",
+   "key": "arrow_down"
+  },
+  {
+   "in": "left",
+   "key": "arrow_left"
+  },
+  {
+   "in": "right",
+   "key": "arrow_right"
+  },
+  {
+   "in": "ArrowLeft",
+   "key": "arrow_left"
+  },
+  {
+   "in": "ctrl+left",
+   "key": "ctrl+arrow_left"
+  },
+  {
+   "in": "KeyA",
+   "key": "key_a"
+  },
+  {
+   "in": "ctrl+key_w",
+   "key": "ctrl+key_w"
+  },
+  {
+   "in": "Digit1",
+   "key": "digit_1"
+  },
+  {
+   "in": "F12",
+   "key": "f12"
+  },
+  {
+   "in": "f25",
+   "key": "f25"
+  },
+  {
+   "in": "Numpad0",
+   "key": "numpad_0"
+  },
+  {
+   "in": "NumpadEnter",
+   "key": "numpad_enter"
+  },
+  {
+   "in": "ContextMenu",
+   "key": "context_menu"
+  },
+  {
+   "in": "LaunchApp1",
+   "key": "launch_app_1"
+  },
+  {
+   "in": "ShiftLeft",
+   "key": "shift_left"
+  },
+  {
+   "in": "shift_left",
+   "key": "shift_left"
+  },
+  {
+   "in": "space",
+   "key": "space"
+  },
+  {
+   "in": "Space",
+   "key": "space"
+  },
+  {
+   "in": "ctrl+space",
+   "key": "ctrl+space"
+  },
+  {
+   "in": "shift+tab",
+   "key": "shift+tab"
+  },
+  {
+   "in": "shift+key_a",
+   "key": "shift+key_a"
+  },
+  {
+   "in": "comma",
+   "key": "comma"
+  },
+  {
+   "in": "ctrl+comma",
+   "key": "ctrl+comma"
+  },
+  {
+   "in": "shift",
+   "key": "shift"
+  },
+  {
+   "in": "Shift",
+   "key": "shift"
+  },
+  {
+   "in": "ctrl+shift",
+   "key": "ctrl+shift"
+  },
+  {
+   "in": "shift+ctrl",
+   "key": "shift+ctrl"
+  },
+  {
+   "in": "cmd",
+   "key": "super"
+  },
+  {
+   "in": "control",
+   "key": "ctrl"
+  },
+  {
+   "in": "alt+super+ctrl",
+   "key": "super+alt+ctrl"
+  },
+  {
+   "in": "",
+   "key": null
+  },
+  {
+   "in": "ctrl+",
+   "key": null
+  },
+  {
+   "in": "a+",
+   "key": null
+  },
+  {
+   "in": "shift+shift",
+   "key": null
+  },
+  {
+   "in": "ctrl+ctrl+a",
+   "key": null
+  },
+  {
+   "in": "ctrl+control+a",
+   "key": null
+  },
+  {
+   "in": "meta+a",
+   "key": null
+  },
+  {
+   "in": "meta",
+   "key": null
+  },
+  {
+   "in": "hyper+a",
+   "key": null
+  },
+  {
+   "in": "gg",
+   "key": null
+  },
+  {
+   "in": "g+g",
+   "key": null
+  },
+  {
+   "in": "++",
+   "key": null
+  },
+  {
+   "in": "return",
+   "key": null
+  },
+  {
+   "in": "f0",
+   "key": null
+  },
+  {
+   "in": "f26",
+   "key": null
+  },
+  {
+   "in": "key_aa",
+   "key": null
+  },
+  {
+   "in": "<leader>",
+   "key": null
+  },
+  {
+   "in": "<my_key>",
+   "key": null
+  },
+  {
+   "in": "<>",
+   "key": null
+  },
+  {
+   "in": " ",
+   "key": null
+  },
+  {
+   "in": "\u0001",
+   "key": null
+  },
+  {
+   "in": "\t",
+   "key": null
+  },
+  {
+   "in": "ctrl+ ",
+   "key": null
+  }
+ ],
+ "strict": [
+  {
+   "in": "a",
+   "key": "a"
+  },
+  {
+   "in": "ctrl+d",
+   "key": "ctrl+d"
+  },
+  {
+   "in": "shift+g",
+   "key": "shift+g"
+  },
+  {
+   "in": "super+ctrl+alt+shift+enter",
+   "key": "super+ctrl+alt+shift+enter"
+  },
+  {
+   "in": "page_down",
+   "key": "page_down"
+  },
+  {
+   "in": "ctrl++",
+   "key": "ctrl++"
+  },
+  {
+   "in": "+",
+   "key": "+"
+  },
+  {
+   "in": "?",
+   "key": "?"
+  },
+  {
+   "in": "shift+1",
+   "key": "shift+1"
+  },
+  {
+   "in": "key_a",
+   "key": "key_a"
+  },
+  {
+   "in": "ctrl+arrow_left",
+   "key": "ctrl+arrow_left"
+  },
+  {
+   "in": "é",
+   "key": "é"
+  },
+  {
+   "in": "shift",
+   "key": "shift"
+  },
+  {
+   "in": "ctrl+shift",
+   "key": "ctrl+shift"
+  },
+  {
+   "in": "shift+ctrl",
+   "key": "shift+ctrl"
+  },
+  {
+   "in": "Ctrl+d",
+   "key": null
+  },
+  {
+   "in": "control+d",
+   "key": null
+  },
+  {
+   "in": "shift+ctrl+d",
+   "key": null
+  },
+  {
+   "in": "d+ctrl",
+   "key": null
+  },
+  {
+   "in": "cmd+s",
+   "key": null
+  },
+  {
+   "in": "esc",
+   "key": null
+  },
+  {
+   "in": "PageDown",
+   "key": null
+  },
+  {
+   "in": "up",
+   "key": null
+  },
+  {
+   "in": "F1",
+   "key": null
+  },
+  {
+   "in": "G",
+   "key": null
+  },
+  {
+   "in": "ctrl+É",
+   "key": null
+  },
+  {
+   "in": "shift+G",
+   "key": null
+  },
+  {
+   "in": "Shift",
+   "key": null
+  },
+  {
+   "in": "control",
+   "key": null
+  },
+  {
+   "in": "meta+a",
+   "key": null
+  }
+ ],
+ "shifted_capitals": [
+  {
+   "in": "G",
+   "key": "shift+g"
+  },
+  {
+   "in": "shift+g",
+   "key": "shift+g"
+  },
+  {
+   "in": "shift+G",
+   "key": "shift+g"
+  },
+  {
+   "in": "ctrl+A",
+   "key": "ctrl+shift+a"
+  },
+  {
+   "in": "ctrl+shift+a",
+   "key": "ctrl+shift+a"
+  },
+  {
+   "in": "É",
+   "key": "shift+é"
+  },
+  {
+   "in": "g",
+   "key": "g"
+  },
+  {
+   "in": "?",
+   "key": "?"
+  },
+  {
+   "in": "1",
+   "key": "1"
+  },
+  {
+   "in": "ǅ",
+   "key": "ǆ"
+  }
+ ],
+ "strict_shifted_capitals": [
+  {
+   "in": "G",
+   "key": "shift+g"
+  },
+  {
+   "in": "shift+g",
+   "key": "shift+g"
+  },
+  {
+   "in": "ctrl+A",
+   "key": "ctrl+shift+a"
+  },
+  {
+   "in": "ctrl+shift+a",
+   "key": "ctrl+shift+a"
+  },
+  {
+   "in": "É",
+   "key": "shift+é"
+  },
+  {
+   "in": "shift+G",
+   "key": null
+  },
+  {
+   "in": "Ctrl+A",
+   "key": null
+  },
+  {
+   "in": "ǅ",
+   "key": null
+  }
+ ],
+ "split": [
+  {
+   "key": "a",
+   "mods": [],
+   "value": "a",
+   "kind": "character"
+  },
+  {
+   "key": "ctrl+shift+a",
+   "mods": [
+    "ctrl",
+    "shift"
+   ],
+   "value": "a",
+   "kind": "character"
+  },
+  {
+   "key": "+",
+   "mods": [],
+   "value": "+",
+   "kind": "character"
+  },
+  {
+   "key": "ctrl++",
+   "mods": [
+    "ctrl"
+   ],
+   "value": "+",
+   "kind": "character"
+  },
+  {
+   "key": "super+ctrl+alt+shift+enter",
+   "mods": [
+    "super",
+    "ctrl",
+    "alt",
+    "shift"
+   ],
+   "value": "enter",
+   "kind": "physical"
+  },
+  {
+   "key": "page_down",
+   "mods": [],
+   "value": "page_down",
+   "kind": "physical"
+  },
+  {
+   "key": "ctrl+key_w",
+   "mods": [
+    "ctrl"
+   ],
+   "value": "key_w",
+   "kind": "physical"
+  },
+  {
+   "key": "shift_left",
+   "mods": [],
+   "value": "shift_left",
+   "kind": "physical"
+  },
+  {
+   "key": "shift",
+   "mods": [],
+   "value": "shift",
+   "kind": "modifier"
+  },
+  {
+   "key": "ctrl+shift",
+   "mods": [
+    "ctrl"
+   ],
+   "value": "shift",
+   "kind": "modifier"
+  },
+  {
+   "key": "shift+ctrl",
+   "mods": [
+    "shift"
+   ],
+   "value": "ctrl",
+   "kind": "modifier"
+  }
+ ],
+ "sequences": [
+  {
+   "in": "g g",
+   "keys": [
+    "g",
+    "g"
+   ]
+  },
+  {
+   "in": "  g  g ",
+   "keys": [
+    "g",
+    "g"
+   ]
+  },
+  {
+   "in": "g\tg\ng",
+   "keys": [
+    "g",
+    "g",
+    "g"
+   ]
+  },
+  {
+   "in": "Ctrl+X d pgdn",
+   "keys": [
+    "ctrl+x",
+    "d",
+    "page_down"
+   ]
+  },
+  {
+   "in": "g  ",
+   "keys": [
+    "g",
+    " "
+   ]
+  },
+  {
+   "in": "shift shift",
+   "keys": [
+    "shift",
+    "shift"
+   ]
+  },
+  {
+   "in": "",
+   "keys": null
+  },
+  {
+   "in": "   ",
+   "keys": null
+  },
+  {
+   "in": "<leader> n",
+   "keys": null
+  },
+  {
+   "in": "g meta+g",
+   "keys": null
+  }
+ ],
+ "display": [
+  {
+   "key": "arrow_left",
+   "display": "←"
+  },
+  {
+   "key": "arrow_right",
+   "display": "→"
+  },
+  {
+   "key": "arrow_up",
+   "display": "↑"
+  },
+  {
+   "key": "arrow_down",
+   "display": "↓"
+  },
+  {
+   "key": "ctrl+arrow_left",
+   "display": "ctrl+←"
+  },
+  {
+   "key": "shift+arrow_up",
+   "display": "shift+↑"
+  },
+  {
+   "key": "tab",
+   "display": "⇥"
+  },
+  {
+   "key": "shift+tab",
+   "display": "⇧⇥"
+  },
+  {
+   "key": "ctrl+shift+tab",
+   "display": "ctrl+⇧⇥"
+  },
+  {
+   "key": "ctrl+shift+a",
+   "display": "ctrl+shift+a"
+  },
+  {
+   "key": "escape",
+   "display": "escape"
+  },
+  {
+   "key": "page_down",
+   "display": "page_down"
+  },
+  {
+   "key": "shift+g",
+   "display": "shift+g"
+  },
+  {
+   "key": "super+x",
+   "display": "super+x"
+  },
+  {
+   "key": "+",
+   "display": "+"
+  },
+  {
+   "key": "shift",
+   "display": "shift"
+  }
+ ]
+}
