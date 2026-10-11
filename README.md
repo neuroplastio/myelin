@@ -7,10 +7,12 @@ Context-bound keymaps and which-key menus for Go programs.
 [![Go version](https://img.shields.io/github/go-mod/go-version/neuroplastio/myelin)](go.mod)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-Practice wraps a nerve pathway in myelin, and the signal along it gets fast
-enough that the hand moves before you think. This library is for that kind
-of muscle memory: keys that mean the same thing wherever you are, in every
-program built on it.
+myelin decides what a key does in your Go program, given what holds the
+keyboard right now. You declare the things that can hold it (a window, a
+list, a text field), bind keys in contexts over them, and layer the user's
+config over your defaults. Sequences like `g g`, a leader key and which-key
+menus are built in. It has no UI and reads no files, so it works the same in
+a TUI, a GUI or anything else that takes keys.
 
 ## Highlights
 
