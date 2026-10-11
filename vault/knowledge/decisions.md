@@ -256,8 +256,8 @@ supersedes D1.2's hotty-go requirement and D3.1's "through hotty-go's
    - **hotty-go keeps the rest:** `ParseKey`, as a thin wrapper that
      delegates; `DecodeKeys`; `Keymap`, `ParseKeymap`, `Resolve` and
      `TerminalKeys`; `hottytea.KeyName` and `hottyterm.KeyName`.
-   - **Step 1 also waits for HOTTY's msgpack release** (the P-3 move in
-     hotty-go). myelin messages the hotty agent before it starts.
+   - **Step 1 also waits for HOTTY's msgpack release** (hotty-go's move
+     to msgpack). myelin messages the hotty agent before it starts.
 
 ### D13 — Keys are a module of their own; no Bubble Tea adapter
 **2026-10-11.** The maintainer: "Make the key a submodule. Also, drop

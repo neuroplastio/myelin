@@ -13,37 +13,27 @@ Item template:
 
 Statuses: `todo`, `in-progress`, `blocked`.
 
-_Last updated: 2026-10-11. The engine, the docs and the godoc are done,
-and the history starts fresh (D10). Going public waits for the
-maintainer's final review._
+_Last updated: 2026-10-11. myelin is public: the engine, the docs and the
+godoc are done, and keys are their own module, myelinkey (D13, D14)._
 
 ## In progress
 
 ## Blocked
 
-- [ ] **PUBLIC-01** myelin goes public
-      status: blocked | owner: — | added: 2026-10-10
-      notes: Waits for the maintainer's final review (D8). Then flip the
-      visibility, so that CI starts, and tell kubecom the public commit to
-      require. It holds its switch until then and until its own go-ahead.
-      Its local switch is green on myelin 1be8805 with `myelinkey`
-      2f34a93 (kubecom 16f418d, unpushed). Live keys go through
-      `hottytea.KeyName` and `myelinkey.ParseHotty` (D13, D14).
-
 - [ ] **KEYS-02** hotty-go takes its key names from `myelinkey` (D12 step 2)
       status: blocked | owner: — | added: 2026-10-11
       notes: myelin's step is done (D13, D14). The hotty agent makes
       `hotty.ParseKey` delegate to `myelinkey.ParseHotty` after HOTTY's
-      msgpack release; it reports changes to its key code or vectors before
-      then,
-      and `make vectors HOTTY=main` follows a vectors bump. When it lands,
-      send gov the commits (NEIO-13's "until the switch" lines).
+      msgpack release; it reports changes to its key code or vectors
+      before then, and `make vectors HOTTY=main` follows a vectors bump.
+      When it lands, report the commits to the org's design record, which
+      describes step 2 as pending.
 
 ## Todo
 
 - [ ] **RELEASE-01** The first tag, v0.1.0
       status: todo | owner: — | added: 2026-10-11
-      notes: gov's P-5 (draft): packages use semver. After PUBLIC-01 and on
+      notes: The org's versioning policy (draft): packages use semver. On
       the maintainer's go-ahead, tag myelinkey/v0.1.0, move the root's
       myelinkey requirement to it, and tag v0.1.0 there (no public version
       above 0.1.0). Then tell kubecom, so it can require tags instead of
