@@ -59,10 +59,15 @@ func keyTable() string {
 	return b.String()
 }
 
-// The docs' code is the Examples' code, which go test compiles and runs: a
-// fenced block after `<!-- example:NAME -->` is the body of the Example
-// function NAME, or the whole of an example file named by its path. The
-// gate fails when a block drifts; -update rewrites them.
+// The docs' code is the Examples' code, which go test compiles and runs. A
+// fenced block after a marker is generated, and the gate fails when it
+// drifts; -update rewrites them:
+//   - `<!-- example:NAME -->`: the body of the Example function NAME, or the
+//     whole of an example file named by its path;
+//   - `<!-- example:NAME#N -->`: step N of that body, the code after its
+//     `// N. …` comment and before the next step's;
+//   - `<!-- file:PATH -->`: the file at PATH, such as a config an Example
+//     reads.
 func TestDocsExamples(t *testing.T) {
 	examples := exampleSources(t, "example_test.go", "myelinkey/example_test.go")
 	pages, err := filepath.Glob("docs/*.md")
@@ -78,23 +83,42 @@ func TestDocsExamples(t *testing.T) {
 		var out strings.Builder
 		rest := page
 		for {
-			i := strings.Index(rest, "<!-- example:")
+			i := strings.Index(rest, "<!-- ")
 			if i < 0 {
 				out.WriteString(rest)
 				break
 			}
 			j := strings.Index(rest[i:], " -->")
-			name := rest[i+len("<!-- example:") : i+j]
-			code, ok := examples[name]
-			if !ok {
-				t.Fatalf("%s: no example %q", file, name)
+			kind, name, _ := strings.Cut(rest[i+len("<!-- "):i+j], ":")
+			var code string
+			switch kind {
+			case "example":
+				c, ok := examples[name]
+				if !ok {
+					t.Fatalf("%s: no example %q", file, name)
+				}
+				code = c
+			case "file":
+				b, err := os.ReadFile(name)
+				if err != nil {
+					t.Fatalf("%s: %v", file, err)
+				}
+				code = string(b)
+			default:
+				out.WriteString(rest[:i+j])
+				rest = rest[i+j:]
+				continue
 			}
-			open := strings.Index(rest[i:], "```go\n")
-			end := strings.Index(rest[i+open+len("```go\n"):], "```\n")
-			if open < 0 || end < 0 {
-				t.Fatalf("%s: example %q has no ```go block after it", file, name)
+			open := strings.Index(rest[i:], "```")
+			nl := strings.IndexByte(rest[i+max(open, 0):], '\n')
+			if open < 0 || nl < 0 {
+				t.Fatalf("%s: %s has no fenced block after it", file, name)
 			}
-			start := i + open + len("```go\n")
+			start := i + open + nl + 1
+			end := strings.Index(rest[start:], "```\n")
+			if end < 0 {
+				t.Fatalf("%s: %s's block doesn't end", file, name)
+			}
 			out.WriteString(rest[:start])
 			out.WriteString(code)
 			rest = rest[start+end:]
@@ -113,7 +137,8 @@ func TestDocsExamples(t *testing.T) {
 }
 
 // exampleSources are each file's Example functions' bodies by name
-// (myelintea's prefixed "myelintea."), and each whole file by its path.
+// (myelinkey's prefixed "myelinkey."), each body's steps as NAME#N, and each
+// whole file by its path.
 func exampleSources(t *testing.T, files ...string) map[string]string {
 	t.Helper()
 	out := map[string]string{}
@@ -142,8 +167,37 @@ func exampleSources(t *testing.T, files ...string) map[string]string {
 			for i, l := range lines {
 				lines[i] = strings.TrimPrefix(l, "\t")
 			}
-			out[prefix+fn.Name.Name] = strings.Join(lines, "\n") + "\n"
+			name := prefix + fn.Name.Name
+			out[name] = strings.Join(lines, "\n") + "\n"
+			for n, step := range steps(lines) {
+				out[fmt.Sprintf("%s#%d", name, n)] = step
+			}
 		}
 	}
+	return out
+}
+
+// steps splits an Example's lines at its numbered step comments ("// 1.
+// Declare …"): step N is the code after its comment, up to the next step.
+func steps(lines []string) map[int]string {
+	out := map[int]string{}
+	n, from := 0, 0
+	flush := func(to int) {
+		if n == 0 {
+			return
+		}
+		for from < to && strings.HasPrefix(lines[from], "//") {
+			from++ // the rest of the step's comment
+		}
+		out[n] = strings.Trim(strings.Join(lines[from:to], "\n"), "\n") + "\n"
+	}
+	for i, l := range lines {
+		var k int
+		if _, err := fmt.Sscanf(l, "// %d. ", &k); err == nil && k == n+1 {
+			flush(i)
+			n, from = k, i+1
+		}
+	}
+	flush(len(lines))
 	return out
 }

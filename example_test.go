@@ -1,19 +1,23 @@
 package myelin_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"os"
 	"slices"
 	"time"
 
 	"github.com/neuroplastio/myelin"
-
 	"github.com/neuroplastio/myelin/myelinkey"
 )
 
 // A file manager's keymap: its defaults and a user's config, matched on the
 // paths the keyboard takes.
 func Example() {
+	// 1. Declare what can hold the keyboard: a window, a list of files in a
+	// directory, and a filter field that takes text.
 	env, err := myelin.NewEnv(myelin.Schema{
 		Nodes: []myelin.NodeType{
 			{Name: "window"},
@@ -26,6 +30,9 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
+
+	// 2. Write the bindings: the program's defaults, and a user's override
+	// for lists under /tmp.
 	defaults := myelin.Doc{Layer: "defaults", Binds: []myelin.Bind{
 		{Keys: "j", Action: "down"},
 		{Keys: "g g", Action: "top"},
@@ -36,11 +43,15 @@ func Example() {
 	user := myelin.Doc{Layer: "user", Binds: []myelin.Bind{
 		{Keys: "enter", Action: "preview", When: "list.dir.startsWith('/tmp')"},
 	}}
+
+	// 3. Build the keymap. Problems are errors and warnings, each with where
+	// it was written.
 	km, problems := env.Build([]myelin.Doc{defaults, user}, nil)
 	if km == nil {
 		panic(fmt.Sprint(problems))
 	}
 
+	// 4. Ask what keys do where the keyboard is.
 	home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/home/me"}}}
 	tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
 	filter := append(slices.Clone(home), myelin.Step{Name: "field"})
@@ -155,6 +166,7 @@ func ExampleContext_Depth() {
 // The sequencer holds no clock: the time goes in with each key, and a
 // deadline comes out for the program's loop to wake at.
 func ExampleFeed() {
+	// 1. A keymap where g runs one thing and g g another: after g, it waits.
 	env, err := myelin.NewEnv(myelin.Schema{
 		Nodes:   []myelin.NodeType{{Name: "list"}},
 		Layers:  []string{"defaults"},
@@ -170,6 +182,9 @@ func ExampleFeed() {
 	if km == nil {
 		panic(fmt.Sprint(problems))
 	}
+
+	// 2. Feed keys with the time they came. A deadline means: wake then,
+	// and call Expire.
 	p := myelin.Path{{Name: "list"}}
 	now := time.Date(2026, 10, 11, 12, 0, 0, 0, time.UTC)
 
@@ -198,6 +213,7 @@ func ExampleFeed() {
 // The leader's menu: one item per key, a group where more keys follow, and
 // what the program says does nothing now dimmed.
 func ExampleKeymap_Menu() {
+	// 1. A leader key, a group that labels a prefix, and labelled bindings.
 	env, err := myelin.NewEnv(myelin.Schema{
 		Nodes:  []myelin.NodeType{{Name: "list"}},
 		Layers: []string{"defaults"},
@@ -218,6 +234,9 @@ func ExampleKeymap_Menu() {
 	if km == nil {
 		panic(fmt.Sprint(problems))
 	}
+
+	// 2. Draw the menu after the leader, and after the leader and f. The
+	// program says what applies here: in a read-only list, not editing.
 	readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Action != "file.delete" }
 
 	leader, _ := km.Leader()
@@ -242,4 +261,85 @@ func ExampleKeymap_Menu() {
 	// space f (+file)
 	//   n  New file enabled=false
 	//   d  Delete enabled=false
+}
+
+// myelin reads no files: a program decodes its own config, in its own
+// format, into documents. Here the defaults are sections in the style of
+// Zed's keymap.json, and the user's overrides are rules in the style of VS
+// Code's keybindings.json.
+func Example_config() {
+	env, err := myelin.NewEnv(myelin.Schema{
+		Nodes: []myelin.NodeType{
+			{Name: "window"},
+			{Name: "list", Attrs: map[string]myelin.Type{"dir": "string"}},
+			{Name: "field", Text: true},
+		},
+		Layers: []string{"defaults", "user"},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	// 1. The defaults: a context, and the keys bound in it.
+	var sections []struct {
+		Context  string
+		Bindings map[string]string
+	}
+	data, err := os.ReadFile("testdata/config/defaults.json")
+	if err != nil {
+		panic(err)
+	}
+	if err := json.Unmarshal(data, &sections); err != nil {
+		panic(err)
+	}
+	defaults := myelin.Doc{Layer: "defaults", Source: "defaults.json"}
+	for _, s := range sections {
+		for _, keys := range slices.Sorted(maps.Keys(s.Bindings)) {
+			defaults.Binds = append(defaults.Binds, myelin.Bind{Keys: keys, Action: s.Bindings[keys], When: s.Context})
+		}
+	}
+
+	// 2. The user's rules decode straight into binds: keys, action, when,
+	// args, unbind.
+	user := myelin.Doc{Layer: "user", Source: "user.json"}
+	if data, err = os.ReadFile("testdata/config/user.json"); err != nil {
+		panic(err)
+	}
+	if err := json.Unmarshal(data, &user.Binds); err != nil {
+		panic(err)
+	}
+
+	// 3. Build, and ask.
+	km, problems := env.Build([]myelin.Doc{defaults, user}, nil)
+	if km == nil {
+		panic(fmt.Sprint(problems))
+	}
+	home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/home/me"}}}
+	tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
+	filter := append(slices.Clone(home), myelin.Step{Name: "field"})
+	for _, q := range []struct {
+		keys, where string
+		p           myelin.Path
+	}{
+		{"enter", "a list", home},
+		{"enter", "/tmp", tmp},
+		{"d d", "a list", home},
+		{"ctrl+d", "a list", home},
+		{"esc", "the filter", filter},
+		{"g g", "a list", home},
+	} {
+		seq, _ := myelinkey.ParseSeq(q.keys)
+		action := "nothing"
+		if m := km.Match(seq, q.p); m.Exact != nil {
+			action = m.Exact.Action
+		}
+		fmt.Printf("%s in %s: %s\n", q.keys, q.where, action)
+	}
+	// Output:
+	// enter in a list: open
+	// enter in /tmp: preview
+	// d d in a list: nothing
+	// ctrl+d in a list: delete
+	// esc in the filter: close-filter
+	// g g in a list: top
 }

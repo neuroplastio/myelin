@@ -1,0 +1,5 @@
+[
+  { "bindings": { "j": "down", "k": "up", "g g": "top", "esc": "back" } },
+  { "context": "list", "bindings": { "enter": "open", "d d": "delete" } },
+  { "context": "field", "bindings": { "esc": "close-filter" } }
+]

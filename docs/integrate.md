@@ -176,6 +176,7 @@ new state and a `Result`, in which at most one thing is set:
 <!-- example:ExampleFeed -->
 
 ```go
+// 1. A keymap where g runs one thing and g g another: after g, it waits.
 env, err := myelin.NewEnv(myelin.Schema{
 	Nodes:   []myelin.NodeType{{Name: "list"}},
 	Layers:  []string{"defaults"},
@@ -191,6 +192,9 @@ km, problems := env.Build([]myelin.Doc{{Layer: "defaults", Binds: []myelin.Bind{
 if km == nil {
 	panic(fmt.Sprint(problems))
 }
+
+// 2. Feed keys with the time they came. A deadline means: wake then,
+// and call Expire.
 p := myelin.Path{{Name: "list"}}
 now := time.Date(2026, 10, 11, 12, 0, 0, 0, time.UTC)
 
@@ -263,6 +267,7 @@ that has no label, and you draw the menu, with `DisplayKey` for the keys.
 <!-- example:ExampleKeymap_Menu -->
 
 ```go
+// 1. A leader key, a group that labels a prefix, and labelled bindings.
 env, err := myelin.NewEnv(myelin.Schema{
 	Nodes:  []myelin.NodeType{{Name: "list"}},
 	Layers: []string{"defaults"},
@@ -283,6 +288,9 @@ km, problems := env.Build([]myelin.Doc{{Layer: "defaults",
 if km == nil {
 	panic(fmt.Sprint(problems))
 }
+
+// 2. Draw the menu after the leader, and after the leader and f. The
+// program says what applies here: in a read-only list, not editing.
 readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Action != "file.delete" }
 
 leader, _ := km.Leader()
