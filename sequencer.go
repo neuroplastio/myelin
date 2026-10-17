@@ -16,6 +16,8 @@ import (
 // What happens to the keys a Result drops is the program's: one forwards
 // them to the terminal it fronts, another types them into its field, or
 // feeds the last one again on its own. Feed never retries a key by itself.
+// Where a fence swallows them (Fence.Swallow), the Result has them as
+// Swallowed instead, and they go nowhere.
 
 // Feed is one key typed on a path at now.
 //
@@ -25,12 +27,13 @@ import (
 //   - A key that finishes a binding, with nothing as deep continuing it,
 //     runs it.
 //   - A key that does neither drops the keys pending with it, and the state
-//     is cleared.
+//     is cleared. Whether they drop or are swallowed is decided on the path
+//     the first of them was typed on: the state's, or p.
 //
 // With nothing pending, a key no binding starts with is one map lookup.
 func Feed(km *Keymap, st Pending, k myelinkey.Key, p Path, now time.Time) (Pending, Result) {
 	if len(st.Seq) == 0 && !km.Starts(k) {
-		return Pending{}, Result{Dropped: []myelinkey.Key{k}}
+		return Pending{}, km.drop([]myelinkey.Key{k}, p)
 	}
 	// seq is on the stack: a state or a Result that keeps it keeps a copy.
 	var buf [8]myelinkey.Key
@@ -43,13 +46,31 @@ func Feed(km *Keymap, st Pending, k myelinkey.Key, p Path, now time.Time) (Pendi
 	case m.Exact != nil:
 		return Pending{}, Result{Run: m.Exact}
 	}
-	return Pending{}, Result{Dropped: slices.Clone(seq)}
+	if len(st.Seq) > 0 {
+		p = st.Path
+	}
+	return Pending{}, km.drop(slices.Clone(seq), p)
+}
+
+// drop is the Result of keys that matched nothing on p: Swallowed where the
+// path's fence swallows them, and Dropped where it doesn't, or where they
+// start with a key that types text into a node deeper than the fence.
+func (km *Keymap) drop(seq []myelinkey.Key, p Path) Result {
+	if km.swallows {
+		a := km.act(p)
+		swallow := a.fence != nil && a.fence.f.Swallow && !(a.text > a.fenceDepth && myelinkey.TypesText(seq[0]))
+		km.release(a)
+		if swallow {
+			return Result{Swallowed: seq}
+		}
+	}
+	return Result{Dropped: seq}
 }
 
 // Expire is the pending keys timing out. Before the state's deadline it
 // does nothing, so a stale timer is harmless. After it, the binding the
 // pending keys finish runs, on the path they were typed on; with none they
-// drop. Either way the state is cleared.
+// drop, or a fence there swallows them. Either way the state is cleared.
 func Expire(km *Keymap, st Pending, now time.Time) (Pending, Result) {
 	if len(st.Seq) == 0 || now.Before(st.Deadline) {
 		return st, Result{}
@@ -57,7 +78,7 @@ func Expire(km *Keymap, st Pending, now time.Time) (Pending, Result) {
 	if m := km.Match(st.Seq, st.Path); m.Exact != nil {
 		return Pending{}, Result{Run: m.Exact}
 	}
-	return Pending{}, Result{Dropped: st.Seq}
+	return Pending{}, km.drop(st.Seq, st.Path)
 }
 
 // Arm is an alias's keys as if they had been typed on the path at now, by

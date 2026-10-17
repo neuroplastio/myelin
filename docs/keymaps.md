@@ -168,6 +168,13 @@ Some keys need more than one binding or a binding to nothing:
 - **Dropping the defaults.** A keymap can leave the layers below it out
   entirely, so that every key is yours to bind. Each program's docs say
   how its file writes that.
+- **Modes.** A program can have modes, such as one that passes every key
+  to a terminal but the mode's own, or a dialog that takes every key. In
+  a mode, bindings whose contexts are shallower than the mode's can stop
+  working, and keys that match nothing can do nothing. A text field
+  opened inside the mode still keeps its text. A binding of yours that is
+  as deep as the mode or deeper still works there; to keep it out, say so
+  in its context. Each program's docs list its modes.
 
 Each program prints its keymap in force and explains what a key does on a
 given path, with its own commands. Its docs say how.

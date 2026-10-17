@@ -85,7 +85,7 @@ At the same depth, the higher layer wins, so a user's binding overrides a
 default that is just as specific. Within a layer, the later binding wins,
 as it would in any config file.
 
-Two rules follow from depth:
+Three rules follow from depth:
 
 - **An unbind is a binding to nothing,** and wins the same way. To take
   away a key that a default binds in a context, unbind it in that context.
@@ -93,6 +93,12 @@ Two rules follow from depth:
   focus, a key that types text goes to it, unless a binding at least as
   deep takes the key. A binding of `x` never stops someone typing an `x`
   into a filter.
+- **A mode is a fence.** Where a fence's context holds, it can make that
+  rule apply to every key at the fence's depth, so the bindings shallower
+  than the mode stop applying. It can also send the keys that nothing
+  takes nowhere instead of back to the program. The deepest fence
+  decides, as the deepest binding wins, so a palette opened in a mode can
+  give the default back.
 
 ## Why CEL
 

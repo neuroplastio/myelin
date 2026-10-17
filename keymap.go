@@ -22,6 +22,12 @@ import (
 // sequence times out. With a node that takes text on the path, a sequence
 // that starts with a key that types text is the field's unless a binding at
 // least as deep as that node takes it (the field rule).
+//
+// One fence decides on a path, by the same precedence: the deepest that
+// holds, then the higher layer, then the later. A fence that shadows is the
+// field rule for every key, at the fence's depth. One that swallows sends
+// what matches nothing nowhere, except a key that types text into a node
+// deeper than the fence.
 
 // Keymap is a built keymap: every layer's bindings, their aliases resolved,
 // in load order. It is immutable and safe for concurrent use. The Bindings its
@@ -31,6 +37,10 @@ type Keymap struct {
 	aliases map[string][]myelinkey.Key
 	binds   []bound
 	groups  []boundGroup
+	fences  []boundFence
+	// swallows is set when a fence swallows: only then does a key that
+	// matches nothing need its path.
+	swallows bool
 	// byFirst indexes binds by their first key, so a key no sequence starts
 	// with costs one map lookup and builds no activation.
 	byFirst map[myelinkey.Key][]int
@@ -67,8 +77,17 @@ type boundGroup struct {
 	order int
 }
 
+// boundFence is a fence as the keymap holds it.
+type boundFence struct {
+	f     Fence
+	ctx   *Context
+	cid   int32
+	rank  int
+	order int
+}
+
 // act is an activation of the path for one query, from the keymap's pool,
-// reset; release puts it back.
+// reset, with the fence that decides on the path; release puts it back.
 func (km *Keymap) act(p Path) *pathAct {
 	a, _ := km.acts.Get().(*pathAct)
 	if a == nil {
@@ -78,12 +97,25 @@ func (km *Keymap) act(p Path) *pathAct {
 	for i := range a.depths {
 		a.depths[i] = unknownDepth
 	}
+	best := none
+	for i := range km.fences {
+		f := &km.fences[i]
+		if w := (winner{depth: a.ctxDepth(f.cid, f.ctx), rank: f.rank, order: f.order}); w.depth >= 0 && best.beaten(w) {
+			best, a.fence = w, f
+		}
+	}
+	if a.fence != nil {
+		a.fenceDepth = best.depth
+		if a.fence.f.Shadow {
+			a.shadow = best.depth
+		}
+	}
 	return a
 }
 
 // release returns an activation to the pool, holding nothing of its path.
 func (km *Keymap) release(a *pathAct) {
-	a.path = nil
+	a.path, a.fence, a.fenceDepth, a.shadow = nil, nil, 0, 0
 	clear(a.keys)
 	km.acts.Put(a)
 }
@@ -227,6 +259,15 @@ func (e *Env) Build(docs []Doc, check func(Binding) error) (*Keymap, []Problem) 
 				continue
 			}
 			km.groups = append(km.groups, boundGroup{g: g, keys: keys, ctx: ctx, cid: cid, rank: rank, order: order})
+			order++
+		}
+		for _, f := range d.Fences {
+			ctx, cid, ok := compile(f.Source, f.When)
+			if !ok {
+				continue
+			}
+			km.fences = append(km.fences, boundFence{f: f, ctx: ctx, cid: cid, rank: rank, order: order})
+			km.swallows = km.swallows || f.Swallow
 			order++
 		}
 	}

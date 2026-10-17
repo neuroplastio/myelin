@@ -36,6 +36,7 @@ func TestDecodeHostileHeader(t *testing.T) {
 		{"doc binds", &Doc{}, field("binds", arr)},
 		{"doc groups", &Doc{}, field("groups", arr)},
 		{"doc drops", &Doc{}, field("drops", arr)},
+		{"doc fences", &Doc{}, field("fences", arr)},
 		{"doc aliases", &Doc{}, field("aliases", mp)},
 		{"bind args", &Bind{}, field("args", arr)},
 		{"bind props", &Bind{}, field("props", mp)},
@@ -47,6 +48,7 @@ func TestDecodeHostileHeader(t *testing.T) {
 		{"menu items", &Menu{}, field("items", arr)},
 		{"item items", &Item{}, field("items", arr)},
 		{"result dropped", &Result{}, field("dropped", arr)},
+		{"result swallowed", &Result{}, field("swallowed", arr)},
 	} {
 		var before, after runtime.MemStats
 		runtime.ReadMemStats(&before)

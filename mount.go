@@ -7,8 +7,9 @@ import (
 
 // Mount is a document for a widget another program embeds, such as a
 // pager, put under the node its host shows it at: a copy of d with every
-// bind's and group's context joined to when, as "(when) && (its own)". A
-// node with no context of its own gets when. An empty when changes nothing.
+// bind's, group's and fence's context joined to when, as "(when) && (its
+// own)". One with no context of its own gets when. An empty when changes
+// nothing.
 func Mount(d Doc, when string) Doc {
 	out := d
 	out.Drops = slices.Clone(d.Drops)
@@ -22,6 +23,10 @@ func Mount(d Doc, when string) Doc {
 	out.Groups = slices.Clone(d.Groups)
 	for i := range out.Groups {
 		out.Groups[i].When = joinWhen(when, out.Groups[i].When)
+	}
+	out.Fences = slices.Clone(d.Fences)
+	for i := range out.Fences {
+		out.Fences[i].When = joinWhen(when, out.Fences[i].When)
 	}
 	return out
 }

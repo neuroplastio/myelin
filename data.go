@@ -87,6 +87,9 @@ type Doc struct {
 	Binds []Bind `msg:"binds,omitempty,limit=16384"`
 	// Groups label key prefixes for the menus.
 	Groups []Group `msg:"groups,omitempty"`
+	// Fences say what happens to the keys their contexts don't bind, for a
+	// program's modes.
+	Fences []Fence `msg:"fences,omitempty"`
 	// Source is where Aliases and Drops were written.
 	Source string `msg:"source,omitempty"`
 }
@@ -128,6 +131,26 @@ type Group struct {
 	// hold, the label follows the bindings' precedence.
 	When string `msg:"when,omitempty"`
 	// Source is where the group was written.
+	Source string `msg:"source,omitempty"`
+}
+
+// Fence says, where its context holds, what happens to the keys the
+// bindings at least as deep don't take: a program's mode, such as one that
+// passes every key to a terminal but its own, or a dialog that lets no key
+// past it. On a path the deepest fence that holds decides, then the higher
+// layer, then the later fence, as for bindings. A fence with neither option
+// set gives a deeper context the default back: a palette in a mode.
+type Fence struct {
+	// When is the fence's context; empty holds everywhere.
+	When string `msg:"when,omitempty"`
+	// Shadow leaves out the bindings whose contexts are shallower than the
+	// fence's: only those at least as deep apply, and menus show only them.
+	Shadow bool `msg:"shadow,omitempty"`
+	// Swallow sends a key that nothing takes nowhere: Feed and Expire put
+	// it in Result.Swallowed, not Dropped. A key that types text still
+	// drops where a node that takes text is deeper than the fence.
+	Swallow bool `msg:"swallow,omitempty"`
+	// Source is where the fence was written.
 	Source string `msg:"source,omitempty"`
 }
 
@@ -178,6 +201,9 @@ type Candidate struct {
 	Depth int `msg:"depth"`
 	// Wins is set on the binding that runs: the one [Keymap.Match] returns.
 	Wins bool `msg:"wins"`
+	// Fenced is set when the binding holds but the path's fence shadows it:
+	// its context is shallower than the fence's ([Keymap.Fence]).
+	Fenced bool `msg:"fenced,omitempty"`
 }
 
 // Problem is something wrong with a keymap, where it was written.
@@ -244,4 +270,7 @@ type Result struct {
 	// Dropped are keys that matched nothing: the program types, forwards
 	// or swallows them.
 	Dropped []myelinkey.Key `msg:"dropped,omitempty"`
+	// Swallowed are keys that matched nothing where a fence sends them
+	// nowhere (Fence.Swallow): the program does nothing with them.
+	Swallowed []myelinkey.Key `msg:"swallowed,omitempty"`
 }

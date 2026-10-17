@@ -19,22 +19,6 @@ Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17)._
 
 ## In progress
 
-- [ ] **FENCE-01** Fences: what a context does with the keys it doesn't bind, so programs can build modes from contexts
-      status: in-progress | owner: myelin | added: 2026-10-17
-      notes: Asked by plexos-key-presets for plx's modes (zellij's pane and
-      locked modes, a modal dialog). Shaped in reply: `Doc.Fences []Fence`
-      {When, Shadow, Swallow, Source}. The deepest holding fence decides
-      both options (then layer, then later). Shadow is the Text floor for
-      every key, and Swallow sets a new `Result.Swallowed` in place of
-      Dropped. A Text node deeper than the fence keeps typed text, and a
-      sequence that dies is decided on Pending.Path. Menu and Tree apply
-      the floor, Explain gains `Candidate.Fenced`, and `(*Keymap).Fence(p)`
-      returns the deciding fence. plx agreed to all of it and to "at least
-      as deep": only the modes' own binds sit at a mode's depth, and the
-      focused surfaces deeper keep their keys. plx will document
-      `&& viewer.mode != 'locked'` for a user's own pane binds. Needs D18
-      and a check against plx's keymap golden. The maintainer: "Build now". Tell plexos-key-presets the commit when it lands.
-
 ## Blocked
 
 - [ ] **KEYS-02** HOTTY's key names follow myelinkey's; hotty-go takes them from it (D12 step 2, D15.10)

@@ -181,7 +181,9 @@ new state and a `Result`, in which at most one thing is set:
   so a stale timer is harmless;
 - `Dropped`, keys that matched nothing. They are yours: type them into a
   field, forward them to a terminal, or swallow them. Feed never retries a
-  key on its own.
+  key on its own;
+- `Swallowed`, keys that matched nothing where a mode sends them nowhere
+  ([Modes](#modes)). Do nothing with them.
 
 <!-- example:ExampleFeed -->
 
@@ -233,6 +235,95 @@ fmt.Println("x matches nothing:", res.Dropped)
 `Arm` returns the state as if an alias's keys had been typed, such as
 `Arm(km, "leader", path, now)`, for a tap or a touch-screen button that
 opens the leader's menu.
+
+## Modes
+
+A mode changes what happens to the keys that its own bindings don't take.
+A multiplexer's locked mode passes every key to the terminal but its own,
+and a dialog lets no key past it. A document's `Fences` say this for a
+context, with two options:
+
+- `Shadow` leaves out the bindings whose contexts are shallower than the
+  fence's, so only those at least as deep apply. Menus show only them,
+  and `Explain` marks the others `Fenced`.
+- `Swallow` sends the keys that match nothing nowhere: Feed and Expire
+  put them in `Swallowed`, not `Dropped`. A key that types text still
+  drops where a text field is deeper than the fence, so a palette opened
+  in the mode keeps its text. A sequence that dies is decided on the path
+  its first key was typed on.
+
+One fence decides on a path, as a binding wins: the deepest, then the
+higher layer, then the later. A fence with neither option set gives a
+deeper context the default back. `Keymap.Fence` returns the fence that
+decides, for a status line that names the mode.
+
+<!-- example:ExampleFence -->
+
+```go
+// 1. A window in a mode, its pane, and a dialog over it.
+env, err := myelin.NewEnv(myelin.Schema{
+	Nodes: []myelin.NodeType{
+		{Name: "window", Attrs: map[string]myelin.Type{"mode": "string"}},
+		{Name: "pane"}, {Name: "dialog"},
+	},
+	Layers: []string{"defaults"},
+})
+if err != nil {
+	panic(err)
+}
+locked := "window.mode == 'locked'"
+km, problems := env.Build([]myelin.Doc{{
+	Layer: "defaults",
+	Binds: []myelin.Bind{
+		{Keys: "ctrl+q", Action: "quit"},
+		{Keys: "ctrl+g", Action: "unlock", When: locked},
+		{Keys: "escape", Action: "close", When: "dialog"},
+	},
+	Fences: []myelin.Fence{
+		{When: locked, Shadow: true, Source: "locked"},
+		{When: "dialog", Shadow: true, Swallow: true, Source: "dialog"},
+	},
+}}, nil)
+if km == nil {
+	panic(fmt.Sprint(problems))
+}
+
+// 2. Feed keys where the focus is. The Result says what to do.
+feed := func(where string, p myelin.Path, k myelinkey.Key) {
+	_, res := myelin.Feed(km, myelin.Pending{}, k, p, time.Time{})
+	switch {
+	case res.Run != nil:
+		fmt.Println(where, k, "runs", res.Run.Action)
+	case res.Dropped != nil:
+		fmt.Println(where, k, "goes to the terminal")
+	case res.Swallowed != nil:
+		fmt.Println(where, k, "does nothing")
+	}
+}
+window := func(mode string) myelin.Step {
+	return myelin.Step{Name: "window", Attrs: map[string]any{"mode": mode}}
+}
+normal := myelin.Path{window("normal"), {Name: "pane"}}
+lockedPane := myelin.Path{window("locked"), {Name: "pane"}}
+dialog := myelin.Path{window("normal"), {Name: "dialog"}}
+feed("normal:", normal, "ctrl+q")
+feed("normal:", normal, "x")
+feed("locked:", lockedPane, "ctrl+q")
+feed("locked:", lockedPane, "ctrl+g")
+feed("dialog:", dialog, "ctrl+q")
+feed("dialog:", dialog, "escape")
+
+// 3. The fence that decides names the mode, for a status line.
+fmt.Println("the mode:", km.Fence(lockedPane).Source)
+// Output:
+// normal: ctrl+q runs quit
+// normal: x goes to the terminal
+// locked: ctrl+q goes to the terminal
+// locked: ctrl+g runs unlock
+// dialog: ctrl+q does nothing
+// dialog: escape runs close
+// the mode: locked
+```
 
 ## Keys from your input
 
@@ -359,7 +450,8 @@ show(km.Menu(slices.Concat(leader, []myelinkey.Key{"f"}), p, readOnly))
   sequence that runs an action there, and `KeyFor` the one to show beside
   it in a command palette.
 - `Explain` says what a sequence does on a path and why: every binding
-  considered, ranked, with its depth and whether it wins.
+  considered, ranked, with its depth, whether it wins, and whether a
+  mode's fence shadows it.
 - `Shadowed` finds bindings that a deeper binding in a lower layer beats
   on any of the paths you pass, such as a user's binding that a default
   always beats in a dialog.
@@ -370,7 +462,8 @@ show(km.Menu(slices.Concat(leader, []myelinkey.Key{"f"}), p, readOnly))
 ## A widget's keys inside a host
 
 `Mount` puts a widget's document under the node where its host shows the
-widget: every bind and group gets the host's context joined to its own.
+widget: every bind, group and fence gets the host's context joined to its
+own.
 
 ## Across a process
 

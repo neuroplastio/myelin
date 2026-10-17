@@ -331,6 +331,11 @@ type pathAct struct {
 	depths []int32
 	// text is the path's textDepth.
 	text int
+	// fence is the fence that decides on the path, nil for none, and
+	// fenceDepth its context's depth there. shadow is the depth a binding
+	// must reach: the fence's when it shadows, else 0.
+	fence              *boundFence
+	fenceDepth, shadow int
 	// keys is next's scratch: the index of each key it has listed.
 	keys map[myelinkey.Key]int
 }

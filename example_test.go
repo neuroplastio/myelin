@@ -214,6 +214,75 @@ func ExampleFeed() {
 	// x matches nothing: [x]
 }
 
+// A program's modes are fences. In the locked mode only the mode's own keys
+// apply, and every other key goes to the terminal; a dialog lets no key
+// past it.
+func ExampleFence() {
+	// 1. A window in a mode, its pane, and a dialog over it.
+	env, err := myelin.NewEnv(myelin.Schema{
+		Nodes: []myelin.NodeType{
+			{Name: "window", Attrs: map[string]myelin.Type{"mode": "string"}},
+			{Name: "pane"}, {Name: "dialog"},
+		},
+		Layers: []string{"defaults"},
+	})
+	if err != nil {
+		panic(err)
+	}
+	locked := "window.mode == 'locked'"
+	km, problems := env.Build([]myelin.Doc{{
+		Layer: "defaults",
+		Binds: []myelin.Bind{
+			{Keys: "ctrl+q", Action: "quit"},
+			{Keys: "ctrl+g", Action: "unlock", When: locked},
+			{Keys: "escape", Action: "close", When: "dialog"},
+		},
+		Fences: []myelin.Fence{
+			{When: locked, Shadow: true, Source: "locked"},
+			{When: "dialog", Shadow: true, Swallow: true, Source: "dialog"},
+		},
+	}}, nil)
+	if km == nil {
+		panic(fmt.Sprint(problems))
+	}
+
+	// 2. Feed keys where the focus is. The Result says what to do.
+	feed := func(where string, p myelin.Path, k myelinkey.Key) {
+		_, res := myelin.Feed(km, myelin.Pending{}, k, p, time.Time{})
+		switch {
+		case res.Run != nil:
+			fmt.Println(where, k, "runs", res.Run.Action)
+		case res.Dropped != nil:
+			fmt.Println(where, k, "goes to the terminal")
+		case res.Swallowed != nil:
+			fmt.Println(where, k, "does nothing")
+		}
+	}
+	window := func(mode string) myelin.Step {
+		return myelin.Step{Name: "window", Attrs: map[string]any{"mode": mode}}
+	}
+	normal := myelin.Path{window("normal"), {Name: "pane"}}
+	lockedPane := myelin.Path{window("locked"), {Name: "pane"}}
+	dialog := myelin.Path{window("normal"), {Name: "dialog"}}
+	feed("normal:", normal, "ctrl+q")
+	feed("normal:", normal, "x")
+	feed("locked:", lockedPane, "ctrl+q")
+	feed("locked:", lockedPane, "ctrl+g")
+	feed("dialog:", dialog, "ctrl+q")
+	feed("dialog:", dialog, "escape")
+
+	// 3. The fence that decides names the mode, for a status line.
+	fmt.Println("the mode:", km.Fence(lockedPane).Source)
+	// Output:
+	// normal: ctrl+q runs quit
+	// normal: x goes to the terminal
+	// locked: ctrl+q goes to the terminal
+	// locked: ctrl+g runs unlock
+	// dialog: ctrl+q does nothing
+	// dialog: escape runs close
+	// the mode: locked
+}
+
 // The leader's menu: one item per key, a group where more keys follow, and
 // what the program says does nothing now dimmed.
 func ExampleKeymap_Menu() {

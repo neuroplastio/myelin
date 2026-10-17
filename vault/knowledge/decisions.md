@@ -437,3 +437,38 @@ D16.3.
 2. **The spec is released** as version 0.1 on 2026-10-17, under the tag
    `myelinkey/v0.1.0`. Any change to a name or a rule is now 0.2. The root
    module isn't tagged and stays on commit pins.
+
+### D18 — Fences: a program's modes, by the same precedence
+**2026-10-17.** A terminal multiplexer that uses myelin asked for modes: one
+that passes every key to the terminal but its own, one that takes every
+key, and a modal dialog. The shape was agreed with it, and the maintainer
+said "Build now". This adds to D6's precedence and its field rule; key
+spelling doesn't change.
+1. **A fence is data in a document:** `Doc.Fences`, each with a context
+   (`When`), two options (`Shadow`, `Swallow`) and a `Source`. A mode is a
+   context the program sets on its path. myelin has no mode of its own.
+2. **One fence decides on a path,** the way a binding wins: the deepest
+   that holds, then the higher layer, then the later. A fence with neither
+   option set is the explicit default, so a deeper context (a palette in
+   a mode) gives the default back. Dropping a layer drops its fences.
+3. **Shadow is the field rule for every key, at the fence's depth.** Only
+   bindings at least as deep as the fence apply. The mode's own bindings
+   sit at its depth, and the focused nodes deeper keep their keys. A
+   user's binding that is deeper than the mode stays in force there; to
+   keep it out, its context says so. Menus and trees follow the same
+   floor, and Explain sets `Candidate.Fenced` on a binding that holds but
+   is shadowed.
+4. **Swallow sends what matches nothing nowhere:** `Result.Swallowed`
+   in place of `Dropped`, from Feed and Expire. Two exceptions:
+   - **A key that types text** still drops where a node that takes text is
+     strictly deeper than the fence, so a field opened in the mode keeps
+     its text.
+   - **A sequence that dies** is decided on the path its first key was
+     typed on (`Pending.Path`), not the path where it died.
+5. **`Keymap.Fence(p)`** returns the fence that decides, or nil, so a
+   program can name the mode it is in. `Mount` joins a fence's context
+   as it joins a binding's.
+6. **What stays the program's:** what its modes are, how a mode gets onto
+   the path, and what it does with Dropped keys. Feed's path for a key
+   that no binding starts with stays one map lookup unless some fence
+   swallows.

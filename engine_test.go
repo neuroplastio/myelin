@@ -499,6 +499,7 @@ func TestBuildProblems(t *testing.T) {
 		{"an alias's bad name", Doc{Layer: "user", Aliases: map[string]string{"a.b": "x"}, Source: "l.kdl"}, "l.kdl", "an alias's name is", false},
 		{"Shift with no case", doc("user", b("shift+1", "x")), "test.kdl:1", "shift+1: Shift with a character that has no case", true},
 		{"a bad group", Doc{Layer: "user", Groups: []Group{{Keys: "g", Label: "+go", When: "1", Source: "g.kdl:2"}}}, "g.kdl:2", "not a boolean", false},
+		{"a bad fence", Doc{Layer: "user", Fences: []Fence{{When: "tabel", Swallow: true, Source: "f.kdl:5"}}}, "f.kdl:5", "undeclared reference", false},
 	} {
 		km, problems := e.Build([]Doc{tc.doc}, check)
 		if len(problems) != 1 {

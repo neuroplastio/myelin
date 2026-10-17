@@ -33,13 +33,14 @@ func (w winner) beaten(w2 winner) bool {
 func (b *bound) at(d int) winner { return winner{depth: d, rank: b.rank, order: b.order} }
 
 // floor is the depth a binding of a sequence that starts with first must
-// reach on the activation's path: a key that types text is a text node's
+// reach on the activation's path: the fence's, when it shadows, and for a
+// key that types text the text node's, since such a key is the node's
 // unless a binding at least as deep as it takes the key (the field rule).
 func (a *pathAct) floor(first myelinkey.Key) int {
 	if a.text >= 0 && myelinkey.TypesText(first) {
-		return a.text
+		return max(a.shadow, a.text)
 	}
-	return 0
+	return a.shadow
 }
 
 // Match looks up a sequence on a path.
@@ -223,10 +224,27 @@ func (km *Keymap) Explain(seq []myelinkey.Key, p Path) []Candidate {
 	var out []Candidate
 	for _, cs := range [][]cand{exact, longer, off} {
 		for _, c := range cs {
-			out = append(out, Candidate{Binding: km.binds[c.i].b, Holds: c.depth >= 0, Depth: c.depth, Wins: c.i == won})
+			out = append(out, Candidate{Binding: km.binds[c.i].b, Holds: c.depth >= 0, Depth: c.depth, Wins: c.i == won,
+				Fenced: c.depth >= 0 && c.depth < a.shadow})
 		}
 	}
 	return out
+}
+
+// Fence is the fence that decides on the path, or nil: the deepest that
+// holds, then the higher layer, then the later. Its Source names the mode a
+// program shows. It is the keymap's own, as a Match's binding is: read it,
+// don't change it.
+func (km *Keymap) Fence(p Path) *Fence {
+	if len(km.fences) == 0 {
+		return nil
+	}
+	a := km.act(p)
+	defer km.release(a)
+	if a.fence == nil {
+		return nil
+	}
+	return &a.fence.f
 }
 
 // Shadowed is the bindings that a deeper binding of a lower layer shadows on
