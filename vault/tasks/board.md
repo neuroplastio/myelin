@@ -44,9 +44,11 @@ Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17)._
       Dropped. A Text node deeper than the fence keeps typed text, and a
       sequence that dies is decided on Pending.Path. Menu and Tree apply
       the floor, Explain gains `Candidate.Fenced`, and `(*Keymap).Fence(p)`
-      returns the deciding fence. Open question to plx: "at least as deep"
-      vs "deeper, or the fence's own When". Needs D18 and a check against
-      plx's keymap golden. Waits on the maintainer's go-ahead (token
+      returns the deciding fence. plx agreed to all of it and to "at least
+      as deep": only the modes' own binds sit at a mode's depth, and the
+      focused surfaces deeper keep their keys. plx will document
+      `&& viewer.mode != 'locked'` for a user's own pane binds. Needs D18
+      and a check against plx's keymap golden. Waits on the maintainer's go-ahead (token
       preservation). Tell plexos-key-presets the commit when it lands.
 
 - [x] **RELEASE-01** The first tags, v0.1.0-next.1
