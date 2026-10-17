@@ -141,12 +141,15 @@ A modifier key is a modifier pressed and released with no other key
 pressed in between: a **tap**.
 - **Its name is the modifier's,** whichever side it was on: `shift`,
   `ctrl`, `alt`, `super`.
-- **Modifiers held during the tap come before it:** `ctrl+shift` is Shift
-  tapped while Ctrl is held.
-- **A source that knows the side has the sided physical key too**
-  (`shift_left`; see §3).
 - **A source names a modifier key on release,** because only then is it a
   tap.
+- **The modifiers held at the release come before it,** in §2.1's order,
+  and the tapped one is last: `ctrl+shift` is Shift tapped while Ctrl is
+  held, and `shift+ctrl` is Ctrl tapped while Shift is held. A modifier let
+  go during the tap is not held: Ctrl down, Shift down, Ctrl up, Shift up
+  is `shift`.
+- **A source that knows the side has the sided physical key too**
+  (`shift_left`; see §3).
 - **A modifier held for a chord is no key.** Shift held while g is pressed
   is `shift+g`, not `shift` followed by `shift+g`.
 
@@ -318,7 +321,8 @@ HOTTY (its §10.4), defines how its own hosts name them.
   - The modifiers are `metaKey` (super), `ctrlKey`, `altKey` and
     `shiftKey`.
   - A `keyup` of a modifier with no other key since its `keydown` is a
-    modifier key, and its `code` gives the side.
+    modifier key. Its `code` gives the side, and the other modifiers'
+    flags give the ones held (§2.5).
 - **A terminal's bytes** carry characters, and the library or protocol that
   reads them decodes them, as HOTTY §10.4 does. The result follows this
   document:
