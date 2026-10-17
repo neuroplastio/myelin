@@ -64,8 +64,8 @@ A key's name is its modifiers, each followed by `+`, then its value:
 A name is **canonical** when:
 - each modifier appears at most once, in the order `super`, `ctrl`, `alt`,
   `shift`;
-- the value is a physical key's name from Appendix A (§2.3), a character as
-  §2.4 writes it, or the name of a modifier (§2.5);
+- the value is a physical key's name from Appendix A.1 (§2.3), a character
+  as §2.4 writes it, or the name of a modifier (§2.5);
 - a modifier key's own modifier is not among the modifiers before it.
 
 A **key** is a canonical name. Every other way of writing a key is a
@@ -73,7 +73,7 @@ spelling, which a reading (§4) turns into the key or refuses.
 
 To take a key apart, strip the leading `modifier+` words while something
 remains after them. What remains is the value. A value is a physical key
-if Appendix A lists it, a modifier key if it is one of the four modifier
+if Appendix A.1 lists it, a modifier key if it is one of the four modifier
 names, and a character otherwise.
 
 | Key | Modifiers | Value | Kind |
@@ -108,7 +108,7 @@ turns it into `super` or `ctrl`.
 
 A physical key is a place on the keyboard. Its name is its W3C UI Events
 code value ([UIEVENTS-CODE](https://www.w3.org/TR/uievents-code/)) in snake
-case: `PageDown` is `page_down` and `KeyW` is `key_w`. Appendix A lists
+case: `PageDown` is `page_down` and `KeyW` is `key_w`. Appendix A.1 lists
 every one, and the list is normative.
 - **A physical key is the same whatever the layout types there.** `key_z`
   is the key where a US keyboard has Z, which types y on a German layout.
@@ -214,9 +214,9 @@ as options.
 3. **The value.** Any other part is the value, and there is at most one. It
    is read as:
    - **one character** (§2.4), written as §2.4 writes it;
-   - otherwise **a physical key:** a name from Appendix A in any case; one
-     of the other names below, in any case; or a W3C code value, if it
-     converts to a name in Appendix A. To convert, write it in lower case
+   - otherwise **a physical key:** a name from Appendix A.1 in any case;
+     one of the other names in Appendix A.2, in any case; or a W3C code
+     value, if it converts to a name in Appendix A.1. To convert, write it in lower case
      and start a new word, after `_`, at each capital letter or digit after
      the first character: `PageDown` is `page_down`, `KeyA` is `key_a`, and
      `Digit1` is `digit_1`.
@@ -227,13 +227,6 @@ as options.
 5. **The key** is the modifiers and the value in canonical form (§2.1).
 6. **Aliases.** Text of the form `<name>` is an alias (§5), not a key, and
    is refused.
-
-| Other name | Key |
-| --- | --- |
-| `up`, `down`, `left`, `right` | `arrow_up`, `arrow_down`, `arrow_left`, `arrow_right` |
-| `pageup`, `pgup` | `page_up` |
-| `pagedown`, `pgdn` | `page_down` |
-| `esc` | `escape` |
 
 ### 4.2 Strict reading
 
@@ -296,15 +289,8 @@ that a keymap names and puts in the word's place, as in `<leader> f`.
 ## 6. Display
 
 A menu or a hint **SHOULD** show a key by its canonical name, except for
-these keys:
-
-| Key | Shown |
-| --- | --- |
-| `arrow_left`, `arrow_right`, `arrow_up`, `arrow_down` | `←`, `→`, `↑`, `↓` |
-| `tab` | `⇥` |
-| `shift+tab` | `⇧⇥` |
-
-Other modifiers are written as usual: `ctrl+←`, `ctrl+⇧⇥`. A program **MAY**
+the keys in Appendix A.3, which it shows by their symbols. Other modifiers
+are written before them as usual: `ctrl+←`, `ctrl+⇧⇥`. A program **MAY**
 show keys its own way, for example a capital for `shift` with a letter
 where its keymap reads shifted capitals.
 
@@ -340,7 +326,7 @@ HOTTY (its §10.4), defines how its own hosts name them.
 implementation conforms when it gives every vector's result. Error messages
 are not part of conformance.
 
-- **`physical`:** Appendix A's names, in order.
+- **`physical`:** Appendix A.1's names, in order.
 - **`read`:** the default reading (§4.1). `in` is the text, and `key` the
   key, or null where it is refused.
 - **`strict`:** strict reading (§4.2), as `read`.
@@ -365,6 +351,8 @@ vectors carry the version they test.
 ---
 
 ## Appendix A. Physical keys
+
+### A.1 Names
 
 The physical keys, by the sections of the W3C's code values. Every name
 also reads as its W3C code value (§4.1), shown beside it.
@@ -587,6 +575,28 @@ also reads as its W3C code value (§4.1), shown beside it.
 | `paste` | `Paste` |
 
 <!-- physical:end -->
+
+### A.2 Other names
+
+The default reading also reads these names as physical keys, in any case
+(§4.1).
+
+| Other name | Key |
+| --- | --- |
+| `up`, `down`, `left`, `right` | `arrow_up`, `arrow_down`, `arrow_left`, `arrow_right` |
+| `pageup`, `pgup` | `page_up` |
+| `pagedown`, `pgdn` | `page_down` |
+| `esc` | `escape` |
+
+### A.3 Display
+
+A menu or a hint shows these keys by their symbols (§6).
+
+| Key | Shown |
+| --- | --- |
+| `arrow_left`, `arrow_right`, `arrow_up`, `arrow_down` | `←`, `→`, `↑`, `↓` |
+| `tab` | `⇥` |
+| `shift+tab` | `⇧⇥` |
 
 ## Appendix B. HOTTY's names before this document (informative)
 

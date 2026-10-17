@@ -68,7 +68,7 @@ func keyTable(t *testing.T) string {
 	return b.String()
 }
 
-// myelinkey/SPEC.md's Appendix A, the physical keys, is generated from
+// myelinkey/SPEC.md's Appendix A.1, the physical keys, is generated from
 // myelinkey, and the gate fails when it drifts. Rewrite it with go test -run
 // TestReferenceKeys -update.
 func TestSpecPhysicalKeys(t *testing.T) {
