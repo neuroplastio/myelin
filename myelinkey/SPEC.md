@@ -11,9 +11,8 @@
 This document gives every keystroke one name, which programs, terminals,
 protocols and keymaps can share. A name is the key's modifiers and its
 value: a physical key, a character or a modifier key. Two names are the
-same keystroke exactly when they are equal strings. The vocabulary is
-[Ghostty](https://ghostty.org/docs/config/keybind)'s, and physical keys are
-the W3C's code values.
+same keystroke exactly when they are equal strings. Physical keys are the
+W3C's code values, and Appendix C says where the other names come from.
 
 It also says how a name written by a person is read, how a sequence of keys
 is written and how a key is displayed. It is written so that a protocol,
@@ -109,8 +108,8 @@ turns it into `super` or `ctrl`.
 
 A physical key is a place on the keyboard. Its name is its W3C UI Events
 code value ([UIEVENTS-CODE](https://www.w3.org/TR/uievents-code/)) in snake
-case, as Ghostty names it. Appendix A lists every one, and the list is
-normative.
+case: `PageDown` is `page_down` and `KeyW` is `key_w`. Appendix A lists
+every one, and the list is normative.
 - **A physical key is the same whatever the layout types there.** `key_z`
   is the key where a US keyboard has Z, which types y on a German layout.
 - **Some keys are only ever physical.** These are the space bar, Enter,
@@ -184,7 +183,7 @@ A keymap binds a double tap of Shift, on either side, as the sequence
 - **A source may have two names for one press.** It may have a physical key
   and a character, or a sided modifier and a modifier key. If it looks them
   up in a keymap, it **MUST** try the physical key first and the other
-  name second, as Ghostty does. The first one bound wins.
+  name second. The first one bound wins.
 
 ## 4. Reading written keys
 
@@ -613,7 +612,8 @@ document. HOTTY 0.3 adds `Mod` to bindings, which this document reads as
 
 ## Appendix C. Prior art (informative)
 
-- **Ghostty's key bindings** gave the vocabulary:
+- **[Ghostty's key bindings](https://ghostty.org/docs/config/keybind)**
+  gave the vocabulary:
   - the modifier names and their aliases;
   - the W3C code values in snake case;
   - one character as a key, with case folded;
