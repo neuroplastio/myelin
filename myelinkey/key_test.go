@@ -394,7 +394,7 @@ func TestParseHotty(t *testing.T) {
 			t.Errorf("ParseHotty(%q) = %q, %v; want %q", tc.name, got, ok, tc.want)
 		}
 	}
-	for _, bad := range []string{"", "Hyper+x", "ab", "enter", "Control+Control+a", "\x01", "Shift+", "Shift+Shift"} {
+	for _, bad := range []string{"", "Hyper+x", "ab", "enter", "Control+Control+a", "\x01", "Shift+", "Shift+Shift", "Mod+s"} {
 		if got, ok := ParseHotty(bad); ok {
 			t.Errorf("ParseHotty(%q) = %q, want it refused", bad, got)
 		}
@@ -415,20 +415,27 @@ func canonical(t *testing.T, from string, k Key) {
 
 func FuzzParse(f *testing.F) {
 	for _, s := range []string{"a", "ctrl+d", "shift+h", "Ctrl+Shift+A", "d+ctrl", "pgdn", "ctrl++", "+",
-		"shift+1", "Escape", "<leader>", "é", "👩‍💻", "cmd+F12", "ctrl+", "KeyA", "G"} {
+		"shift+1", "Escape", "<leader>", "é", "👩‍💻", "cmd+F12", "ctrl+", "KeyA", "G",
+		"mod+s", "Mod+Shift+ArrowLeft", "shift+mod", "mod+ctrl+s"} {
 		f.Add(s)
 	}
 	f.Fuzz(func(t *testing.T, s string) {
-		for _, o := range []Options{{}, {ShiftedCapitals: true}} {
+		for _, o := range []Options{{}, {ShiftedCapitals: true}, {Mod: Ctrl}, {Mod: Super, ShiftedCapitals: true}} {
 			k, err := ParseWith(s, o)
 			if err != nil {
 				continue
 			}
 			canonical(t, s, k)
 			// The strict reading takes s exactly when it is k's spelling.
-			strict, err := ParseWith(s, Options{Strict: true, ShiftedCapitals: o.ShiftedCapitals})
+			strict, err := ParseWith(s, Options{Strict: true, ShiftedCapitals: o.ShiftedCapitals, Mod: o.Mod})
 			if err == nil && strict != k {
 				t.Fatalf("%q is %q, and strictly %q", s, k, strict)
+			}
+			// mod only adds spellings: what reads without it reads the same.
+			if o.Mod != 0 {
+				if plain, err := ParseWith(s, Options{ShiftedCapitals: o.ShiftedCapitals}); err == nil && plain != k {
+					t.Fatalf("%q is %q, and with mod %q", s, plain, k)
+				}
 			}
 		}
 	})

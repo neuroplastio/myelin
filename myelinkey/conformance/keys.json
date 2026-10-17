@@ -566,6 +566,14 @@
   {
    "in": "ctrl+ ",
    "key": null
+  },
+  {
+   "in": "mod+s",
+   "key": null
+  },
+  {
+   "in": "mod",
+   "key": null
   }
  ],
  "strict": [
@@ -688,6 +696,10 @@
   {
    "in": "meta+a",
    "key": null
+  },
+  {
+   "in": "mod+s",
+   "key": null
   }
  ],
  "shifted_capitals": [
@@ -763,6 +775,267 @@
   },
   {
    "in": "ǅ",
+   "key": null
+  }
+ ],
+ "mod": [
+  {
+   "in": "mod+s",
+   "mod": "ctrl",
+   "key": "ctrl+s"
+  },
+  {
+   "in": "Mod+s",
+   "mod": "ctrl",
+   "key": "ctrl+s"
+  },
+  {
+   "in": "MOD+S",
+   "mod": "ctrl",
+   "key": "ctrl+s"
+  },
+  {
+   "in": "Mod+Shift+ArrowLeft",
+   "mod": "ctrl",
+   "key": "ctrl+shift+arrow_left"
+  },
+  {
+   "in": "shift+mod+z",
+   "mod": "ctrl",
+   "key": "ctrl+shift+z"
+  },
+  {
+   "in": "mod+alt+s",
+   "mod": "ctrl",
+   "key": "ctrl+alt+s"
+  },
+  {
+   "in": "mod++",
+   "mod": "ctrl",
+   "key": "ctrl++"
+  },
+  {
+   "in": "mod+page_down",
+   "mod": "ctrl",
+   "key": "ctrl+page_down"
+  },
+  {
+   "in": "mod",
+   "mod": "ctrl",
+   "key": "ctrl"
+  },
+  {
+   "in": "shift+mod",
+   "mod": "ctrl",
+   "key": "shift+ctrl"
+  },
+  {
+   "in": "mod+shift",
+   "mod": "ctrl",
+   "key": "ctrl+shift"
+  },
+  {
+   "in": "mod+ctrl+s",
+   "mod": "ctrl",
+   "key": null
+  },
+  {
+   "in": "ctrl+mod+s",
+   "mod": "ctrl",
+   "key": null
+  },
+  {
+   "in": "control+mod+s",
+   "mod": "ctrl",
+   "key": null
+  },
+  {
+   "in": "mod+super+s",
+   "mod": "ctrl",
+   "key": null
+  },
+  {
+   "in": "cmd+mod+s",
+   "mod": "ctrl",
+   "key": null
+  },
+  {
+   "in": "mod+mod+s",
+   "mod": "ctrl",
+   "key": null
+  },
+  {
+   "in": "mod+",
+   "mod": "ctrl",
+   "key": null
+  },
+  {
+   "in": "mod+s",
+   "mod": "super",
+   "key": "super+s"
+  },
+  {
+   "in": "Mod+Shift+ArrowLeft",
+   "mod": "super",
+   "key": "super+shift+arrow_left"
+  },
+  {
+   "in": "mod+alt+s",
+   "mod": "super",
+   "key": "super+alt+s"
+  },
+  {
+   "in": "mod",
+   "mod": "super",
+   "key": "super"
+  },
+  {
+   "in": "mod+ctrl+s",
+   "mod": "super",
+   "key": null
+  },
+  {
+   "in": "mod+cmd+s",
+   "mod": "super",
+   "key": null
+  },
+  {
+   "in": "super+mod+s",
+   "mod": "super",
+   "key": null
+  },
+  {
+   "in": "mod+control",
+   "mod": "super",
+   "key": null
+  },
+  {
+   "in": "mod+s",
+   "mod": "ctrl",
+   "strict": true,
+   "key": "ctrl+s"
+  },
+  {
+   "in": "ctrl+s",
+   "mod": "ctrl",
+   "strict": true,
+   "key": "ctrl+s"
+  },
+  {
+   "in": "mod+shift+s",
+   "mod": "ctrl",
+   "strict": true,
+   "key": "ctrl+shift+s"
+  },
+  {
+   "in": "mod+alt+s",
+   "mod": "ctrl",
+   "strict": true,
+   "key": "ctrl+alt+s"
+  },
+  {
+   "in": "mod++",
+   "mod": "ctrl",
+   "strict": true,
+   "key": "ctrl++"
+  },
+  {
+   "in": "mod",
+   "mod": "ctrl",
+   "strict": true,
+   "key": "ctrl"
+  },
+  {
+   "in": "alt+mod",
+   "mod": "ctrl",
+   "strict": true,
+   "key": "alt+ctrl"
+  },
+  {
+   "in": "Mod+s",
+   "mod": "ctrl",
+   "strict": true,
+   "key": null
+  },
+  {
+   "in": "shift+mod+s",
+   "mod": "ctrl",
+   "strict": true,
+   "key": null
+  },
+  {
+   "in": "alt+mod+s",
+   "mod": "ctrl",
+   "strict": true,
+   "key": null
+  },
+  {
+   "in": "mod+S",
+   "mod": "ctrl",
+   "strict": true,
+   "key": null
+  },
+  {
+   "in": "mod+s",
+   "mod": "super",
+   "strict": true,
+   "key": "super+s"
+  },
+  {
+   "in": "super+s",
+   "mod": "super",
+   "strict": true,
+   "key": "super+s"
+  },
+  {
+   "in": "mod+shift+tab",
+   "mod": "super",
+   "strict": true,
+   "key": "super+shift+tab"
+  },
+  {
+   "in": "mod+S",
+   "mod": "ctrl",
+   "key": "ctrl+s"
+  },
+  {
+   "in": "mod+S",
+   "mod": "ctrl",
+   "shifted_capitals": true,
+   "key": "ctrl+shift+s"
+  },
+  {
+   "in": "Mod+Z",
+   "mod": "super",
+   "shifted_capitals": true,
+   "key": "super+shift+z"
+  },
+  {
+   "in": "mod+S",
+   "mod": "ctrl",
+   "strict": true,
+   "shifted_capitals": true,
+   "key": "ctrl+shift+s"
+  },
+  {
+   "in": "mod+shift+s",
+   "mod": "ctrl",
+   "strict": true,
+   "shifted_capitals": true,
+   "key": "ctrl+shift+s"
+  },
+  {
+   "in": "ctrl+S",
+   "mod": "ctrl",
+   "strict": true,
+   "shifted_capitals": true,
+   "key": "ctrl+shift+s"
+  },
+  {
+   "in": "Mod+S",
+   "mod": "ctrl",
+   "strict": true,
+   "shifted_capitals": true,
    "key": null
   }
  ],

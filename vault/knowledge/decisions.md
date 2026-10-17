@@ -411,3 +411,29 @@ a sided key", D15.10's lone `Shift` → `shift_left`, and D15.11's `Split`.
    - **Vectors:** HOTTY's `keys` vectors stay bytes → names.
    - **Order:** hotty-go moves onto myelinkey in the same train as §10.4,
      and `ParseHotty` goes then.
+
+### D17 — Key names 0.1 is released, with the command modifier `mod`
+**2026-10-17.** gov dispatched the release on the maintainer's word to the
+hotty agent: "OK, you can ask gov to dispatch myelin agent to do 0.1
+release". On the root module, the maintainer told gov: "Tag only
+myelinkey". gov left the `Mod` call to myelin. This adds to D15.6–7 and
+D16.3.
+1. **`mod` is the command modifier, as a reading option** (SPEC §4.4).
+   `Options.Mod` says what it stands for, `Super` or `Ctrl`. Without it,
+   `mod` is refused, so the default reading doesn't change.
+   - **Why it's in 0.1:** HOTTY 0.3's bindings, menu keys and `seq` all
+     carry `Mod`, and the host reads it as its own `mod`. HOTTY will cite
+     this spec for its names, so the spelling belongs here and not in a
+     rule HOTTY puts on top. After 0.1 it would take a 0.2.
+   - **It is a spelling only.** No key is named with it, so keys still
+     compare with `==`.
+   - **`mod` with `super` or `ctrl` is refused,** whichever one it stands
+     for, so a keymap reads on every platform or on none.
+   - **Strict reading** also accepts the canonical name with `mod` in the
+     place of its modifier: `mod+shift+s`.
+   - **The root's `Schema` doesn't offer it yet.** If a program wants
+     `mod` in its keymaps, it asks, and the root then requires myelinkey
+     v0.1.0.
+2. **The spec is released** as version 0.1 on 2026-10-17, under the tag
+   `myelinkey/v0.1.0`. Any change to a name or a rule is now 0.2. The root
+   module isn't tagged and stays on commit pins.

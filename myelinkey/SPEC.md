@@ -1,7 +1,8 @@
 # myelin key names
 
     Version:  0.1
-    Status:   Draft. Versions 0.x may change incompatibly (§9).
+    Status:   Released on 2026-10-17. Versions 0.x may change
+              incompatibly (§9).
     Licence:  Apache-2.0, as the rest of this repository, the conformance
               vectors included.
 
@@ -34,8 +35,8 @@ its reference implementation, and
 8. Conformance
 9. Versioning
 
-Appendices: A. Physical keys · B. HOTTY 0.2 names (informative) · C. Prior
-art (informative)
+Appendices: A. Physical keys · B. HOTTY's names before this document
+(informative) · C. Prior art (informative)
 
 ---
 
@@ -100,6 +101,9 @@ names, and a character otherwise.
 Caps Lock, Num Lock, Scroll Lock, Fn, Hyper and AltGr are not modifiers. A
 key pressed with them is named without them. What AltGr does shows in the
 character it types: `@` typed with AltGr on a German layout is `@`.
+
+`mod`, the command modifier (§4.4), is no modifier of a key. A reading
+turns it into `super` or `ctrl`.
 
 ### 2.3 Physical keys
 
@@ -186,7 +190,8 @@ A keymap binds a double tap of Shift, on either side, as the sequence
 
 People write keys in config files. A **reading** turns what they wrote into
 a key, or refuses it. An implementation **MUST** offer the default reading,
-and **MAY** offer strict reading and shifted capitals as options.
+and **MAY** offer strict reading, shifted capitals and the command modifier
+as options.
 
 ### 4.1 The default reading
 
@@ -202,7 +207,8 @@ and **MAY** offer strict reading and shifted capitals as options.
      `control` for ctrl.
 
    A modifier written twice is refused. So is `meta`, which some programs
-   use for super and others (Emacs) for alt.
+   use for super and others (Emacs) for alt, and so is `mod`, unless the
+   reading says what it stands for (§4.4).
 3. **The value.** Any other part is the value, and there is at most one. It
    is read as:
    - **one character** (§2.4), written as §2.4 writes it;
@@ -246,6 +252,29 @@ whose simple uppercase mapping of l is c again.
 - **A title-case letter is no capital:** ǅ is `ǆ`.
 - **With strict reading also on,** both the canonical name and the spelling
   with the capital are accepted.
+
+### 4.4 The command modifier
+
+`mod` is the platform's modifier for commands. One keymap binds `mod+s`,
+and it is Command+s on macOS and Ctrl+s elsewhere. A reading that offers
+it is told which modifier `mod` stands for, `super` or `ctrl`. Without
+that, `mod` is refused.
+- **`mod` reads as the modifier it stands for,** in any case and in any
+  place among the others. Where it stands for `ctrl`, `mod+s` is `ctrl+s`,
+  `Mod+Shift+ArrowLeft` is `ctrl+shift+arrow_left`, and `mod` alone is the
+  modifier key `ctrl` (§4.1, step 4).
+- **`mod` with `super` or `ctrl` is refused,** or with an alias of either,
+  whichever one `mod` stands for. So a keymap reads on every platform or
+  on none. `mod` written twice is refused, as any modifier is.
+- **No key is named with `mod`.** The key has the modifier `mod` stands
+  for, and a source never names a press with it.
+- **With strict reading also on,** the canonical name is accepted, and so
+  is the canonical name with `mod` in the place of the modifier it stands
+  for: `mod+shift+s`, `alt+mod`. With shifted capitals on as well, so is
+  the spelling with the capital, with `mod` in that place: `mod+S`.
+- **What `mod` stands for is the program's to say,** or a protocol's. It
+  is usually `super` on macOS and `ctrl` elsewhere. A HOTTY host reports
+  it as `mod`.
 
 ## 5. Sequences
 
@@ -315,6 +344,9 @@ are not part of conformance.
 - **`shifted_capitals`:** the default reading with shifted capitals
   (§4.3).
 - **`strict_shifted_capitals`:** strict reading with shifted capitals.
+- **`mod`:** a reading with the command modifier (§4.4). `mod` is what it
+  stands for, `super` or `ctrl`. `strict` and `shifted_capitals`, where
+  true, turn those options on. `in` and `key` are as in `read`.
 - **`split`:** a key taken apart (§2.1): `mods` in order, `value`, and
   `kind`, which is `character`, `physical` or `modifier`.
 - **`sequences`:** a sequence read with the default reading and no
@@ -323,8 +355,9 @@ are not part of conformance.
 
 ## 9. Versioning
 
-This is version 0.1. Versions 0.x may change incompatibly. A change to any
-name or rule is a new version, and the vectors carry the version they test.
+This is version 0.1, released on 2026-10-17. Versions 0.x may change
+incompatibly. A change to any name or rule is a new version, and the
+vectors carry the version they test.
 
 ---
 
@@ -552,13 +585,14 @@ also reads as its W3C code value (§4.1), shown beside it.
 
 <!-- physical:end -->
 
-## Appendix B. HOTTY 0.2 names (informative)
+## Appendix B. HOTTY's names before this document (informative)
 
-HOTTY 0.2 wrote keys in its own way (its §10.4 as of 0.2). myelinkey's
+HOTTY 0.2 and 0.3 write keys in their own way (§10.4). myelinkey's
 `ParseHotty` reads those names into keys while HOTTY moves to this
-document:
+document. HOTTY 0.3 adds `Mod` to bindings, which this document reads as
+`mod` (§4.4). No pressed key is named with it, so `ParseHotty` refuses it.
 
-| HOTTY 0.2 | Key |
+| HOTTY 0.2, 0.3 | Key |
 | --- | --- |
 | `a` | `a` |
 | `A` | `shift+a` |
@@ -591,3 +625,5 @@ document:
   read.
 - **IntelliJ's** "Search Everywhere" is a double tap of Shift, which
   modifier keys write as `shift shift`.
+- **HOTTY's `Mod`,** CodeMirror's and ProseMirror's `Mod-` and Electron's
+  `CommandOrControl` gave the command modifier, `mod`.

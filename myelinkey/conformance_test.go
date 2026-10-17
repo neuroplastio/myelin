@@ -3,6 +3,7 @@ package myelinkey
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"testing"
 )
@@ -26,7 +27,13 @@ type keyVectors struct {
 	Strict                []readCase `json:"strict"`
 	ShiftedCapitals       []readCase `json:"shifted_capitals"`
 	StrictShiftedCapitals []readCase `json:"strict_shifted_capitals"`
-	Split                 []struct {
+	Mod                   []struct {
+		readCase
+		Mod             string `json:"mod"`
+		Strict          bool   `json:"strict"`
+		ShiftedCapitals bool   `json:"shifted_capitals"`
+	} `json:"mod"`
+	Split []struct {
 		Key   string   `json:"key"`
 		Mods  []string `json:"mods"`
 		Value string   `json:"value"`
@@ -40,6 +47,18 @@ type keyVectors struct {
 		Key     string `json:"key"`
 		Display string `json:"display"`
 	} `json:"display"`
+}
+
+// checkRead checks one reading's vector.
+func checkRead(t *testing.T, name string, c readCase, o Options) {
+	t.Helper()
+	k, err := ParseWith(c.In, o)
+	switch {
+	case c.Key == nil && err == nil:
+		t.Errorf("%s %q = %q, want it refused", name, c.In, k)
+	case c.Key != nil && (err != nil || string(k) != *c.Key):
+		t.Errorf("%s %q = %q, %v; want %q", name, c.In, k, err, *c.Key)
+	}
 }
 
 // myelinkey conforms to its spec: every vector of every section.
@@ -68,14 +87,18 @@ func TestConformance(t *testing.T) {
 			t.Errorf("%s: no vectors", s.name)
 		}
 		for _, c := range s.cases {
-			k, err := ParseWith(c.In, s.o)
-			switch {
-			case c.Key == nil && err == nil:
-				t.Errorf("%s %q = %q, want it refused", s.name, c.In, k)
-			case c.Key != nil && (err != nil || string(k) != *c.Key):
-				t.Errorf("%s %q = %q, %v; want %q", s.name, c.In, k, err, *c.Key)
-			}
+			checkRead(t, s.name, c, s.o)
 		}
+	}
+	if len(v.Mod) == 0 {
+		t.Error("mod: no vectors")
+	}
+	for _, c := range v.Mod {
+		o := Options{Strict: c.Strict, ShiftedCapitals: c.ShiftedCapitals, Mod: map[string]Mods{"super": Super, "ctrl": Ctrl}[c.Mod]}
+		if o.Mod == 0 {
+			t.Errorf("mod %q: mod is %q", c.In, c.Mod)
+		}
+		checkRead(t, fmt.Sprintf("mod %s %+v", c.Mod, o), c.readCase, o)
 	}
 	kinds := map[Kind]string{Character: "character", Physical: "physical", Modifier: "modifier"}
 	for _, c := range v.Split {

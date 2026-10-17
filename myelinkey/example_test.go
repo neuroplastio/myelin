@@ -47,6 +47,21 @@ func ExampleParseWith() {
 	// with ShiftedCapitals, G is shift+g
 }
 
+// One keymap binds the platform's command modifier as mod: Command on macOS,
+// Ctrl elsewhere. The program says which it stands for.
+func ExampleOptions_mod() {
+	for _, m := range []myelinkey.Mods{myelinkey.Super, myelinkey.Ctrl} {
+		k, _ := myelinkey.ParseWith("mod+shift+z", myelinkey.Options{Mod: m})
+		fmt.Println(k)
+	}
+	_, err := myelinkey.Parse("mod+s")
+	fmt.Println(err != nil)
+	// Output:
+	// super+shift+z
+	// ctrl+shift+z
+	// true
+}
+
 // A key that comes in named as HOTTY names keys now is read into a Key, and
 // then compares with ==.
 func ExampleParseHotty() {

@@ -32,7 +32,8 @@
 // super, opt and option for alt, and control for ctrl; a physical key by
 // its own name, by its W3C code value ("PageDown", "KeyA") or by another
 // keymap's name for it ("pgdn", "esc", "up"); a letter in either case.
-// [ParseWith] can read more strictly ([Options]). A sequence is keys
+// [ParseWith] can read more strictly, and can read "mod" as the platform's
+// command modifier ([Options]). A sequence is keys
 // separated by ASCII white space: "g g" ([ParseSeq], [FormatSeq]).
 // [Display] writes a key as a menu shows it, with glyphs for the arrows and
 // Tab.
@@ -93,8 +94,8 @@ var modAliases = map[string]Mods{
 	"cmd": Super, "command": Super, "opt": Alt, "option": Alt, "control": Ctrl,
 }
 
-// Options are how strictly [ParseWith] reads a key. The zero value is the
-// default reading, [Parse]'s.
+// Options are how [ParseWith] reads a key. The zero value is the default
+// reading, [Parse]'s.
 type Options struct {
 	// Strict reads only a key's canonical spelling, and refuses any other
 	// with it: "Ctrl+D" asks for "ctrl+d", "esc" for "escape",
@@ -104,6 +105,12 @@ type Options struct {
 	// letter, as vim does: "G" is "shift+g", "ctrl+A" is "ctrl+shift+a".
 	// Without it a letter's case does not matter: "G" is "g".
 	ShiftedCapitals bool
+	// Mod is the modifier that "mod" stands for, Super or Ctrl: the
+	// platform's command modifier, Super on macOS and Ctrl elsewhere, as
+	// HOTTY's Mod. "mod+s" is "super+s" or "ctrl+s". "mod" with super or
+	// ctrl is refused whichever it stands for, so that a keymap reads on
+	// every platform or on none. Without it, "mod" is refused.
+	Mod Mods
 }
 
 // Parse reads a key the default way, which is Ghostty's: "ctrl+d",
@@ -124,6 +131,8 @@ func ParseWith(s string, o Options) (Key, error) {
 		value   string
 		capital bool
 		lastMod Mods
+		viaMod  bool // "mod" was written
+		named   Mods // the modifiers written by their own names
 	)
 	for rest := s; rest != ""; {
 		part, after, plus := strings.Cut(rest, "+")
@@ -131,12 +140,21 @@ func ParseWith(s string, o Options) (Key, error) {
 			return "", fmt.Errorf("%q: no key after the last +", s)
 		}
 		rest = after
-		if m, ok := modOf(part); ok {
+		if m, ok := modOf(part, o.Mod); ok {
+			isMod := strings.EqualFold(part, "mod")
+			if isMod && named&(Super|Ctrl) != 0 || !isMod && viaMod && m&(Super|Ctrl) != 0 {
+				return "", fmt.Errorf("%q: mod with super or ctrl reads on one platform only", s)
+			}
 			if mods&m != 0 {
 				return "", fmt.Errorf("%q: %s twice", s, part)
 			}
 			mods |= m
 			lastMod = m
+			if isMod {
+				viaMod = true
+			} else {
+				named |= m
+			}
 			continue
 		}
 		if value != "" {
@@ -165,13 +183,53 @@ func ParseWith(s string, o Options) (Key, error) {
 		mods |= Shift
 	}
 	k := join(mods, value)
-	if o.Strict && s != string(k) && !(o.ShiftedCapitals && s == capitalSpelling(k)) {
-		if capital && !o.ShiftedCapitals && mods&Shift == 0 {
-			return "", fmt.Errorf("%q: write %s, or %s for Shift with it", s, k, join(mods|Shift, value))
+	if o.Strict && !strictSpelling(s, k, o) {
+		want, shifted := string(k), string(join(mods|Shift, value))
+		if viaMod {
+			want, shifted = modSpelling(want, o.Mod), modSpelling(shifted, o.Mod)
 		}
-		return "", fmt.Errorf("%q: write %s", s, k)
+		if capital && !o.ShiftedCapitals && mods&Shift == 0 {
+			return "", fmt.Errorf("%q: write %s, or %s for Shift with it", s, want, shifted)
+		}
+		return "", fmt.Errorf("%q: write %s", s, want)
 	}
 	return k, nil
+}
+
+// strictSpelling reports whether strict reading takes s for k: its canonical
+// name; with ShiftedCapitals, its capital spelling; and with Mod, either one
+// with "mod" in place of the modifier it stands for.
+func strictSpelling(s string, k Key, o Options) bool {
+	if s == string(k) {
+		return true
+	}
+	capSpelling := ""
+	if o.ShiftedCapitals {
+		capSpelling = capitalSpelling(k)
+		if s == capSpelling {
+			return true
+		}
+	}
+	if o.Mod != Super && o.Mod != Ctrl {
+		return false
+	}
+	return s == modSpelling(string(k), o.Mod) || capSpelling != "" && s == modSpelling(capSpelling, o.Mod)
+}
+
+// modSpelling writes a key's canonical name, or its capital spelling, with
+// "mod" in place of m, whether m is held ("ctrl+s" is "mod+s") or tapped
+// ("alt+ctrl" is "alt+mod"). It is "" where the key has no m.
+func modSpelling(s string, m Mods) string {
+	name := modName(m)
+	switch {
+	case s == name:
+		return "mod"
+	case strings.HasPrefix(s, name+"+"):
+		return "mod+" + s[len(name)+1:]
+	case strings.HasSuffix(s, "+"+name):
+		return s[:len(s)-len(name)] + "mod"
+	}
+	return ""
 }
 
 // modName is the name of one modifier.
@@ -184,13 +242,17 @@ func modName(m Mods) string {
 	return ""
 }
 
-// modOf reads a modifier's name, or one of its aliases, in any case.
-func modOf(s string) (Mods, bool) {
+// modOf reads a modifier's name, or one of its aliases, in any case. "mod"
+// is cmd, Super or Ctrl, where the reading has one.
+func modOf(s string, cmd Mods) (Mods, bool) {
 	lower := strings.ToLower(s)
 	for i, n := range modNames {
 		if lower == n {
 			return 1 << i, true
 		}
+	}
+	if lower == "mod" && (cmd == Super || cmd == Ctrl) {
+		return cmd, true
 	}
 	m, ok := modAliases[lower]
 	return m, ok
@@ -202,6 +264,8 @@ func hint(part string) string {
 	switch {
 	case strings.EqualFold(part, "meta"):
 		return " (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)"
+	case strings.EqualFold(part, "mod"):
+		return " (mod stands for super or ctrl only where the reading says which: Options.Mod)"
 	case looksWord(part):
 		return " (a physical key is named by its W3C code value, page_down or PageDown; a sequence's keys are separated by spaces: `g g`)"
 	}
