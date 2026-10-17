@@ -55,6 +55,9 @@ license is Apache-2.0.
   identifier. The code in README and `docs/` is the Example functions, and
   the key table is generated: after changing either, run
   `go test -run 'TestReferenceKeys|TestDocsExamples' -update`.
+- **The site copies the README.** myelin.neuroplast.io is the web agent's,
+  and its quick start is a copy of Example#1–4. When those or the README's
+  text change, tell the web agent.
 
 ## Where things live
 
