@@ -34,6 +34,21 @@ Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17)._
 
 ## Todo
 
+- [ ] **FENCE-01** Fences: what a context does with the keys it doesn't bind, so programs can build modes from contexts
+      status: todo | owner: — | added: 2026-10-17
+      notes: Asked by plexos-key-presets for plx's modes (zellij's pane and
+      locked modes, a modal dialog). Shaped in reply: `Doc.Fences []Fence`
+      {When, Shadow, Swallow, Source}. The deepest holding fence decides
+      both options (then layer, then later). Shadow is the Text floor for
+      every key, and Swallow sets a new `Result.Swallowed` in place of
+      Dropped. A Text node deeper than the fence keeps typed text, and a
+      sequence that dies is decided on Pending.Path. Menu and Tree apply
+      the floor, Explain gains `Candidate.Fenced`, and `(*Keymap).Fence(p)`
+      returns the deciding fence. Open question to plx: "at least as deep"
+      vs "deeper, or the fence's own When". Needs D18 and a check against
+      plx's keymap golden. Waits on the maintainer's go-ahead (token
+      preservation). Tell plexos-key-presets the commit when it lands.
+
 - [x] **RELEASE-01** The first tags, v0.1.0-next.1
       status: done | owner: myelin | added: 2026-10-11
       notes: On the maintainer's go-ahead ("Tag both packages"), and as gov
