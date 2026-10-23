@@ -22,7 +22,9 @@ func Mount(d Doc, when string) Doc {
 	}
 	out.Groups = slices.Clone(d.Groups)
 	for i := range out.Groups {
-		out.Groups[i].When = joinWhen(when, out.Groups[i].When)
+		g := &out.Groups[i]
+		g.When = joinWhen(when, g.When)
+		g.Props = maps.Clone(g.Props)
 	}
 	out.Fences = slices.Clone(d.Fences)
 	for i := range out.Fences {

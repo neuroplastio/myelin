@@ -59,15 +59,15 @@ func TestRoundTrip(t *testing.T) {
 		}, &Schema{}},
 		{"doc", &Doc{Layer: "user", Aliases: map[string]string{"leader": "ctrl+a"}, Drops: []string{"core"}, Source: "config.kdl:3",
 			Binds:  []Bind{bind, {Keys: "g g", Unbind: true}},
-			Groups: []Group{{Keys: "<leader> p", Label: "+pane", When: "pane", Source: "config.kdl:9"}},
+			Groups: []Group{{Keys: "<leader> p", Label: "+pane", When: "pane", Source: "config.kdl:9", Props: map[string]string{"hold": "true"}}},
 			Fences: []Fence{{When: `workspace.mode == "locked"`, Shadow: true, Swallow: true, Source: "config.kdl:20"}},
 		}, &Doc{}},
 		{"path", &Path{{Name: "workspace"}, {Name: "pane", Attrs: map[string]any{"zoomed": true, "title": "logs"}}}, &Path{}},
 		{"match", &Match{Exact: &binding, Prefix: true}, &Match{}},
 		{"candidate", &Candidate{Binding: binding, Holds: true, Depth: 2, Wins: true, Fenced: true}, &Candidate{}},
 		{"problem", &Problem{Source: "config.kdl:12", Text: "unknown action", Warning: true}, &Problem{}},
-		{"menu", &Menu{Seq: []myelinkey.Key{"ctrl+b"}, Label: "+leader", Items: []Item{
-			{Key: "p", Label: "+pane", Group: true, Enabled: true, Items: []Item{
+		{"menu", &Menu{Seq: []myelinkey.Key{"ctrl+b"}, Label: "+leader", Props: map[string]string{"hold": "true"}, Items: []Item{
+			{Key: "p", Label: "+pane", Group: true, Props: map[string]string{"hold": "false"}, Enabled: true, Items: []Item{
 				{Key: "n", Binding: &binding, Enabled: true},
 				{Key: "x", Label: "close", Binding: &Binding{Bind: Bind{Keys: "<leader> p x", Action: "pane.close"}, Seq: []myelinkey.Key{"ctrl+b", "p", "x"}, Layer: "core"}},
 			}},
@@ -162,7 +162,7 @@ func TestMount(t *testing.T) {
 			{Keys: "j", Action: "down", Args: []string{""}, Props: map[string]string{"p": "1"}},
 			{Keys: "q", Action: "quit", When: "a || b"},
 		},
-		Groups: []Group{{Keys: "g", Label: "+go"}, {Keys: "z", Label: "+fold", When: "c"}},
+		Groups: []Group{{Keys: "g", Label: "+go"}, {Keys: "z", Label: "+fold", When: "c", Props: map[string]string{"p": "1"}}},
 		Fences: []Fence{{Swallow: true}, {When: "d", Shadow: true}},
 	}
 	m := Mount(d, "logs || pager")
@@ -182,8 +182,9 @@ func TestMount(t *testing.T) {
 		t.Errorf("the fences mount as %q", got)
 	}
 	// A copy: the original is untouched by the mount and by edits to it.
-	m.Binds[0].Args[0], m.Binds[0].Props["p"], m.Drops[0] = "changed", "changed", "changed"
-	if d.Binds[0].When != "" || d.Groups[1].When != "c" || d.Fences[1].When != "d" || d.Binds[0].Args[0] != "" || d.Binds[0].Props["p"] != "1" || d.Drops[0] != "x" {
+	m.Binds[0].Args[0], m.Binds[0].Props["p"], m.Groups[1].Props["p"], m.Drops[0] = "changed", "changed", "changed", "changed"
+	if d.Binds[0].When != "" || d.Groups[1].When != "c" || d.Fences[1].When != "d" || d.Binds[0].Args[0] != "" || d.Binds[0].Props["p"] != "1" ||
+		d.Groups[1].Props["p"] != "1" || d.Drops[0] != "x" {
 		t.Errorf("Mount changed its document: %#v", d)
 	}
 	if m.Binds[0].Args == nil || len(Mount(Doc{Binds: []Bind{{Keys: "x"}}}, "y").Binds[0].Args) != 0 {

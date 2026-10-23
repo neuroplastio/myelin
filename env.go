@@ -338,6 +338,8 @@ type pathAct struct {
 	fenceDepth, shadow int
 	// keys is next's scratch: the index of each key it has listed.
 	keys map[myelinkey.Key]int
+	// props is groupAt's scratch, cleared after each use.
+	props []groupProps
 }
 
 // unknownDepth marks a context's depth not yet evaluated.

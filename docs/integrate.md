@@ -53,8 +53,8 @@ documents for a layer, in load order. A `Bind` binds a sequence to an
 action, with its values in `Args`. An unbind takes keys away, and a
 `Group` labels a prefix for the menus. Put where each one was written in
 its `Source`, such as `config.kdl:12`, because every problem myelin
-reports carries it. Properties of your own go in `Props`, which myelin
-passes back without reading.
+reports carries it. Properties of your own go in a bind's or a group's
+`Props`, which myelin passes back without reading.
 
 To report every mistake in a file in one pass, check each sequence as you
 parse it. `Env.CheckSeq` reads a sequence as `Build` will, without a
@@ -387,6 +387,15 @@ binding. Your `applies` function says whether a binding would do anything
 now, and a group is enabled when anything under it is. You word a binding
 that has no label, and you draw the menu, with `myelinkey.Display` for
 the keys.
+
+A group's `Props` come back on its item and on the menu after it, so you
+can ask each level of a sequence what it does, such as whether it stays
+open after a binding runs. Where several groups of the same keys hold,
+each property is the winning one's among those that set it, by the same
+precedence as the label. So a user's group that only relabels a prefix
+keeps your defaults' properties, and to turn one off it sets that
+property to a value you read as off. A group can be an alias alone, such
+as `<leader>`, to give the leader's own level a label and properties.
 
 <!-- example:ExampleKeymap_Menu -->
 

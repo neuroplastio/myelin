@@ -2,6 +2,7 @@ package myelin
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"strings"
@@ -297,12 +298,14 @@ func describe(b *Binding) string {
 }
 
 // entry is one key that can follow a sequence: a group (more keys follow;
-// label is its group's) or a leaf (b wins there). best is the key's own
-// winning binding's precedence, deeper the depth of its deepest longer one.
+// label and props are its group's) or a leaf (b wins there). best is the
+// key's own winning binding's precedence, deeper the depth of its deepest
+// longer one.
 type entry struct {
 	key    myelinkey.Key
 	group  bool
 	label  string
+	props  map[string]string
 	b      *Binding
 	best   winner
 	deeper int
@@ -351,7 +354,7 @@ func (km *Keymap) next(seq []myelinkey.Key, only myelinkey.Key, a *pathAct) []en
 		switch {
 		case e.group:
 			e.b = nil
-			e.label = km.groupLabel(seq, e.key, a)
+			e.label, e.props = km.groupAt(seq, e.key, a)
 		case e.b == nil || e.b.Unbind:
 			continue // unbound here
 		default:
@@ -362,11 +365,14 @@ func (km *Keymap) next(seq []myelinkey.Key, only myelinkey.Key, a *pathAct) []en
 	return kept
 }
 
-// groupLabel is the winning label of the group at exactly seq and then
-// key, or "".
-func (km *Keymap) groupLabel(seq []myelinkey.Key, key myelinkey.Key, a *pathAct) string {
+// groupAt is the group at exactly seq and then key: the winning group's
+// label, or "", and its props, each from the winning group that sets it.
+// Props a single group sets are that group's own map; several groups'
+// are merged into a new one, the higher overwriting the lower.
+func (km *Keymap) groupAt(seq []myelinkey.Key, key myelinkey.Key, a *pathAct) (string, map[string]string) {
 	best := none
 	label := ""
+	sets := a.props[:0]
 	for i := range km.groups {
 		g := &km.groups[i]
 		if len(g.keys) != len(seq)+1 || g.keys[len(seq)] != key || !hasPrefix(g.keys, seq) {
@@ -376,9 +382,40 @@ func (km *Keymap) groupLabel(seq []myelinkey.Key, key myelinkey.Key, a *pathAct)
 		if d < 0 {
 			continue
 		}
-		if w := (winner{depth: d, rank: g.rank, order: g.order}); best.beaten(w) {
+		w := winner{depth: d, rank: g.rank, order: g.order}
+		if best.beaten(w) {
 			best, label = w, g.g.Label
 		}
+		if len(g.g.Props) > 0 {
+			sets = append(sets, groupProps{w: w, props: g.g.Props})
+		}
 	}
-	return label
+	a.props = sets
+	defer clear(sets)
+	switch len(sets) {
+	case 0:
+		return label, nil
+	case 1:
+		return label, sets[0].props
+	}
+	slices.SortFunc(sets, func(x, y groupProps) int {
+		switch {
+		case x.w == y.w:
+			return 0
+		case x.w.beaten(y.w):
+			return -1
+		}
+		return 1
+	})
+	props := make(map[string]string, len(sets[len(sets)-1].props))
+	for _, s := range sets {
+		maps.Copy(props, s.props)
+	}
+	return label, props
+}
+
+// groupProps are the props of a group that holds, at its precedence.
+type groupProps struct {
+	w     winner
+	props map[string]string
 }

@@ -1135,6 +1135,38 @@ func (z *Group) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Source")
 				return
 			}
+		case "props":
+			var zb0002 uint32
+			zb0002, err = dc.ReadMapHeader()
+			if err != nil {
+				err = msgp.WrapError(err, "Props")
+				return
+			}
+			if zb0002 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
+				return
+			}
+			if z.Props == nil {
+				z.Props = make(map[string]string, zb0002)
+			} else if len(z.Props) > 0 {
+				clear(z.Props)
+			}
+			for zb0002 > 0 {
+				zb0002--
+				var za0001 string
+				za0001, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Props")
+					return
+				}
+				var za0002 string
+				za0002, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Props", za0001)
+					return
+				}
+				z.Props[za0001] = za0002
+			}
 		default:
 			err = dc.Skip()
 			if err != nil {
@@ -1149,8 +1181,8 @@ func (z *Group) DecodeMsg(dc *msgp.Reader) (err error) {
 // EncodeMsg implements msgp.Encodable
 func (z *Group) EncodeMsg(en *msgp.Writer) (err error) {
 	// check for omitted fields
-	zb0001Len := uint32(4)
-	var zb0001Mask uint8 /* 4 bits */
+	zb0001Len := uint32(5)
+	var zb0001Mask uint8 /* 5 bits */
 	_ = zb0001Mask
 	if z.When == "" {
 		zb0001Len--
@@ -1159,6 +1191,10 @@ func (z *Group) EncodeMsg(en *msgp.Writer) (err error) {
 	if z.Source == "" {
 		zb0001Len--
 		zb0001Mask |= 0x8
+	}
+	if z.Props == nil {
+		zb0001Len--
+		zb0001Mask |= 0x10
 	}
 	// variable map header, size zb0001Len
 	err = en.Append(0x80 | uint8(zb0001Len))
@@ -1212,13 +1248,43 @@ func (z *Group) EncodeMsg(en *msgp.Writer) (err error) {
 				return
 			}
 		}
+		if (zb0001Mask & 0x10) == 0 { // if not omitted
+			// write "props"
+			err = en.Append(0xa5, 0x70, 0x72, 0x6f, 0x70, 0x73)
+			if err != nil {
+				return
+			}
+			err = en.WriteMapHeader(uint32(len(z.Props)))
+			if err != nil {
+				err = msgp.WrapError(err, "Props")
+				return
+			}
+			for za0001, za0002 := range z.Props {
+				err = en.WriteString(za0001)
+				if err != nil {
+					err = msgp.WrapError(err, "Props")
+					return
+				}
+				err = en.WriteString(za0002)
+				if err != nil {
+					err = msgp.WrapError(err, "Props", za0001)
+					return
+				}
+			}
+		}
 	}
 	return
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Group) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Keys) + 6 + msgp.StringPrefixSize + len(z.Label) + 5 + msgp.StringPrefixSize + len(z.When) + 7 + msgp.StringPrefixSize + len(z.Source)
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Keys) + 6 + msgp.StringPrefixSize + len(z.Label) + 5 + msgp.StringPrefixSize + len(z.When) + 7 + msgp.StringPrefixSize + len(z.Source) + 6 + msgp.MapHeaderSize
+	if z.Props != nil {
+		for za0001, za0002 := range z.Props {
+			_ = za0002
+			s += msgp.StringPrefixSize + len(za0001) + msgp.StringPrefixSize + len(za0002)
+		}
+	}
 	return
 }
 
@@ -1266,6 +1332,38 @@ func (z *Item) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Group")
 				return
 			}
+		case "props":
+			var zb0003 uint32
+			zb0003, err = dc.ReadMapHeader()
+			if err != nil {
+				err = msgp.WrapError(err, "Props")
+				return
+			}
+			if zb0003 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
+				return
+			}
+			if z.Props == nil {
+				z.Props = make(map[string]string, zb0003)
+			} else if len(z.Props) > 0 {
+				clear(z.Props)
+			}
+			for zb0003 > 0 {
+				zb0003--
+				var za0001 string
+				za0001, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Props")
+					return
+				}
+				var za0002 string
+				za0002, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Props", za0001)
+					return
+				}
+				z.Props[za0001] = za0002
+			}
 		case "binding":
 			if dc.IsNil() {
 				err = dc.ReadNil()
@@ -1291,25 +1389,25 @@ func (z *Item) DecodeMsg(dc *msgp.Reader) (err error) {
 				return
 			}
 		case "items":
-			var zb0003 uint32
-			zb0003, err = dc.ReadArrayHeader()
+			var zb0004 uint32
+			zb0004, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Items")
 				return
 			}
-			if zb0003 > z8b843d16limitArrays {
+			if zb0004 > z8b843d16limitArrays {
 				err = msgp.ErrLimitExceeded
 				return
 			}
-			if cap(z.Items) >= int(zb0003) {
-				z.Items = (z.Items)[:zb0003]
+			if cap(z.Items) >= int(zb0004) {
+				z.Items = (z.Items)[:zb0004]
 			} else {
-				z.Items = make([]Item, zb0003)
+				z.Items = make([]Item, zb0004)
 			}
-			for za0001 := range z.Items {
-				err = z.Items[za0001].DecodeMsg(dc)
+			for za0003 := range z.Items {
+				err = z.Items[za0003].DecodeMsg(dc)
 				if err != nil {
-					err = msgp.WrapError(err, "Items", za0001)
+					err = msgp.WrapError(err, "Items", za0003)
 					return
 				}
 			}
@@ -1327,8 +1425,8 @@ func (z *Item) DecodeMsg(dc *msgp.Reader) (err error) {
 // EncodeMsg implements msgp.Encodable
 func (z *Item) EncodeMsg(en *msgp.Writer) (err error) {
 	// check for omitted fields
-	zb0001Len := uint32(6)
-	var zb0001Mask uint8 /* 6 bits */
+	zb0001Len := uint32(7)
+	var zb0001Mask uint8 /* 7 bits */
 	_ = zb0001Mask
 	if z.Label == "" {
 		zb0001Len--
@@ -1338,13 +1436,17 @@ func (z *Item) EncodeMsg(en *msgp.Writer) (err error) {
 		zb0001Len--
 		zb0001Mask |= 0x4
 	}
-	if z.Binding == nil {
+	if z.Props == nil {
 		zb0001Len--
 		zb0001Mask |= 0x8
 	}
+	if z.Binding == nil {
+		zb0001Len--
+		zb0001Mask |= 0x10
+	}
 	if z.Items == nil {
 		zb0001Len--
-		zb0001Mask |= 0x20
+		zb0001Mask |= 0x40
 	}
 	// variable map header, size zb0001Len
 	err = en.Append(0x80 | uint8(zb0001Len))
@@ -1389,6 +1491,30 @@ func (z *Item) EncodeMsg(en *msgp.Writer) (err error) {
 			}
 		}
 		if (zb0001Mask & 0x8) == 0 { // if not omitted
+			// write "props"
+			err = en.Append(0xa5, 0x70, 0x72, 0x6f, 0x70, 0x73)
+			if err != nil {
+				return
+			}
+			err = en.WriteMapHeader(uint32(len(z.Props)))
+			if err != nil {
+				err = msgp.WrapError(err, "Props")
+				return
+			}
+			for za0001, za0002 := range z.Props {
+				err = en.WriteString(za0001)
+				if err != nil {
+					err = msgp.WrapError(err, "Props")
+					return
+				}
+				err = en.WriteString(za0002)
+				if err != nil {
+					err = msgp.WrapError(err, "Props", za0001)
+					return
+				}
+			}
+		}
+		if (zb0001Mask & 0x10) == 0 { // if not omitted
 			// write "binding"
 			err = en.Append(0xa7, 0x62, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67)
 			if err != nil {
@@ -1417,7 +1543,7 @@ func (z *Item) EncodeMsg(en *msgp.Writer) (err error) {
 			err = msgp.WrapError(err, "Enabled")
 			return
 		}
-		if (zb0001Mask & 0x20) == 0 { // if not omitted
+		if (zb0001Mask & 0x40) == 0 { // if not omitted
 			// write "items"
 			err = en.Append(0xa5, 0x69, 0x74, 0x65, 0x6d, 0x73)
 			if err != nil {
@@ -1428,10 +1554,10 @@ func (z *Item) EncodeMsg(en *msgp.Writer) (err error) {
 				err = msgp.WrapError(err, "Items")
 				return
 			}
-			for za0001 := range z.Items {
-				err = z.Items[za0001].EncodeMsg(en)
+			for za0003 := range z.Items {
+				err = z.Items[za0003].EncodeMsg(en)
 				if err != nil {
-					err = msgp.WrapError(err, "Items", za0001)
+					err = msgp.WrapError(err, "Items", za0003)
 					return
 				}
 			}
@@ -1442,15 +1568,22 @@ func (z *Item) EncodeMsg(en *msgp.Writer) (err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Item) Msgsize() (s int) {
-	s = 1 + 4 + msgp.StringPrefixSize + len(string(z.Key)) + 6 + msgp.StringPrefixSize + len(z.Label) + 6 + msgp.BoolSize + 8
+	s = 1 + 4 + msgp.StringPrefixSize + len(string(z.Key)) + 6 + msgp.StringPrefixSize + len(z.Label) + 6 + msgp.BoolSize + 6 + msgp.MapHeaderSize
+	if z.Props != nil {
+		for za0001, za0002 := range z.Props {
+			_ = za0002
+			s += msgp.StringPrefixSize + len(za0001) + msgp.StringPrefixSize + len(za0002)
+		}
+	}
+	s += 8
 	if z.Binding == nil {
 		s += msgp.NilSize
 	} else {
 		s += z.Binding.Msgsize()
 	}
 	s += 8 + msgp.BoolSize + 6 + msgp.ArrayHeaderSize
-	for za0001 := range z.Items {
-		s += z.Items[za0001].Msgsize()
+	for za0003 := range z.Items {
+		s += z.Items[za0003].Msgsize()
 	}
 	return
 }
@@ -1636,26 +1769,58 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Label")
 				return
 			}
-		case "items":
+		case "props":
 			var zb0004 uint32
-			zb0004, err = dc.ReadArrayHeader()
+			zb0004, err = dc.ReadMapHeader()
+			if err != nil {
+				err = msgp.WrapError(err, "Props")
+				return
+			}
+			if zb0004 > z8b843d16limitMaps {
+				err = msgp.ErrLimitExceeded
+				return
+			}
+			if z.Props == nil {
+				z.Props = make(map[string]string, zb0004)
+			} else if len(z.Props) > 0 {
+				clear(z.Props)
+			}
+			for zb0004 > 0 {
+				zb0004--
+				var za0002 string
+				za0002, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Props")
+					return
+				}
+				var za0003 string
+				za0003, err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Props", za0002)
+					return
+				}
+				z.Props[za0002] = za0003
+			}
+		case "items":
+			var zb0005 uint32
+			zb0005, err = dc.ReadArrayHeader()
 			if err != nil {
 				err = msgp.WrapError(err, "Items")
 				return
 			}
-			if zb0004 > z8b843d16limitArrays {
+			if zb0005 > z8b843d16limitArrays {
 				err = msgp.ErrLimitExceeded
 				return
 			}
-			if cap(z.Items) >= int(zb0004) {
-				z.Items = (z.Items)[:zb0004]
+			if cap(z.Items) >= int(zb0005) {
+				z.Items = (z.Items)[:zb0005]
 			} else {
-				z.Items = make([]Item, zb0004)
+				z.Items = make([]Item, zb0005)
 			}
-			for za0002 := range z.Items {
-				err = z.Items[za0002].DecodeMsg(dc)
+			for za0004 := range z.Items {
+				err = z.Items[za0004].DecodeMsg(dc)
 				if err != nil {
-					err = msgp.WrapError(err, "Items", za0002)
+					err = msgp.WrapError(err, "Items", za0004)
 					return
 				}
 			}
@@ -1673,12 +1838,16 @@ func (z *Menu) DecodeMsg(dc *msgp.Reader) (err error) {
 // EncodeMsg implements msgp.Encodable
 func (z *Menu) EncodeMsg(en *msgp.Writer) (err error) {
 	// check for omitted fields
-	zb0001Len := uint32(3)
-	var zb0001Mask uint8 /* 3 bits */
+	zb0001Len := uint32(4)
+	var zb0001Mask uint8 /* 4 bits */
 	_ = zb0001Mask
 	if z.Label == "" {
 		zb0001Len--
 		zb0001Mask |= 0x2
+	}
+	if z.Props == nil {
+		zb0001Len--
+		zb0001Mask |= 0x4
 	}
 	// variable map header, size zb0001Len
 	err = en.Append(0x80 | uint8(zb0001Len))
@@ -1717,6 +1886,30 @@ func (z *Menu) EncodeMsg(en *msgp.Writer) (err error) {
 				return
 			}
 		}
+		if (zb0001Mask & 0x4) == 0 { // if not omitted
+			// write "props"
+			err = en.Append(0xa5, 0x70, 0x72, 0x6f, 0x70, 0x73)
+			if err != nil {
+				return
+			}
+			err = en.WriteMapHeader(uint32(len(z.Props)))
+			if err != nil {
+				err = msgp.WrapError(err, "Props")
+				return
+			}
+			for za0002, za0003 := range z.Props {
+				err = en.WriteString(za0002)
+				if err != nil {
+					err = msgp.WrapError(err, "Props")
+					return
+				}
+				err = en.WriteString(za0003)
+				if err != nil {
+					err = msgp.WrapError(err, "Props", za0002)
+					return
+				}
+			}
+		}
 		// write "items"
 		err = en.Append(0xa5, 0x69, 0x74, 0x65, 0x6d, 0x73)
 		if err != nil {
@@ -1727,10 +1920,10 @@ func (z *Menu) EncodeMsg(en *msgp.Writer) (err error) {
 			err = msgp.WrapError(err, "Items")
 			return
 		}
-		for za0002 := range z.Items {
-			err = z.Items[za0002].EncodeMsg(en)
+		for za0004 := range z.Items {
+			err = z.Items[za0004].EncodeMsg(en)
 			if err != nil {
-				err = msgp.WrapError(err, "Items", za0002)
+				err = msgp.WrapError(err, "Items", za0004)
 				return
 			}
 		}
@@ -1744,9 +1937,16 @@ func (z *Menu) Msgsize() (s int) {
 	for za0001 := range z.Seq {
 		s += msgp.StringPrefixSize + len(string(z.Seq[za0001]))
 	}
-	s += 6 + msgp.StringPrefixSize + len(z.Label) + 6 + msgp.ArrayHeaderSize
-	for za0002 := range z.Items {
-		s += z.Items[za0002].Msgsize()
+	s += 6 + msgp.StringPrefixSize + len(z.Label) + 6 + msgp.MapHeaderSize
+	if z.Props != nil {
+		for za0002, za0003 := range z.Props {
+			_ = za0003
+			s += msgp.StringPrefixSize + len(za0002) + msgp.StringPrefixSize + len(za0003)
+		}
+	}
+	s += 6 + msgp.ArrayHeaderSize
+	for za0004 := range z.Items {
+		s += z.Items[za0004].Msgsize()
 	}
 	return
 }

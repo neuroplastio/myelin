@@ -2,6 +2,8 @@ package myelin
 
 import (
 	"errors"
+	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -571,6 +573,84 @@ func TestMenu(t *testing.T) {
 	}
 	if lvl := km.Menu(nil, nil, func(Binding) bool { return false }); lvl.Items[0].Enabled || lvl.Items[0].Items != nil {
 		t.Fatalf("a level's group = %+v", lvl.Items[0])
+	}
+}
+
+// A group's props come back on its item and on the menu after it. Each one
+// is the winning group's among those that set it, by the precedence a
+// label follows: the deeper context, then the higher layer, then the later
+// document. A group may be the leader alone.
+func TestGroupProps(t *testing.T) {
+	e, err := NewEnv(appSchema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	props := func(kv ...string) map[string]string {
+		m := map[string]string{}
+		for i := 0; i < len(kv); i += 2 {
+			m[kv[i]] = kv[i+1]
+		}
+		return m
+	}
+	km := build(t, e,
+		Doc{Layer: "core",
+			Groups: []Group{
+				{Keys: "<leader>", Label: "+app", Props: props("hold", "true")},
+				{Keys: "<leader> w", Label: "+window", Props: props("hold", "true", "color", "blue")},
+				{Keys: "<leader> b", Label: "+buffer", When: "buffer", Props: props("hold", "true")},
+			},
+			Binds: []Bind{
+				b("<leader> w h", "win.left"), b("<leader> w l", "win.right"), b("<leader> q", "quit"),
+				{Keys: "<leader> b d", Action: "buf.delete", When: "buffer"},
+			}},
+		Doc{Layer: "core", Groups: []Group{{Keys: "<leader> w", Label: "+window", Props: props("color", "red")}}},
+		Doc{Layer: "user", Groups: []Group{{Keys: "<leader> w", Label: "+win"}}},
+		Doc{Layer: "ext", Groups: []Group{{Keys: "<leader> w", Label: "+pane", When: "panel", Props: props("hold", "false")}}},
+	)
+	leader, _ := km.Alias("leader")
+	w := append(slices.Clone(leader), "w")
+	buffer := Path{node("window"), node("buffer")}
+	panel := Path{node("window"), node("sidebar"), {Name: "panel", Attrs: map[string]any{"id": "files", "ext": "git"}}}
+
+	// The leader alone is a group: the root's item and the leader's menu.
+	if it := km.Menu(nil, buffer, nil).Items[0]; it.Key != leader[0] || !it.Group || it.Label != "+app" || !reflect.DeepEqual(it.Props, props("hold", "true")) {
+		t.Fatalf("the leader's item = %+v", it)
+	}
+	m := km.Menu(leader, buffer, nil)
+	if m.Label != "+app" || !reflect.DeepEqual(m.Props, props("hold", "true")) {
+		t.Fatalf("the leader's menu = %q %v", m.Label, m.Props)
+	}
+	got := map[myelinkey.Key]map[string]string{}
+	for _, it := range m.Items {
+		got[it.Key] = it.Props
+	}
+	// The user's label wins and sets no props, so core's stay: hold from
+	// the first document, color from the later one. A leaf has none.
+	want := map[myelinkey.Key]map[string]string{"w": props("hold", "true", "color", "red"), "b": props("hold", "true"), "q": nil}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("the leader's items' props = %v, want %v", got, want)
+	}
+	if m := km.Menu(w, buffer, nil); m.Label != "+win" || !reflect.DeepEqual(m.Props, want["w"]) {
+		t.Fatalf("after w = %q %v", m.Label, m.Props)
+	}
+	// In a panel the lowest layer's deeper context wins hold, and the
+	// label; color has no deeper setter.
+	if m := km.Menu(w, panel, nil); m.Label != "+pane" || !reflect.DeepEqual(m.Props, props("hold", "false", "color", "red")) {
+		t.Fatalf("after w in a panel = %q %v", m.Label, m.Props)
+	}
+	// A tree carries them at every level; a group whose context doesn't
+	// hold is not there, and neither are its props.
+	tree := km.Tree(nil, panel, nil)
+	if lv := tree.Items[0]; !reflect.DeepEqual(lv.Props, props("hold", "true")) || len(lv.Items) != 2 ||
+		!reflect.DeepEqual(lv.Items[0].Props, props("hold", "false", "color", "red")) || lv.Items[1].Props != nil {
+		t.Fatalf("the tree's leader = %+v", lv)
+	}
+	// No keys, or keys that are no group, have none.
+	if m := km.Menu(nil, buffer, nil); m.Props != nil {
+		t.Fatalf("the root's props = %v", m.Props)
+	}
+	if m := km.Menu(append(slices.Clone(leader), "q"), buffer, nil); m.Props != nil || m.Label != "" {
+		t.Fatalf("after a leaf = %q %v", m.Label, m.Props)
 	}
 }
 

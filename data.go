@@ -132,6 +132,11 @@ type Group struct {
 	When string `msg:"when,omitempty"`
 	// Source is where the group was written.
 	Source string `msg:"source,omitempty"`
+	// Props are the program's own properties, such as a flag that says
+	// what a level of its menu does. myelin passes them back on menus and
+	// never reads them; where several groups of the same keys hold, each
+	// property is the winning one's among those that set it.
+	Props map[string]string `msg:"props,omitempty"`
 }
 
 // Fence says, where its context holds, what happens to the keys the
@@ -224,6 +229,9 @@ type Menu struct {
 	Seq []myelinkey.Key `msg:"seq"`
 	// Label is the group's label: "+file".
 	Label string `msg:"label,omitempty"`
+	// Props are the group's properties (Group.Props): each one from the
+	// winning group of these keys that sets it.
+	Props map[string]string `msg:"props,omitempty"`
 	// Items are the keys that can follow, in the order the keymap first
 	// binds each.
 	Items []Item `msg:"items"`
@@ -239,6 +247,9 @@ type Item struct {
 	Label string `msg:"label,omitempty"`
 	// Group is set when more keys follow.
 	Group bool `msg:"group,omitempty"`
+	// Props are a group's properties, as Menu.Props; a binding's are its
+	// Binding's.
+	Props map[string]string `msg:"props,omitempty"`
 	// Binding is the binding that wins at the key; nil for a group.
 	Binding *Binding `msg:"binding,omitempty"`
 	// Enabled is the program's verdict on a leaf; a group is enabled when

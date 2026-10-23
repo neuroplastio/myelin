@@ -15,6 +15,11 @@ import (
 // anything now. nil means every binding applies. A group is enabled when
 // anything under it is. The program draws the menu, dimming what is not
 // enabled, and words a binding with no label.
+//
+// A group's props (Group.Props) come back on its item and on the menu
+// after it, decided as its label is, so a program can ask each level of a
+// sequence what it does, such as whether it stays open after a binding
+// runs while the leader's modifier is held.
 func (km *Keymap) Menu(seq []myelinkey.Key, p Path, applies func(Binding) bool) Menu {
 	return km.menu(seq, p, applies, false)
 }
@@ -32,7 +37,8 @@ func (km *Keymap) menu(seq []myelinkey.Key, p Path, applies func(Binding) bool, 
 	// own is the sequence with room for the levels under it, which items
 	// writes past its end.
 	own := append(make([]myelinkey.Key, 0, len(seq)+4), seq...)
-	return Menu{Seq: slices.Clone(seq), Label: km.label(seq, a), Items: km.items(own, a, applies, tree)}
+	label, props := km.heading(seq, a)
+	return Menu{Seq: slices.Clone(seq), Label: label, Props: props, Items: km.items(own, a, applies, tree)}
 }
 
 // items are the items after seq; with tree, each group's own nested. The
@@ -42,7 +48,7 @@ func (km *Keymap) items(seq []myelinkey.Key, a *pathAct, applies func(Binding) b
 	es := km.next(seq, "", a)
 	out := make([]Item, 0, len(es))
 	for _, e := range es {
-		it := Item{Key: e.key, Label: e.label, Group: e.group, Binding: e.b}
+		it := Item{Key: e.key, Label: e.label, Group: e.group, Props: e.props, Binding: e.b}
 		if e.group {
 			under := km.items(append(seq, e.key), a, applies, tree)
 			it.Enabled = slices.ContainsFunc(under, func(c Item) bool { return c.Enabled })
@@ -57,16 +63,16 @@ func (km *Keymap) items(seq []myelinkey.Key, a *pathAct, applies func(Binding) b
 	return out
 }
 
-// label is the group label of a sequence, as the level before it lists the
-// group; "" when it is no group there.
-func (km *Keymap) label(seq []myelinkey.Key, a *pathAct) string {
+// heading is the group label and props of a sequence, as the level before
+// it lists the group; none when it is no group there.
+func (km *Keymap) heading(seq []myelinkey.Key, a *pathAct) (string, map[string]string) {
 	if len(seq) == 0 {
-		return ""
+		return "", nil
 	}
 	for _, e := range km.next(seq[:len(seq)-1], seq[len(seq)-1], a) {
 		if e.group {
-			return e.label
+			return e.label, e.props
 		}
 	}
-	return ""
+	return "", nil
 }

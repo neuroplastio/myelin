@@ -30,8 +30,8 @@ import (
 // deeper than the fence.
 
 // Keymap is a built keymap: every layer's bindings, their aliases resolved,
-// in load order. It is immutable and safe for concurrent use. The Bindings its
-// queries return are its own: read them, don't change them.
+// in load order. It is immutable and safe for concurrent use. The Bindings and
+// props its queries return are its own: read them, don't change them.
 type Keymap struct {
 	env     *Env
 	aliases map[string][]myelinkey.Key

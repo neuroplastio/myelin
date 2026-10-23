@@ -472,3 +472,31 @@ spelling doesn't change.
    the path, and what it does with Dropped keys. Feed's path for a key
    that no binding starts with stays one map lookup unless some fence
    swallows.
+
+### D19 — A group's own properties, decided per property
+**2026-10-23.** A terminal multiplexer that uses myelin asked for it: while
+its leader's modifier is held, keys run one binding after another, and a
+binding that runs puts the sequence back at the deepest level above it
+that says it holds. Whether a level holds has to follow the precedence a
+group's label follows, so the program can't keep it beside the keymap.
+Key spelling and the bindings' precedence don't change.
+1. **`Group.Props`** are the program's own strings, as `Bind.Props`:
+   myelin passes them back and never reads a value. `Mount` copies them.
+2. **They come back on menus:** `Menu.Props` for the group the menu is
+   after, and `Item.Props` on a group's item, in a level and in a tree. A
+   leaf's item has none, since its binding carries its own.
+3. **Each property is decided on its own,** by the label's precedence
+   among the groups of the same keys that hold and set it: the deepest
+   context, then the higher layer, then the later group. The label still
+   comes from the winning group whether or not it sets props.
+   - Why not the winning group's whole map: a user's group that only
+     relabels a prefix would silently drop the defaults' properties.
+   - The cost: a property can't be removed, only set again. A program
+     reads its own value as off.
+   - A single group's map comes back as it is, shared with the keymap like
+     its Bindings; several are merged into a new map.
+4. **A group can be an alias alone,** such as `<leader>`: one key on the
+   path's first level, which gives the leader's own menu its label and
+   props. It already resolved; now a test holds it.
+5. **What stays the program's:** what its properties mean, and everything
+   its held leader does with them.
