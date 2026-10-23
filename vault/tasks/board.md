@@ -34,6 +34,22 @@ Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17)._
 
 ## Todo
 
+- [ ] **GROUP-PROPS-01** Groups carry a program's own properties, as binds do
+      status: todo | owner: — | added: 2026-10-23
+      notes: Asked by plx for its held leader (the maintainer, 2026-10-23):
+      while the leader's modifier stays down, keys run one binding after
+      another, and a binding that runs puts the sequence back at the
+      deepest group above it that holds. Whether a group holds has to
+      follow the precedence its label already follows (layers, contexts,
+      the later document), so plx can't keep it beside the keymap.
+      Proposed: `Group.Props map[string]string` (`props,omitempty`),
+      passed back and never read, as `Bind.Props`; and the winning group's
+      on `Menu` (`Menu.Props`), so a program walking a sequence's prefixes
+      can ask each level. The layer itself stays the program's, as a
+      dropped key's fate is: the held modifiers, a key matched again with
+      them removed, the return after a run, Backspace back a level. myelin
+      decides the shape. Tell plx the commit when it lands.
+
 - [x] **RELEASE-01** The first tags, v0.1.0-next.1
       status: done | owner: myelin | added: 2026-10-11
       notes: On the maintainer's go-ahead ("Tag both packages"), and as gov
