@@ -3,7 +3,7 @@ module github.com/neuroplastio/myelin
 go 1.24.0
 
 require (
-	github.com/neuroplastio/cel-lite v0.1.0
+	github.com/neuroplastio/cel-lite v0.1.1
 	github.com/neuroplastio/myelin/myelinkey v0.1.0-next.1
 	github.com/tinylib/msgp v1.6.5
 )

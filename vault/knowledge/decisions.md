@@ -505,7 +505,7 @@ Key spelling and the bindings' precedence don't change.
 **2026-10-30.** The maintainer: "myelin can rewire itself to cel-lite now
 and bump its minor release when done". cel-lite is neuroplastio's subset
 of CEL in Go's standard library alone (github.com/neuroplastio/cel-lite,
-v0.1.0), with cel-go as its oracle and never linked. Key spelling and the
+v0.1.1), with cel-go as its oracle and never linked. Key spelling and the
 bindings' precedence don't change: kubecom's keymap golden and a terminal
 multiplexer's leader golden stay byte-identical.
 1. **The root requires cel-lite, not cel-go** (supersedes the cel-go in

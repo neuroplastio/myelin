@@ -109,7 +109,7 @@ keymap loads.
   wrong type or an expression that isn't a boolean fails at load, with the
   names the schema has. A keymap that loads never fails on a key.
 - **Fast.** A compiled context evaluates in well under a microsecond, so
-  matching a key with contexts costs about half a microsecond, and a key no
+  matching a key with contexts costs under half a microsecond, and a key no
   binding starts with costs one map lookup.
 - **Partial evaluation.** With some attributes unknown, CEL can still say
   whether an expression might hold. `MayHold` and `MayDepth` use that to
@@ -133,13 +133,13 @@ the allocations don't:
 
 | Operation | Time | Allocations |
 |-----------|------|-------------|
-| A key no binding starts with | 50 ns | 1 |
-| A key matched against bindings with contexts | 0.8 µs | 4 |
-| The leader's menu | 27 µs | 60 |
-| A palette row's key (`KeyFor`) | 0.6 µs | 4 |
-| Compiling a context, once, at load | 50 µs | 385 |
+| A key no binding starts with | 45 ns | 1 |
+| A key matched against bindings with contexts | 0.44 µs | 0 |
+| The leader's menu | 17 µs | 60 |
+| A palette row's key (`KeyFor`) | 0.41 µs | 0 |
+| Compiling a context, once, at load | 2 µs | 22 |
 
 A query evaluates each distinct context once, on an activation the keymap
-pools, and a menu's allocations are its items. The allocations of a match
-are CEL's own. `make bench` runs these, and the gate checks the allocations
-stay where they are.
+pools, and evaluating a context doesn't allocate, so a match allocates
+nothing. A menu's allocations are its items. `make bench` runs these, and
+the gate checks the allocations stay where they are.
