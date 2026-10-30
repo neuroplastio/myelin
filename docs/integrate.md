@@ -24,9 +24,11 @@ outermost first, and their attributes. Contexts are written against these names,
 a context that names anything else fails when the keymap loads.
 
 - **Nodes** are what the program shows: a window, a list, a preview, a
-  dialog, a text field. Each one's name is a CEL identifier.
+  dialog, a text field. Each one's name is a CEL identifier, and not one
+  of the words CEL reserves (an attribute may be one: `cluster.namespace`).
 - **Attributes** are typed: `string`, `bool`, `int`, `uint`, `double`,
-  `bytes`, `dyn`, `list<T>` and `map<K,V>`. Read them in contexts as
+  `bytes`, `dyn`, `list<T>` and `map<K,V>`, a map keyed by a `bool`, an
+  `int`, a `uint`, a `string` or `dyn`. Read them in contexts as
   `node.attribute`.
 - **`Text`** marks a node that takes typed text. While one is on the path,
   a key that types text goes to it, unless a binding at least as deep

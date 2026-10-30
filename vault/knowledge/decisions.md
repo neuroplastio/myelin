@@ -500,3 +500,36 @@ Key spelling and the bindings' precedence don't change.
    props. It already resolved; now a test holds it.
 5. **What stays the program's:** what its properties mean, and everything
    its held leader does with them.
+
+### D20 — Contexts run on cel-lite
+**2026-10-30.** The maintainer: "myelin can rewire itself to cel-lite now
+and bump its minor release when done". cel-lite is neuroplastio's subset
+of CEL in Go's standard library alone (github.com/neuroplastio/cel-lite,
+v0.1.0), with cel-go as its oracle and never linked. Key spelling and the
+bindings' precedence don't change: kubecom's keymap golden and a terminal
+multiplexer's leader golden stay byte-identical.
+1. **The root requires cel-lite, not cel-go** (supersedes the cel-go in
+   D1 and D13.4). cel-go, protobuf, ANTLR and genproto leave the module
+   graph, of myelin and of every program that requires it. A small
+   program on myelin goes from 10.6 MB to 2.5 MB native, and from 21.7 MB
+   to 4.2 MB as js/wasm.
+2. **A context says what cel-lite implements.** What it refuses (the
+   macros, matches, timestamps and durations, type values, optional
+   syntax) fails at load with cel-lite's message, "… are not supported".
+   No real keymap used any of it. cel-lite's language page is the list.
+3. **The errors are cel-lite's.** Compile reports the error's message
+   without its position, as before; the vocabulary hint keys on
+   `Error.Kind` being Undeclared, not on the message's words. A syntax
+   error now reads "syntax error: unexpected end of input", not cel-go's
+   "Syntax error: mismatched input …".
+4. **The schema is declared as cel-lite declares it.** A node named with
+   a reserved word, which no context could ever read, fails at NewEnv; an
+   attribute may still be one (`cluster.namespace`). A map attribute is
+   keyed by a bool, an int, a uint, a string or dyn.
+5. **One program per context.** Holds and Depth read an attribute the
+   step doesn't give as absent; MayHold and MayDepth read it as unknown,
+   through the same program's Test, where cel-go needed a second one built
+   for partial evaluation. Evaluating a context doesn't allocate, so a
+   match in contexts allocates nothing.
+6. **The version is v0.2.0:** what a keymap may say and the errors it
+   gets change, so the minor version rises (P-5).

@@ -3,13 +3,11 @@ package myelin
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
-	"sync"
 
-	"cel.dev/cel-go/cel"
-	"cel.dev/cel-go/common/types"
-	"cel.dev/cel-go/interpreter"
+	cellite "github.com/neuroplastio/cel-lite"
 
 	"github.com/neuroplastio/myelin/myelinkey"
 )
@@ -21,11 +19,11 @@ const focusVar = "focus"
 // compiled in, and every keymap built with. It is safe for concurrent use.
 type Env struct {
 	schema Schema
-	cel    *cel.Env
-	// nodes are the declared node types by name; attrs the declared
-	// attributes by qualified name ("list.dir").
+	cel    *cellite.Env
+	// nodes are the declared node types by name; vars the variables a
+	// context reads, by their index in cel.
 	nodes map[string]*nodeInfo
-	attrs map[string]attrInfo
+	vars  []varInfo
 	// ranks are the layers' ranks, lowest 0.
 	ranks map[string]int
 	// keys is how the schema reads keys.
@@ -36,51 +34,53 @@ type Env struct {
 
 // nodeInfo is a declared node type.
 type nodeInfo struct {
-	name  string
-	text  bool
-	attrs []string // its attributes' qualified names, sorted
+	name string
+	text bool
 }
 
-// attrInfo is a declared attribute.
-type attrInfo struct {
-	node, name string
-	int        bool // declared int: integers of any Go kind read as int64
+// varInfo is a variable a context reads: focus, a node, or a node's
+// attribute.
+type varInfo struct {
+	node string // "" for focus
+	attr string // "" for the node itself
+	int  bool   // declared int: integers of any Go kind read as int64
 }
 
 // NewEnv declares a schema's path and layers to CEL. Every node is a bool
 // variable (is it on the path?), every attribute a typed variable under its
 // node ("list.dir"), and focus the innermost node's name. A name that isn't
-// a CEL identifier, a node declared twice, a type it can't read, no layers,
-// a layer named twice and an alias that doesn't read are errors.
+// a CEL identifier, a node named with a reserved word (an attribute may
+// be: `cluster.namespace`), a node declared twice, a type it can't read, no
+// layers, a layer named twice and an alias that doesn't read are errors.
 func NewEnv(s Schema) (*Env, error) {
-	e := &Env{schema: s, nodes: map[string]*nodeInfo{}, attrs: map[string]attrInfo{}, ranks: map[string]int{}}
-	opts := []cel.EnvOption{cel.Variable(focusVar, cel.StringType)}
+	e := &Env{schema: s, nodes: map[string]*nodeInfo{}, ranks: map[string]int{}}
+	decls := cellite.Decls{Vars: []cellite.Var{{Name: focusVar, Type: cellite.String}}}
+	e.vars = []varInfo{{}}
 	for _, n := range s.Nodes {
 		switch {
 		case !isIdent(n.Name):
 			return nil, fmt.Errorf("node %q: not a CEL identifier", n.Name)
+		case slices.Contains(cellite.ReservedWords(), n.Name):
+			return nil, fmt.Errorf("node %q: the name is reserved in CEL", n.Name)
 		case n.Name == focusVar:
 			return nil, fmt.Errorf("node %q: the name is the focus's", n.Name)
 		case e.nodes[n.Name] != nil:
 			return nil, fmt.Errorf("node %q: declared twice", n.Name)
 		}
-		info := &nodeInfo{name: n.Name, text: n.Text}
-		e.nodes[n.Name] = info
-		opts = append(opts, cel.Variable(n.Name, cel.BoolType))
-		for a, typ := range n.Attrs {
+		e.nodes[n.Name] = &nodeInfo{name: n.Name, text: n.Text}
+		decls.Vars = append(decls.Vars, cellite.Var{Name: n.Name, Type: cellite.Bool})
+		e.vars = append(e.vars, varInfo{node: n.Name})
+		for _, a := range slices.Sorted(maps.Keys(n.Attrs)) {
 			if !isIdent(a) {
 				return nil, fmt.Errorf("node %q: attribute %q is not a CEL identifier", n.Name, a)
 			}
-			t, err := celType(string(typ))
+			t, err := celType(string(n.Attrs[a]))
 			if err != nil {
 				return nil, fmt.Errorf("node %q: attribute %q: %w", n.Name, a, err)
 			}
-			q := n.Name + "." + a
-			info.attrs = append(info.attrs, q)
-			e.attrs[q] = attrInfo{node: n.Name, name: a, int: t == cel.IntType}
-			opts = append(opts, cel.Variable(q, t))
+			decls.Vars = append(decls.Vars, cellite.Var{Name: n.Name + "." + a, Type: t})
+			e.vars = append(e.vars, varInfo{node: n.Name, attr: a, int: t.Kind == cellite.IntKind})
 		}
-		slices.Sort(info.attrs)
 	}
 	if len(s.Layers) == 0 {
 		return nil, errors.New("a schema names its layers")
@@ -100,7 +100,7 @@ func NewEnv(s Schema) (*Env, error) {
 		}
 		e.aliases[name] = seq
 	}
-	env, err := cel.NewEnv(opts...)
+	env, err := cellite.NewEnv(decls)
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +122,9 @@ func isIdent(s string) bool {
 }
 
 // celType reads an attribute's Type: string, bool, int, uint, double,
-// bytes, dyn, list<T> and map<K,V>.
-func celType(s string) (*cel.Type, error) {
+// bytes, dyn, list<T> and map<K,V>, K a bool, an int, a uint, a string or
+// dyn.
+func celType(s string) (cellite.Type, error) {
 	t, rest, err := readType(strings.ReplaceAll(s, " ", ""))
 	if err == nil && rest != "" {
 		err = fmt.Errorf("%q: unexpected %q", s, rest)
@@ -131,10 +132,10 @@ func celType(s string) (*cel.Type, error) {
 	return t, err
 }
 
-func readType(s string) (*cel.Type, string, error) {
-	for name, t := range map[string]*cel.Type{
-		"string": cel.StringType, "bool": cel.BoolType, "int": cel.IntType, "uint": cel.UintType,
-		"double": cel.DoubleType, "bytes": cel.BytesType, "dyn": cel.DynType,
+func readType(s string) (cellite.Type, string, error) {
+	for name, t := range map[string]cellite.Type{
+		"string": cellite.String, "bool": cellite.Bool, "int": cellite.Int, "uint": cellite.Uint,
+		"double": cellite.Double, "bytes": cellite.Bytes, "dyn": cellite.Dyn,
 	} {
 		if rest, ok := strings.CutPrefix(s, name); ok && (rest == "" || strings.ContainsAny(rest[:1], ",>")) {
 			return t, rest, nil
@@ -143,31 +144,36 @@ func readType(s string) (*cel.Type, string, error) {
 	if rest, ok := strings.CutPrefix(s, "list<"); ok {
 		elem, rest, err := readType(rest)
 		if err != nil {
-			return nil, "", err
+			return cellite.Type{}, "", err
 		}
 		if rest, ok = strings.CutPrefix(rest, ">"); !ok {
-			return nil, "", fmt.Errorf("list<%s: no >", s)
+			return cellite.Type{}, "", fmt.Errorf("list<%s: no >", s)
 		}
-		return cel.ListType(elem), rest, nil
+		return cellite.ListOf(elem), rest, nil
 	}
 	if rest, ok := strings.CutPrefix(s, "map<"); ok {
 		key, rest, err := readType(rest)
 		if err != nil {
-			return nil, "", err
+			return cellite.Type{}, "", err
+		}
+		switch key.Kind {
+		case cellite.BoolKind, cellite.IntKind, cellite.UintKind, cellite.StringKind, cellite.DynKind:
+		default:
+			return cellite.Type{}, "", fmt.Errorf("map<%s: a key is a bool, an int, a uint, a string or dyn", s)
 		}
 		if rest, ok = strings.CutPrefix(rest, ","); !ok {
-			return nil, "", fmt.Errorf("map<%s: no ,", s)
+			return cellite.Type{}, "", fmt.Errorf("map<%s: no ,", s)
 		}
 		val, rest, err := readType(rest)
 		if err != nil {
-			return nil, "", err
+			return cellite.Type{}, "", err
 		}
 		if rest, ok = strings.CutPrefix(rest, ">"); !ok {
-			return nil, "", fmt.Errorf("map<%s: no >", s)
+			return cellite.Type{}, "", fmt.Errorf("map<%s: no >", s)
 		}
-		return cel.MapType(key, val), rest, nil
+		return cellite.MapOf(key, val), rest, nil
 	}
-	return nil, "", fmt.Errorf("%q is not a type (string, bool, int, uint, double, bytes, dyn, list<T>, map<K,V>)", s)
+	return cellite.Type{}, "", fmt.Errorf("%q is not a type (string, bool, int, uint, double, bytes, dyn, list<T>, map<K,V>)", s)
 }
 
 // Context is a compiled context: a CEL boolean over the path. A nil Context
@@ -175,51 +181,33 @@ func readType(s string) (*cel.Type, string, error) {
 type Context struct {
 	env *Env
 	src string
-	ast *cel.Ast
-	prg cel.Program
-	// partial is prg for partial evaluation (MayHold, MayDepth), built on
-	// first use.
-	partial func() cel.Program
+	prg *cellite.Program
 }
 
 // Compile compiles a context. A syntax error, a name the schema does not
-// declare, a type error and an expression that is not a boolean are all
-// errors here, so a keymap that loads never fails on a key. An empty
-// context is nil, which holds everywhere.
+// declare, a type error, what cel-lite doesn't support and an expression
+// that is not a boolean are all errors here, so a keymap that loads never
+// fails on a key. An empty context is nil, which holds everywhere.
 func (e *Env) Compile(when string) (*Context, error) {
 	if strings.TrimSpace(when) == "" {
 		return nil, nil
 	}
-	ast, iss := e.cel.Compile(when)
-	if iss.Err() != nil {
-		var msgs []string
-		unknown := false
-		for _, err := range iss.Errors() {
-			msgs = append(msgs, strings.TrimSuffix(err.Message, " (in container '')"))
-			unknown = unknown || strings.HasPrefix(err.Message, "undeclared reference")
+	prg, err := e.cel.Compile(when)
+	if err != nil {
+		var ce *cellite.Error
+		if !errors.As(err, &ce) {
+			return nil, fmt.Errorf("context %q: %w", when, err)
 		}
-		err := fmt.Errorf("context %q: %s", when, strings.Join(msgs, "; "))
-		if unknown {
+		err := fmt.Errorf("context %q: %s", when, ce.Msg)
+		if ce.Kind == cellite.Undeclared {
 			err = fmt.Errorf("%w (a context reads %s)", err, e.vocabulary())
 		}
 		return nil, err
 	}
-	if !ast.OutputType().IsExactType(cel.BoolType) {
-		return nil, fmt.Errorf("context %q is a %s, not a boolean", when, ast.OutputType())
+	if t := prg.Type(); t.Kind != cellite.BoolKind {
+		return nil, fmt.Errorf("context %q is a %s, not a boolean", when, cellite.FormatType(t))
 	}
-	prg, err := e.cel.Program(ast, cel.EvalOptions(cel.OptOptimize))
-	if err != nil {
-		return nil, fmt.Errorf("context %q: %w", when, err)
-	}
-	c := &Context{env: e, src: when, ast: ast, prg: prg}
-	c.partial = sync.OnceValue(func() cel.Program {
-		p, err := e.cel.Program(ast, cel.EvalOptions(cel.OptPartialEval))
-		if err != nil {
-			return nil
-		}
-		return p
-	})
-	return c, nil
+	return &Context{env: e, src: when, prg: prg}, nil
 }
 
 // vocabulary is the names a context may read, for an error that met another.
@@ -295,23 +283,17 @@ func (c *Context) depth(a *pathAct) int {
 // holds evaluates the context on the activation's prefix. An evaluation
 // error, such as an absent attribute, does not hold.
 func (c *Context) holds(a *pathAct) bool {
-	out, _, err := c.prg.Eval(a)
-	return err == nil && out == types.True
+	holds, _ := c.prg.Test(a)
+	return holds
 }
 
 // may evaluates the context on the activation's prefix with the attributes
 // its steps do not give unknown: true when it holds or might.
 func (c *Context) may(a *pathAct) bool {
-	prg := c.partial()
-	if prg == nil {
-		return true
-	}
-	vars, err := cel.PartialVars(a, a.unknowns()...)
-	if err != nil {
-		return true
-	}
-	out, _, err := prg.Eval(vars)
-	return err == nil && (out == types.True || types.IsUnknown(out))
+	a.may = true
+	holds, unknown := c.prg.Test(a)
+	a.may = false
+	return holds || unknown
 }
 
 // pathAct is a path as CEL reads it, cut to its first d steps: a node on
@@ -326,6 +308,9 @@ type pathAct struct {
 	env  *Env
 	path Path
 	d    int
+	// may makes an attribute the steps don't give unknown rather than
+	// absent: for MayHold and MayDepth.
+	may bool
 	// depths are the depths of the keymap's contexts on the whole path, by
 	// index, unknownDepth until asked; nil outside a keymap's query.
 	depths []int32
@@ -392,85 +377,68 @@ func (a *pathAct) step(node string) int {
 	return -1
 }
 
-// ResolveName is CEL's lookup of a variable (interpreter.Activation).
-func (a *pathAct) ResolveName(name string) (any, bool) {
-	if name == focusVar {
+// Var is variable i's value (cellite.Activation): focus the innermost
+// step's name, a node whether it is on the steps, and an attribute its
+// node's innermost step's value. An attribute of a node not on the steps
+// is absent, and so is one the step doesn't give, unknown instead when
+// the activation asks what may hold.
+func (a *pathAct) Var(i int) (cellite.Value, cellite.Presence) {
+	v := a.env.vars[i]
+	if v.node == "" {
 		if a.d == 0 {
-			return "", true
+			return cellite.StringValue(""), cellite.Present
 		}
-		return a.path[a.d-1].Name, true
+		return cellite.StringValue(a.path[a.d-1].Name), cellite.Present
 	}
-	if _, node := a.env.nodes[name]; node {
-		return a.step(name) >= 0, true
+	st := a.step(v.node)
+	if v.attr == "" {
+		return cellite.BoolValue(st >= 0), cellite.Present
 	}
-	at, ok := a.env.attrs[name]
-	if !ok {
-		return nil, false
+	if st < 0 {
+		return cellite.Value{}, cellite.Absent
 	}
-	i := a.step(at.node)
-	if i < 0 {
-		return nil, false
+	x, ok := a.path[st].Attrs[v.attr]
+	switch {
+	case !ok && a.may:
+		return cellite.Value{}, cellite.Unknown
+	case !ok:
+		return cellite.Value{}, cellite.Absent
+	case v.int:
+		return intValue(x), cellite.Present
 	}
-	v, ok := a.path[i].Attrs[at.name]
-	if !ok {
-		return nil, false
-	}
-	if at.int {
-		v = asInt(v)
-	}
-	return v, true
+	return cellite.ValueOf(x), cellite.Present
 }
 
-// Parent is nil: a path is the whole activation.
-func (a *pathAct) Parent() interpreter.Activation { return nil }
-
-// unknowns are the attributes the prefix's steps do not give, as patterns
-// for partial evaluation.
-func (a *pathAct) unknowns() []*cel.AttributePatternType {
-	var out []*cel.AttributePatternType
-	for i, st := range a.path[:a.d] {
-		n := a.env.nodes[st.Name]
-		if n == nil || a.step(st.Name) != i {
-			continue
-		}
-		for _, q := range n.attrs {
-			if _, given := st.Attrs[a.env.attrs[q].name]; !given {
-				out = append(out, cel.AttributePattern(q))
-			}
-		}
-	}
-	return out
-}
-
-// asInt reads an integer of any Go kind as CEL's int, so a path decoded from
-// msgpack (int64, or uint64 from another encoder) or built in Go (int)
-// compares the same. A uint64 too big for an int stays as it is.
-func asInt(v any) any {
+// intValue reads an integer of any Go kind as CEL's int, so a path decoded
+// from msgpack (int64, or uint64 from another encoder) or built in Go (int)
+// compares the same. A uint64 too big for an int stays a uint, and anything
+// else is read as it is.
+func intValue(v any) cellite.Value {
 	switch n := v.(type) {
 	case int:
-		return int64(n)
+		return cellite.IntValue(int64(n))
 	case int8:
-		return int64(n)
+		return cellite.IntValue(int64(n))
 	case int16:
-		return int64(n)
+		return cellite.IntValue(int64(n))
 	case int32:
-		return int64(n)
+		return cellite.IntValue(int64(n))
 	case uint:
 		if uint64(n) <= 1<<63-1 {
-			return int64(n)
+			return cellite.IntValue(int64(n))
 		}
 	case uint8:
-		return int64(n)
+		return cellite.IntValue(int64(n))
 	case uint16:
-		return int64(n)
+		return cellite.IntValue(int64(n))
 	case uint32:
-		return int64(n)
+		return cellite.IntValue(int64(n))
 	case uint64:
 		if n <= 1<<63-1 {
-			return int64(n)
+			return cellite.IntValue(int64(n))
 		}
 	}
-	return v
+	return cellite.ValueOf(v)
 }
 
 // textDepth is the depth at which the innermost node that takes text joins

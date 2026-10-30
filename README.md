@@ -18,7 +18,9 @@ a TUI, a GUI or anything else that takes keys.
 
 - 🧭 **Contexts.** A binding holds where its [CEL](https://cel.dev)
   expression holds, over the path to what is focused: `list && !field`,
-  `list.dir.startsWith('/tmp')`. The deepest context wins.
+  `list.dir.startsWith('/tmp')`. The deepest context wins. They run on
+  [cel-lite](https://github.com/neuroplastio/cel-lite), CEL in Go's
+  standard library alone.
 - 🧱 **Layers.** Defaults, extensions, the user's config: a higher layer
   overrides a lower one, and a config can start from nothing.
 - ⌨️ **Keys named as Ghostty names them.** `ctrl+d`, `shift+g`,
@@ -70,6 +72,7 @@ come from Spacemacs, and the key names from Ghostty.
 go get github.com/neuroplastio/myelin
 ```
 
+myelin requires msgp's runtime, cel-lite and its own key names.
 Keys are named in `github.com/neuroplastio/myelin/myelinkey`, a module of
 its own that needs only the standard library. A program that only names
 keys can require it alone.

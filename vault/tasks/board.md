@@ -13,9 +13,10 @@ Item template:
 
 Statuses: `todo`, `in-progress`, `blocked`.
 
-_Last updated: 2026-10-23. myelin is public: the engine, the docs and the
+_Last updated: 2026-10-30. myelin is public: the engine, the docs and the
 godoc are done, and keys are their own module, myelinkey, named in
-Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17)._
+Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17).
+Contexts run on cel-lite (D20)._
 
 ## In progress
 
@@ -41,6 +42,16 @@ Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17)._
       myelinkey/v0.1.0-next.1, then the root's myelinkey requirement moved
       to it and v0.1.0-next.1 tagged there, each a GitHub prerelease.
       kubecom told, so it can require tags instead of pseudo-versions.
+
+- [ ] **TINYGO-01** The root's tests under TinyGo, in the gate
+      status: todo | owner: — | added: 2026-10-30
+      notes: Since D20 the root builds with TinyGo, and a small program
+      runs as wasip1 (523 KB). The suite doesn't run yet: it reads
+      testdata with os.ReadFile, which TinyGo's js/wasm target can't, and
+      t.Fatal doesn't stop a test there. Embed the testdata, as
+      myelinkey's vectors are, then add the root to the gate's TinyGo
+      step, with 64 KB stacks. Until then the docs claim TinyGo for
+      myelinkey only.
 
 - [ ] **DOCS-CHECK** Add `docs check` to the gate
       status: todo | owner: — | added: 2026-10-11

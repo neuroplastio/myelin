@@ -36,7 +36,7 @@ license is Apache-2.0.
 - **No `tool` directive in a go.mod.** msgp's generator is pinned in
   `mise.toml`, beside Go, and `//go:generate` runs it as `msgp` (D11).
 - **The root module depends only on** the `myelinkey` module, msgp's
-  runtime and cel-go. **`myelinkey` depends on nothing** and passes its
+  runtime and cel-lite. **`myelinkey` depends on nothing** and passes its
   tests under TinyGo's wasm with 64 KB stacks. myelin is headless: no UI
   toolkit's adapter lives here (D13).
 - **A change to `myelinkey` lands first.** Push it, then move the root's

@@ -47,6 +47,13 @@
 // [Env.Compile] checks a context against the schema, so a mistake fails
 // when the keymap loads and a keymap that loads never fails on a key.
 //
+// Contexts run on cel-lite (github.com/neuroplastio/cel-lite), which
+// implements the part of CEL they need with Go's standard library alone:
+// comparisons, the logical operators, in, size, contains, startsWith,
+// endsWith and the conversions. What it doesn't implement, such as the
+// macros (exists, all), matches, timestamps and durations, fails at load
+// and says what it is: "regular expressions (matches) are not supported".
+//
 // # Precedence
 //
 // When more than one binding of the same keys holds on a path, the winner

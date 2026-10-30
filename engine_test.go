@@ -155,10 +155,12 @@ func exact(t testing.TB, km *Keymap, seq string, p Path) string {
 func TestContextsCompileOrFail(t *testing.T) {
 	e := kubeEnv(t)
 	for src, says := range map[string]string{
-		`table &&`:          "Syntax error",
+		`table &&`:          "syntax error",
 		`tabel.kind == 'x'`: "a context reads focus, cluster, menu",
 		`table.kind == 1`:   "no matching overload",
 		`table.kind`:        "not a boolean",
+		// cel-lite refuses what it doesn't implement by name.
+		`cluster.context.matches('^prod-')`: "regular expressions (matches) are not supported",
 	} {
 		if _, err := e.Compile(src); err == nil || !strings.Contains(err.Error(), says) {
 			t.Errorf("%s: %v, want it to say %q", src, err, says)
@@ -804,6 +806,39 @@ func TestIntAttributes(t *testing.T) {
 	}
 	if _, err := NewEnv(Schema{Nodes: []NodeType{{Name: "pane", Attrs: map[string]Type{"x": "list<"}}}, Layers: []string{"core"}}); err == nil {
 		t.Error("a bad type was declared")
+	}
+}
+
+// A schema's names are CEL's: a node can't take a reserved word, though an
+// attribute can, and a map is keyed by a bool, an int, a uint, a string or
+// dyn.
+func TestSchemaNames(t *testing.T) {
+	for _, tc := range []struct {
+		node NodeType
+		says string // "" for none
+	}{
+		{NodeType{Name: "if"}, "reserved"},
+		{NodeType{Name: "focus"}, "the focus's"},
+		{NodeType{Name: "pane-1"}, "not a CEL identifier"},
+		{NodeType{Name: "pane", Attrs: map[string]Type{"x y": "string"}}, "not a CEL identifier"},
+		{NodeType{Name: "pane", Attrs: map[string]Type{"x": "map<double, string>"}}, "a key is"},
+		{NodeType{Name: "pane", Attrs: map[string]Type{"if": "string", "namespace": "string"}}, ""},
+	} {
+		e, err := NewEnv(Schema{Nodes: []NodeType{tc.node}, Layers: []string{"core"}})
+		switch {
+		case tc.says == "" && err != nil:
+			t.Errorf("%v: %v", tc.node, err)
+		case tc.says != "" && (err == nil || !strings.Contains(err.Error(), tc.says)):
+			t.Errorf("%v: %v, want it to say %q", tc.node, err, tc.says)
+		case tc.says == "":
+			c, err := e.Compile(`pane.if == 'a' && pane.namespace == 'b'`)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !c.Holds(Path{{Name: "pane", Attrs: map[string]any{"if": "a", "namespace": "b"}}}) {
+				t.Error("attributes named with reserved words don't hold")
+			}
+		}
 	}
 }
 

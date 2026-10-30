@@ -116,8 +116,14 @@ keymap loads.
   answer questions about every list, not one list: could this binding hold
   wherever a list has the focus, whatever the list shows?
 
-CEL has costs. It adds several megabytes to a binary, and it doesn't run
-under TinyGo, because it relies on protobuf's reflection.
+Contexts run on [cel-lite](https://github.com/neuroplastio/cel-lite),
+which implements the part of CEL they need with Go's standard library
+alone: no protobuf, no parser generator, and a small program on myelin
+is about 2.5 MB. An expression means what CEL's language definition
+says. What cel-lite doesn't implement, such as the macros (`exists`,
+`all`), `matches`, timestamps and durations, fails at load and says what
+it is. Its [language page](https://github.com/neuroplastio/cel-lite/blob/main/docs/language.md)
+lists what it holds and what it refuses.
 
 ## What it costs
 

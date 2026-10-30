@@ -121,11 +121,22 @@ An expression that reads an attribute of a node that isn't on the path
 doesn't hold: `list.dir == '/tmp'` is false with no list open. A binding
 with no context works everywhere.
 
+Contexts are the part of CEL that
+[cel-lite](https://github.com/neuroplastio/cel-lite) implements:
+comparisons, `&&`, `||`, `!`, `in`, `size`, `contains`, `startsWith`,
+`endsWith` and conversions such as `int(x)`. Its
+[language page](https://github.com/neuroplastio/cel-lite/blob/main/docs/language.md) lists the rest.
+
 A mistake in a context fails when the keymap loads, not when you press the
 key:
+- a context that doesn't parse: `context "list &&": syntax error:
+  unexpected end of input`;
 - a name the program doesn't declare (the error lists the names it does);
 - a type that doesn't fit, such as `list.dir == 1`;
-- an expression that isn't true or false.
+- an expression that isn't true or false;
+- what cel-lite doesn't implement, such as the macros (`exists`, `all`),
+  `matches`, timestamps and durations: `context "list.dir.matches('^/t')":
+  regular expressions (matches) are not supported`.
 
 ## What wins
 
