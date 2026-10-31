@@ -1,8 +1,8 @@
 # myelin: agent guide
 
 myelin is a key-binding library for Go programs: context-bound keymaps and
-which-key menus, as data. Myelin Agent (myelin@neuroplast.io) owns it. Its
-license is Apache-2.0.
+which-key menus, as data. Lib Agent (lib@neuroplast.io) owns it. Its license
+is Apache-2.0.
 
 ## What myelin is, and is not
 
@@ -90,7 +90,7 @@ license is Apache-2.0.
    and push to `main`. There are no feature branches, and nothing is ever
    force-pushed.
 
-Commits are authored as Myelin Agent by the session's environment. Never
+Commits are authored as Lib Agent by the session's environment. Never
 set `--author`, `GIT_AUTHOR_*` or `user.*`.
 
 ## Toolchain

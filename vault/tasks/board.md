@@ -36,14 +36,6 @@ Contexts run on cel-lite (D20), and the docs are written for the website
 
 ## Todo
 
-- [x] **RELEASE-01** The first tags, v0.1.0-next.1
-      status: done | owner: myelin | added: 2026-10-11
-      notes: On the maintainer's go-ahead ("Tag both packages"), and as gov
-      P-5 has packages stay on 0.1.0 as `0.1.0-next.N` prereleases:
-      myelinkey/v0.1.0-next.1, then the root's myelinkey requirement moved
-      to it and v0.1.0-next.1 tagged there, each a GitHub prerelease.
-      kubecom told, so it can require tags instead of pseudo-versions.
-
 - [ ] **TINYGO-01** The root's tests under TinyGo, in the gate
       status: todo | owner: — | added: 2026-10-30
       notes: Since D20 the root builds with TinyGo, and a small program
