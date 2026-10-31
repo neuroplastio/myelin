@@ -76,13 +76,14 @@ env, err := myelin.NewEnv(myelin.Schema{
 if err != nil {
 	panic(err)
 }
-for _, s := range []string{"<leader> f n", "Ctrl+X g", "meta+x"} {
+for _, s := range []string{"<leader> f n", "Ctrl+X g", "ctrl+", "ctrl+ctrl+x"} {
 	fmt.Printf("%s: %v\n", s, env.CheckSeq(s))
 }
 // Output:
 // <leader> f n: <nil>
 // Ctrl+X g: <nil>
-// meta+x: "meta+x" is not a key (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)
+// ctrl+: "ctrl+": no key after the last +
+// ctrl+ctrl+x: "ctrl+ctrl+x": ctrl twice
 ```
 
 ## Build the keymap
@@ -115,9 +116,9 @@ check := func(b myelin.Binding) error {
 }
 user := myelin.Doc{Layer: "user", Binds: []myelin.Bind{
 	{Keys: "J", Action: "scroll", Source: "config:2"},
-	{Keys: "meta+k", Action: "up", Source: "config:3"},
+	{Keys: "ctrl+ctrl+k", Action: "up", Source: "config:3"},
 	{Keys: "x", Action: "explode", Source: "config:4"},
-	{Keys: "y", Action: "up", When: "lsit", Source: "config:5"},
+	{Keys: "y", Action: "up", When: "list &&", Source: "config:5"},
 }}
 km, problems := env.Build([]myelin.Doc{user}, check)
 for _, p := range problems {
@@ -130,9 +131,9 @@ for _, p := range problems {
 fmt.Println("loaded:", km != nil)
 // Output:
 // config:2: warning: "scroll" is going away: use "down"
-// config:3: error: "meta+k" is not a key (meta is no modifier: write super+ for the command or Windows key, alt+ for Emacs's Meta)
+// config:3: error: "ctrl+ctrl+k": ctrl twice
 // config:4: error: "explode" is not an action
-// config:5: error: context "lsit": undeclared reference to 'lsit' (a context reads focus, list)
+// config:5: error: context "list &&": syntax error: unexpected end of input
 // loaded: false
 ```
 

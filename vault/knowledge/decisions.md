@@ -561,8 +561,8 @@ pages. D9's other points stand.
    with a known group and no man page; one title per page; docs.yaml's
    description equal to the README's tagline, which the site shows once;
    relative links that reach a file, and fragments that name a heading by
-   GitHub's ids; and code lines within 80 columns, a tab counted as 4, an
-   example's output excepted.
+   GitHub's ids; and code lines within 80 columns, a tab counted as 4,
+   an example's output included: the site's column at 1280px fits 80.
 5. **Publishing:** web pins main's commit while everything past the latest
    tags (v0.2.0, myelinkey/v0.1.1) is docs or tooling, and the latest
    release's commit otherwise. Pushing main goes through gov.

@@ -137,22 +137,17 @@ func TestDocsPages(t *testing.T) {
 }
 
 // Code lines in the docs stay within 80 columns, a tab counted as 4, as the
-// website and a terminal show them. What an example prints, after its
-// "// Output:", is the program's.
+// website's column and a terminal show them without scrolling. An
+// example's output is code too: pick inputs whose output fits.
 func TestDocsWidth(t *testing.T) {
 	for _, file := range docPages(t) {
-		fenced, output := false, false
+		fenced := false
 		for i, l := range strings.Split(readFile(t, file), "\n") {
-			switch {
-			case strings.HasPrefix(l, "```"):
-				fenced, output = !fenced, false
+			if strings.HasPrefix(l, "```") {
+				fenced = !fenced
 				continue
-			case !fenced:
-				continue
-			case strings.TrimSpace(l) == "// Output:":
-				output = true
 			}
-			if w := utf8.RuneCountInString(strings.ReplaceAll(l, "\t", "    ")); w > 80 && !output {
+			if w := utf8.RuneCountInString(strings.ReplaceAll(l, "\t", "    ")); fenced && w > 80 {
 				t.Errorf("%s:%d: a code line %d columns wide", file, i+1, w)
 			}
 		}
