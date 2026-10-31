@@ -16,17 +16,10 @@ Statuses: `todo`, `in-progress`, `blocked`.
 _Last updated: 2026-10-31. myelin is public: the engine, the docs and the
 godoc are done, and keys are their own module, myelinkey, named in
 Ghostty's vocabulary (D13–D15). Key names 0.1 is released (D17).
-Contexts run on cel-lite (D20)._
+Contexts run on cel-lite (D20), and the docs are written for the website
+(D21)._
 
 ## In progress
-
-- [ ] **DOCS-SITE-01** Docs for myelin.neuroplast.io, as cel-lite's
-      status: in-progress | owner: myelin | added: 2026-10-31
-      notes: The maintainer asked for them, with web and gov publishing.
-      The README is the overview, and getting-started is the first page.
-      integrate is split into guides, and the spec is a page (docs.yaml
-      `pages:`). Performance gets its own page, and the docs' code stays
-      within 80 columns, which the gate checks. web pins the commit.
 
 ## Blocked
 
