@@ -49,7 +49,7 @@ deadline and calls `Expire`.
 A key is its canonical name, in [Ghostty](https://ghostty.org)'s
 vocabulary: `ctrl+d`, `shift+g`, `page_down`, `ctrl+key_w`. Two keys are
 the same keystroke exactly when their names are equal. A terminal's bytes,
-a Bubble Tea key and a HOTTY host's key event come out as the same name,
+a Bubble Tea key and a hotty host's key event come out as the same name,
 so one keymap serves them all.
 
 A key is a character, which follows the keyboard layout, or a physical
@@ -127,19 +127,8 @@ lists what it holds and what it refuses.
 
 ## What it costs
 
-Measured on a busy laptop (AMD Ryzen AI 9 HX 370) with a keymap of a
-hundred bindings, half of them in contexts. The times move with the load;
-the allocations don't:
-
-| Operation | Time | Allocations |
-|-----------|------|-------------|
-| A key no binding starts with | 45 ns | 1 |
-| A key matched against bindings with contexts | 0.44 µs | 0 |
-| The leader's menu | 17 µs | 60 |
-| A palette row's key (`KeyFor`) | 0.41 µs | 0 |
-| Compiling a context, once, at load | 2 µs | 22 |
-
-A query evaluates each distinct context once, on an activation the keymap
-pools, and evaluating a context doesn't allocate, so a match allocates
-nothing. A menu's allocations are its items. `make bench` runs these, and
-the gate checks the allocations stay where they are.
+Little enough to ask on every key. A key no binding starts with is one
+map lookup, a match in contexts takes under half a microsecond and
+allocates nothing, and the leader's menu takes tens of microseconds.
+[Performance](performance.md) has the numbers, how they were measured,
+and what the gate holds.

@@ -95,7 +95,7 @@ Every physical key: `backquote`, `backslash`, `bracket_left`, `bracket_right`, `
 
 Menus show `shift+tab` as `⇧⇥`.
 
-A key from a terminal, from Bubble Tea or from a HOTTY host is the same
+A key from a terminal, from Bubble Tea or from a hotty host is the same
 key however it was named, so one keymap serves them all.
 
 ## Contexts
@@ -190,5 +190,5 @@ Some keys need more than one binding or a binding to nothing:
 Each program prints its keymap in force and explains what a key does on a
 given path, with its own commands. Its docs say how.
 
-Writing a program? See [Using myelin in a program](integrate.md), and the
-API on [pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin).
+Writing a program? Start with [Getting started](getting-started.md), and
+the API on [pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin).

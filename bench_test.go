@@ -13,9 +13,9 @@ import (
 )
 
 // What myelin aims to cost: a key no binding starts with is one map lookup;
-// matching a key against a binding with a context takes a few microseconds;
-// compiling a context, once at load, some tens. Run them with make bench,
-// and compare two runs with benchstat.
+// matching a key against bindings with contexts takes under a microsecond;
+// compiling a context, once at load, a few. Run them with make bench, and
+// compare two runs with benchstat. docs/performance.md has the numbers.
 
 // benchKeymap is a keymap the size of a program's defaults: a hundred
 // bindings, half under contexts, and a group per leader key.

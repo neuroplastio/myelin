@@ -9,7 +9,10 @@ import (
 // A key is read the way Ghostty reads one: modifiers in any order, aliases
 // and W3C code values, a letter in either case.
 func ExampleParse() {
-	for _, s := range []string{"ctrl+d", "Shift+Ctrl+A", "cmd+s", "PageDown", "pgdn", "G", "ctrl+key_w", "?"} {
+	for _, s := range []string{
+		"ctrl+d", "Shift+Ctrl+A", "cmd+s", "PageDown",
+		"pgdn", "G", "ctrl+key_w", "?",
+	} {
 		k, err := myelinkey.Parse(s)
 		if err != nil {
 			fmt.Println(err)
@@ -65,7 +68,9 @@ func ExampleOptions_mod() {
 // A key that comes in named as HOTTY names keys now is read into a Key, and
 // then compares with ==.
 func ExampleParseHotty() {
-	for _, name := range []string{"Shift+Control+a", "A", "Control+ ", "Meta+PageDown", "Hyper+x"} {
+	for _, name := range []string{
+		"Shift+Control+a", "A", "Control+ ", "Meta+PageDown", "Hyper+x",
+	} {
 		k, ok := myelinkey.ParseHotty(name)
 		if !ok {
 			fmt.Printf("%q is not a key\n", name)

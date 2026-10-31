@@ -72,10 +72,11 @@ come from Spacemacs, and the key names from Ghostty.
 go get github.com/neuroplastio/myelin
 ```
 
-myelin requires msgp's runtime, cel-lite and its own key names.
-Keys are named in `github.com/neuroplastio/myelin/myelinkey`, a module of
-its own that needs only the standard library. A program that only names
-keys can require it alone.
+It needs Go 1.24 or later. myelin requires msgp's runtime, cel-lite and
+its own key names. Keys are named in
+`github.com/neuroplastio/myelin/myelinkey`, a module of its own that needs
+only the standard library. A program that only names keys can require it
+alone.
 
 ## Quick start
 
@@ -138,8 +139,14 @@ it, outermost first.
 <!-- example:Example#4 -->
 
 ```go
-home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/home/me"}}}
-tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
+home := myelin.Path{
+	{Name: "window"},
+	{Name: "list", Attrs: map[string]any{"dir": "/home/me"}},
+}
+tmp := myelin.Path{
+	{Name: "window"},
+	{Name: "list", Attrs: map[string]any{"dir": "/tmp"}},
+}
 filter := append(slices.Clone(home), myelin.Step{Name: "field"})
 match := func(keys string, p myelin.Path) string {
 	seq, err := myelinkey.ParseSeq(keys)
@@ -170,323 +177,56 @@ fmt.Println("g:", match("g", home))
 `j` does nothing in the filter because the field takes text: there, `j`
 types a j.
 
-## Bring your own config
-
-myelin has no file format. A program decodes its config, in whatever format
-it likes, into documents: plain Go values.
-
-Here the defaults are sections in the style of Zed's `keymap.json`, a
-context and the keys bound in it:
-
-<!-- file:testdata/config/defaults.json -->
-
-```json
-[
-  { "bindings": { "j": "down", "k": "up", "g g": "top", "escape": "back" } },
-  { "context": "list", "bindings": { "enter": "open", "d d": "delete" } },
-  { "context": "field", "bindings": { "escape": "close-filter" } }
-]
-```
-
-and the user's overrides are rules in the style of VS Code's
-`keybindings.json`, with an unbind:
-
-<!-- file:testdata/config/user.json -->
-
-```json
-[
-  { "keys": "enter", "action": "preview", "when": "list.dir.startsWith('/tmp')" },
-  { "keys": "d d", "unbind": true, "when": "list" },
-  { "keys": "ctrl+d", "action": "delete", "when": "list && !field" }
-]
-```
-
-The sections become one bind per key:
-
-<!-- example:Example_config#1 -->
-
-```go
-var sections []struct {
-	Context  string
-	Bindings map[string]string
-}
-data, err := os.ReadFile("testdata/config/defaults.json")
-if err != nil {
-	panic(err)
-}
-if err := json.Unmarshal(data, &sections); err != nil {
-	panic(err)
-}
-defaults := myelin.Doc{Layer: "defaults", Source: "defaults.json"}
-for _, s := range sections {
-	for _, keys := range slices.Sorted(maps.Keys(s.Bindings)) {
-		defaults.Binds = append(defaults.Binds, myelin.Bind{Keys: keys, Action: s.Bindings[keys], When: s.Context})
-	}
-}
-```
-
-The rules decode straight into binds:
-
-<!-- example:Example_config#2 -->
-
-```go
-user := myelin.Doc{Layer: "user", Source: "user.json"}
-if data, err = os.ReadFile("testdata/config/user.json"); err != nil {
-	panic(err)
-}
-if err := json.Unmarshal(data, &user.Binds); err != nil {
-	panic(err)
-}
-```
-
-Then the keymap is built and asked as before:
-
-<!-- example:Example_config#3 -->
-
-```go
-km, problems := env.Build([]myelin.Doc{defaults, user}, nil)
-if km == nil {
-	panic(fmt.Sprint(problems))
-}
-home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/home/me"}}}
-tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
-filter := append(slices.Clone(home), myelin.Step{Name: "field"})
-for _, q := range []struct {
-	keys, where string
-	p           myelin.Path
-}{
-	{"enter", "a list", home},
-	{"enter", "/tmp", tmp},
-	{"d d", "a list", home},
-	{"ctrl+d", "a list", home},
-	{"escape", "the filter", filter},
-	{"g g", "a list", home},
-} {
-	seq, _ := myelinkey.ParseSeq(q.keys)
-	action := "nothing"
-	if m := km.Match(seq, q.p); m.Exact != nil {
-		action = m.Exact.Action
-	}
-	fmt.Printf("%s in %s: %s\n", q.keys, q.where, action)
-}
-// Output:
-// enter in a list: open
-// enter in /tmp: preview
-// d d in a list: nothing
-// ctrl+d in a list: delete
-// escape in the filter: close-filter
-// g g in a list: top
-```
-
-KDL, TOML, YAML or Lua work the same way: myelin only sees the values.
-
-## Contexts: the deepest wins
-
-A context's depth is how far along the path it has to look to hold: `list`
-holds at the list, `field` at the field inside it. A context that holds
-with nothing on the path, such as `!preview`, is as shallow as none.
-
-<!-- example:ExampleContext_Depth -->
-
-```go
-env, err := myelin.NewEnv(myelin.Schema{
-	Nodes:  []myelin.NodeType{{Name: "window"}, {Name: "list"}, {Name: "preview"}, {Name: "field", Text: true}},
-	Layers: []string{"defaults"},
-})
-if err != nil {
-	panic(err)
-}
-p := myelin.Path{{Name: "window"}, {Name: "list"}, {Name: "field"}}
-for _, when := range []string{"", "window", "list", "field", "list && !preview", "!preview", "preview"} {
-	c, err := env.Compile(when)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("%q reaches %d\n", when, c.Depth(p))
-}
-// Output:
-// "" reaches 0
-// "window" reaches 1
-// "list" reaches 2
-// "field" reaches 3
-// "list && !preview" reaches 2
-// "!preview" reaches 0
-// "preview" reaches -1
-```
-
-When several bindings of the same keys hold, the deepest wins, then the
-higher layer, then the later binding. [Keymaps](docs/keymaps.md) has the
-whole rule.
-
-## Sequences and time
-
-When `g` runs one thing and `g g` another, a `g` has to wait:
-
-<!-- example:ExampleFeed#1 -->
-
-```go
-env, err := myelin.NewEnv(myelin.Schema{
-	Nodes:   []myelin.NodeType{{Name: "list"}},
-	Layers:  []string{"defaults"},
-	Timeout: 500 * time.Millisecond,
-})
-if err != nil {
-	panic(err)
-}
-km, problems := env.Build([]myelin.Doc{{Layer: "defaults", Binds: []myelin.Bind{
-	{Keys: "g", Action: "go"},
-	{Keys: "g g", Action: "top"},
-}}}, nil)
-if km == nil {
-	panic(fmt.Sprint(problems))
-}
-```
-
-myelin starts no timer. `Feed` takes the time each key came and returns a
-deadline, and the program wakes at it and calls `Expire`:
-
-<!-- example:ExampleFeed#2 -->
-
-```go
-p := myelin.Path{{Name: "list"}}
-now := time.Date(2026, 10, 11, 12, 0, 0, 0, time.UTC)
-
-var st myelin.Pending
-st, res := myelin.Feed(km, st, "g", p, now)
-fmt.Println("g waits until", res.Deadline.Format("15:04:05.000"))
-st, res = myelin.Feed(km, st, "g", p, now.Add(200*time.Millisecond))
-fmt.Println("g g runs", res.Run.Action)
-
-st, _ = myelin.Feed(km, st, "g", p, now)
-st, res = myelin.Expire(km, st, now.Add(100*time.Millisecond))
-fmt.Println("before the deadline, Expire does nothing:", res.Run == nil)
-st, res = myelin.Expire(km, st, now.Add(500*time.Millisecond))
-fmt.Println("at the deadline, g runs", res.Run.Action)
-
-_, res = myelin.Feed(km, st, "x", p, now)
-fmt.Println("x matches nothing:", res.Dropped)
-// Output:
-// g waits until 12:00:00.500
-// g g runs top
-// before the deadline, Expire does nothing: true
-// at the deadline, g runs go
-// x matches nothing: [x]
-```
-
-## Which-key menus
-
-A leader key, which bindings write as the alias `<leader>`, a group that
-labels a prefix, and labelled bindings:
-
-<!-- example:ExampleKeymap_Menu#1 -->
-
-```go
-env, err := myelin.NewEnv(myelin.Schema{
-	Nodes:   []myelin.NodeType{{Name: "list"}},
-	Layers:  []string{"defaults"},
-	Aliases: map[string]string{"leader": "space"},
-})
-if err != nil {
-	panic(err)
-}
-km, problems := env.Build([]myelin.Doc{{Layer: "defaults",
-	Groups: []myelin.Group{{Keys: "<leader> f", Label: "+file"}},
-	Binds: []myelin.Bind{
-		{Keys: "<leader> f n", Action: "file.new", Label: "New file"},
-		{Keys: "<leader> f d", Action: "file.delete", Label: "Delete"},
-		{Keys: "<leader> q", Action: "quit", Label: "Quit"},
-		{Keys: "<leader> arrow_left", Action: "back"},
-	},
-}}, nil)
-if km == nil {
-	panic(fmt.Sprint(problems))
-}
-```
-
-A menu is data: its items, their labels and whether each applies here. The
-program draws it however it likes.
-
-<!-- example:ExampleKeymap_Menu#2 -->
-
-```go
-readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Action != "file.delete" }
-
-leader, _ := km.Alias("leader")
-show := func(m myelin.Menu) {
-	fmt.Printf("%s (%s)\n", myelinkey.FormatSeq(m.Seq), m.Label)
-	for _, it := range m.Items {
-		label := it.Label
-		if label == "" {
-			label = it.Binding.Action // the program words a binding with no label
-		}
-		fmt.Printf("  %s  %s enabled=%v\n", myelinkey.Display(it.Key), label, it.Enabled)
-	}
-}
-p := myelin.Path{{Name: "list"}}
-show(km.Menu(leader, p, readOnly))
-show(km.Menu(slices.Concat(leader, []myelinkey.Key{"f"}), p, readOnly))
-// Output:
-// space ()
-//   f  +file enabled=false
-//   q  Quit enabled=true
-//   ←  back enabled=true
-// space f (+file)
-//   n  New file enabled=false
-//   d  Delete enabled=false
-```
-
-## Keys
-
-A key is named as [Ghostty](https://ghostty.org/docs/config/keybind) names
-it: its modifiers in the order `super+ctrl+alt+shift+`, then a character
-(`g`, `?`), which follows the keyboard layout, or a physical key
-(`page_down`, `key_w`), which stays in its place. myelin reads keys as
-Ghostty does, and every way of writing a key comes out as one name, so a
-keymap, a menu and an error message show it the same way. A program that
-wants one spelling per key reads strictly, and any other spelling is
-refused with the one to use.
-
-<!-- example:myelinkey.ExampleParse -->
-
-```go
-for _, s := range []string{"ctrl+d", "Shift+Ctrl+A", "cmd+s", "PageDown", "pgdn", "G", "ctrl+key_w", "?"} {
-	k, err := myelinkey.Parse(s)
-	if err != nil {
-		fmt.Println(err)
-		continue
-	}
-	fmt.Printf("%s is %s\n", s, k)
-}
-// Output:
-// ctrl+d is ctrl+d
-// Shift+Ctrl+A is ctrl+shift+a
-// cmd+s is super+s
-// PageDown is page_down
-// pgdn is page_down
-// G is g
-// ctrl+key_w is ctrl+key_w
-// ? is ?
-```
+[Getting started](docs/getting-started.md) goes on from here: your own
+config format, what wins, sequences, which-key menus and keys.
 
 ## Documentation
 
-- [Using myelin in a program](docs/integrate.md): the schema, building a
-  keymap, the sequencer and menus.
+- [Getting started](docs/getting-started.md): install, a first keymap,
+  your own config, sequences, menus and keys.
+- [Using myelin in a program](docs/integrate.md): the schema, documents,
+  building a keymap and the path.
+- [Typing keys](docs/typing.md): the sequencer, modes, and keys from your
+  input.
+- [Menus and help](docs/menus.md): which-key menus, and explaining what a
+  key does.
+- [Across a process](docs/process.md): the data types as msgpack.
 - [Keymaps](docs/keymaps.md): how keys are written, what a context is and
   which binding wins. Programs link their users here.
-- [How myelin works](docs/design.md): why the keymap is data, why time is a
-  value, and how depth and layers decide.
 - [Key names](myelinkey/SPEC.md): the spec for key names, version 0.1,
   with [conformance vectors](myelinkey/conformance/keys.json) for other
   implementations.
+- [Performance](docs/performance.md): what a key, a match and a menu cost.
+- [How myelin works](docs/design.md): why the keymap is data, why time is a
+  value, and how depth and layers decide.
 - The API reference is on pkg.go.dev:
   [myelin](https://pkg.go.dev/github.com/neuroplastio/myelin) and
   [myelinkey](https://pkg.go.dev/github.com/neuroplastio/myelin/myelinkey).
 
 ## Status
 
-Early: the API can still change.
+Pre-1.0. The current version is on
+[pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin) and among
+the [tags](https://github.com/neuroplastio/myelin/tags). myelin follows
+semantic versioning: until 1.0, a release that breaks the API raises the
+minor version (0.1 to 0.2), and a patch release never does. Before 1.0
+the API's edges may still change, as programs that use it ask for things,
+and so may the wording of problems. How keys are written and which
+binding wins change only by a recorded decision, checked against the
+keymaps of programs that use myelin. The key names are a spec of their
+own, versioned apart from the module.
+
+## Developing
+
+Go, msgp's generator and TinyGo are pinned in `mise.toml`.
+
+- `mise exec -- make check`: gofmt, vet and the tests, myelinkey's under
+  TinyGo too; the msgp codec, the conformance vectors and the docs' code
+  current.
+- `make generate`: the data types' msgp codec, after `data.go` changes.
+- `make bench`: the benchmarks, with their allocations.
+- `make fuzz`: a minute each of myelinkey's parsers.
 
 ## License
 
-Apache-2.0.
+Apache License 2.0: see [LICENSE](LICENSE).

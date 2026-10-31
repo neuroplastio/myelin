@@ -51,13 +51,17 @@ license is Apache-2.0.
   spec, `myelinkey/SPEC.md`, that HOTTY cites: a change to them is a new
   spec version with its vectors (`myelinkey/conformance/keys.json`), and
   the hotty agent hears of it first.
-- **Docs are checked like code** (D9). The godoc documents every exported
-  identifier. The code in README and `docs/` is the Example functions, and
-  the key table is generated: after changing either, run
-  `go test -run 'TestReferenceKeys|TestDocsExamples' -update`.
-- **The site copies the README.** myelin.neuroplast.io is the web agent's,
-  and its quick start is a copy of Example#1–4. When those or the README's
-  text change, tell the web agent.
+- **Docs are checked like code** (D9, D21). The godoc documents every
+  exported identifier. The code in README and `docs/` is the Example
+  functions, and the key table is generated: after changing either, run
+  `go test -run 'TestReferenceKeys|TestDocsExamples' -update`. The docs
+  tests also check each page's front matter, that code lines stay within
+  80 columns (a tab is 4), and that relative links and their fragments
+  reach something.
+- **The site renders the docs.** myelin.neuroplast.io is the web agent's.
+  It shows the README as the overview and every page `docs/docs.yaml`
+  places, `myelinkey/SPEC.md` included, at a commit it pins (D21). When
+  the docs change, tell the web agent the commit that would go out.
 
 ## Where things live
 
@@ -69,8 +73,9 @@ license is Apache-2.0.
   changelog.
 - `vault/feedback/`: notes from the maintainer to the agent. Read them
   before the board, and delete each one once it is addressed.
-- `docs/`: the user docs (README is the overview). Notes for people working
-  on myelin belong in the vault, not there.
+- `docs/`: the user docs (README is the overview), each page placed by its
+  front matter (group, order, nav, description, path). Notes for people
+  working on myelin belong in the vault, not there.
 
 ## Working
 

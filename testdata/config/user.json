@@ -1,5 +1,9 @@
 [
-  { "keys": "enter", "action": "preview", "when": "list.dir.startsWith('/tmp')" },
+  {
+    "keys": "enter",
+    "action": "preview",
+    "when": "list.dir.startsWith('/tmp')"
+  },
   { "keys": "d d", "unbind": true, "when": "list" },
   { "keys": "ctrl+d", "action": "delete", "when": "list && !field" }
 ]

@@ -18,7 +18,7 @@
 // it sends. A modifier tapped on its own is a modifier key: "shift", and a
 // double tap of Shift is the sequence "shift shift". Two keys are the same
 // keystroke exactly when they are ==,
-// whether they came from a terminal, from Bubble Tea or from a HOTTY host.
+// whether they came from a terminal, from Bubble Tea or from a hotty host.
 //
 // People write keys as they would for Ghostty: modifiers in any order and
 // case, W3C code values, a letter in either case. A [Schema] can read them
@@ -109,6 +109,7 @@
 // TinyGo, so a program or a library that reads input can name keys without
 // taking on CEL.
 //
-// docs/keymaps.md in the repository explains, for people writing keymaps,
-// how keys are spelled, how contexts work and which binding wins.
+// In the repository, docs/getting-started.md builds a first keymap step by
+// step, and docs/keymaps.md explains, for people writing keymaps, how keys
+// are spelled, how contexts work and which binding wins.
 package myelin

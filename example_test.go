@@ -1,6 +1,7 @@
 package myelin_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"slices"
 	"time"
+
+	"github.com/tinylib/msgp/msgp"
 
 	"github.com/neuroplastio/myelin"
 	"github.com/neuroplastio/myelin/myelinkey"
@@ -52,8 +55,14 @@ func Example() {
 	}
 
 	// 4. Ask what keys do where the focus is.
-	home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/home/me"}}}
-	tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
+	home := myelin.Path{
+		{Name: "window"},
+		{Name: "list", Attrs: map[string]any{"dir": "/home/me"}},
+	}
+	tmp := myelin.Path{
+		{Name: "window"},
+		{Name: "list", Attrs: map[string]any{"dir": "/tmp"}},
+	}
 	filter := append(slices.Clone(home), myelin.Step{Name: "field"})
 	match := func(keys string, p myelin.Path) string {
 		seq, err := myelinkey.ParseSeq(keys)
@@ -84,7 +93,10 @@ func Example() {
 // A program checks its file's sequences while it parses it, before it has
 // a keymap. An alias is taken on trust: the keymap may name it.
 func ExampleEnv_CheckSeq() {
-	env, err := myelin.NewEnv(myelin.Schema{Nodes: []myelin.NodeType{{Name: "list"}}, Layers: []string{"defaults"}})
+	env, err := myelin.NewEnv(myelin.Schema{
+		Nodes:  []myelin.NodeType{{Name: "list"}},
+		Layers: []string{"defaults"},
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -143,14 +155,19 @@ func ExampleEnv_Build() {
 // A context's depth is how far into the path it reaches: the deepest wins.
 func ExampleContext_Depth() {
 	env, err := myelin.NewEnv(myelin.Schema{
-		Nodes:  []myelin.NodeType{{Name: "window"}, {Name: "list"}, {Name: "preview"}, {Name: "field", Text: true}},
+		Nodes: []myelin.NodeType{
+			{Name: "window"}, {Name: "list"}, {Name: "preview"},
+			{Name: "field", Text: true},
+		},
 		Layers: []string{"defaults"},
 	})
 	if err != nil {
 		panic(err)
 	}
 	p := myelin.Path{{Name: "window"}, {Name: "list"}, {Name: "field"}}
-	for _, when := range []string{"", "window", "list", "field", "list && !preview", "!preview", "preview"} {
+	for _, when := range []string{
+		"", "window", "list", "field", "list && !preview", "!preview", "preview",
+	} {
 		c, err := env.Compile(when)
 		if err != nil {
 			panic(err)
@@ -311,7 +328,9 @@ func ExampleKeymap_Menu() {
 
 	// 2. Draw the menu after the leader, and after the leader and f. The
 	// program says what applies here: in a read-only list, not editing.
-	readOnly := func(b myelin.Binding) bool { return b.Action != "file.new" && b.Action != "file.delete" }
+	readOnly := func(b myelin.Binding) bool {
+		return b.Action != "file.new" && b.Action != "file.delete"
+	}
 
 	leader, _ := km.Alias("leader")
 	show := func(m myelin.Menu) {
@@ -319,9 +338,11 @@ func ExampleKeymap_Menu() {
 		for _, it := range m.Items {
 			label := it.Label
 			if label == "" {
-				label = it.Binding.Action // the program words a binding with no label
+				// The program words a binding with no label.
+				label = it.Binding.Action
 			}
-			fmt.Printf("  %s  %s enabled=%v\n", myelinkey.Display(it.Key), label, it.Enabled)
+			key := myelinkey.Display(it.Key)
+			fmt.Printf("  %s  %s enabled=%v\n", key, label, it.Enabled)
 		}
 	}
 	p := myelin.Path{{Name: "list"}}
@@ -369,7 +390,8 @@ func Example_config() {
 	defaults := myelin.Doc{Layer: "defaults", Source: "defaults.json"}
 	for _, s := range sections {
 		for _, keys := range slices.Sorted(maps.Keys(s.Bindings)) {
-			defaults.Binds = append(defaults.Binds, myelin.Bind{Keys: keys, Action: s.Bindings[keys], When: s.Context})
+			b := myelin.Bind{Keys: keys, Action: s.Bindings[keys], When: s.Context}
+			defaults.Binds = append(defaults.Binds, b)
 		}
 	}
 
@@ -388,8 +410,14 @@ func Example_config() {
 	if km == nil {
 		panic(fmt.Sprint(problems))
 	}
-	home := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/home/me"}}}
-	tmp := myelin.Path{{Name: "window"}, {Name: "list", Attrs: map[string]any{"dir": "/tmp"}}}
+	home := myelin.Path{
+		{Name: "window"},
+		{Name: "list", Attrs: map[string]any{"dir": "/home/me"}},
+	}
+	tmp := myelin.Path{
+		{Name: "window"},
+		{Name: "list", Attrs: map[string]any{"dir": "/tmp"}},
+	}
 	filter := append(slices.Clone(home), myelin.Step{Name: "field"})
 	for _, q := range []struct {
 		keys, where string
@@ -416,4 +444,121 @@ func Example_config() {
 	// ctrl+d in a list: delete
 	// escape in the filter: close-filter
 	// g g in a list: top
+}
+
+// A menu crosses a process as msgpack: the program that holds the keymap
+// writes it, and a front end elsewhere reads it and draws it.
+func Example_process() {
+	env, err := myelin.NewEnv(myelin.Schema{
+		Nodes:   []myelin.NodeType{{Name: "list"}},
+		Layers:  []string{"defaults"},
+		Aliases: map[string]string{"leader": "space"},
+	})
+	if err != nil {
+		panic(err)
+	}
+	km, problems := env.Build([]myelin.Doc{{Layer: "defaults",
+		Binds: []myelin.Bind{
+			{Keys: "<leader> n", Action: "file.new", Label: "New file"},
+			{Keys: "<leader> q", Action: "quit", Label: "Quit"},
+		},
+	}}, nil)
+	if km == nil {
+		panic(fmt.Sprint(problems))
+	}
+
+	// 1. The program writes the leader's menu to the connection.
+	var conn bytes.Buffer // a socket or a pipe in a real program
+	w := msgp.NewWriter(&conn)
+	leader, _ := km.Alias("leader")
+	menu := km.Menu(leader, myelin.Path{{Name: "list"}}, nil)
+	if err := menu.EncodeMsg(w); err != nil {
+		panic(err)
+	}
+	if err := w.Flush(); err != nil {
+		panic(err)
+	}
+
+	// 2. The front end reads it, with limits for bytes it didn't write.
+	r := msgp.NewReader(&conn)
+	r.SetMaxRecursionDepth(32)
+	r.SetMaxStringLength(4096)
+	var got myelin.Menu
+	if err := got.DecodeMsg(r); err != nil {
+		panic(err)
+	}
+	for _, it := range got.Items {
+		fmt.Println(myelinkey.Display(it.Key), it.Label)
+	}
+	// Output:
+	// n New file
+	// q Quit
+}
+
+// Explain says what a sequence does where the focus is, and why: each
+// binding of it, ranked, with how deep its context reaches.
+func ExampleKeymap_Explain() {
+	// 1. The file manager's defaults, and a user's override.
+	env, err := myelin.NewEnv(myelin.Schema{
+		Nodes: []myelin.NodeType{
+			{Name: "window"},
+			{Name: "list", Attrs: map[string]myelin.Type{"dir": "string"}},
+			{Name: "field", Text: true},
+		},
+		Layers: []string{"defaults", "user"},
+	})
+	if err != nil {
+		panic(err)
+	}
+	km, problems := env.Build([]myelin.Doc{
+		{Layer: "defaults", Binds: []myelin.Bind{
+			{Keys: "escape", Action: "back"},
+			{Keys: "escape", Action: "close-filter", When: "field"},
+			{Keys: "enter", Action: "open", When: "list"},
+		}},
+		{Layer: "user", Binds: []myelin.Bind{
+			{Keys: "enter", Action: "preview", When: "list.dir == '/tmp'"},
+		}},
+	}, nil)
+	if km == nil {
+		panic(fmt.Sprint(problems))
+	}
+
+	// 2. Explain a key on a path: every binding of it, the winner marked.
+	explain := func(keys string, p myelin.Path) {
+		seq, err := km.ParseSeq(keys)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(keys, "on", myelin.FormatPath(p))
+		for _, c := range km.Explain(seq, p) {
+			mark := " "
+			if c.Wins {
+				mark = "*"
+			}
+			b := c.Binding
+			fmt.Printf("  %s %-12s %-8s depth %d\n",
+				mark, b.Action, b.Layer, c.Depth)
+		}
+	}
+	tmp := myelin.Path{
+		{Name: "window"},
+		{Name: "list", Attrs: map[string]any{"dir": "/tmp"}},
+	}
+	filter := append(slices.Clone(tmp), myelin.Step{Name: "field"})
+	explain("escape", filter)
+	explain("enter", tmp)
+
+	// 3. The keys to show beside an action in a command palette.
+	if b := km.KeyFor("close-filter", filter); b != nil {
+		fmt.Println("close-filter:", myelinkey.FormatSeq(b.Seq))
+	}
+	// Output:
+	// escape on window > list(dir="/tmp") > field
+	//   * close-filter defaults depth 3
+	//     back         defaults depth 0
+	// enter on window > list(dir="/tmp")
+	//   * preview      user     depth 2
+	//     open         defaults depth 2
+	// close-filter: escape
 }

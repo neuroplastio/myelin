@@ -1,3 +1,6 @@
+# myelin's docs as its website shows them: the README is the overview, each
+# page in this directory says where it goes in its front matter, and the
+# key names spec is a page too.
 name: myelin
 description: Context-bound keymaps and which-key menus for Go programs.
-pages: []
+pages: [myelinkey/SPEC.md]

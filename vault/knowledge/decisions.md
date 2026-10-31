@@ -533,3 +533,36 @@ multiplexer's leader golden stay byte-identical.
    match in contexts allocates nothing.
 6. **The version is v0.2.0:** what a keymap may say and the errors it
    gets change, so the minor version rises (P-5).
+
+### D21 — The docs on the website
+**2026-10-31.** The maintainer: "write website-available docs for myelin,
+see cel-lite as a good example of how it should be done". The website,
+myelin.neuroplast.io, renders the README and the pages docs.yaml places,
+at a commit web pins, as cel-lite's site does. This supersedes D9.2's
+pages. D9's other points stand.
+1. **The README is the overview:** the intro, the highlights, why myelin,
+   install and the quick start (Example#1–4), then the docs, the status,
+   developing and the license. The tour that followed the quick start
+   moved to Getting started.
+2. **Pages**, each placed by its front matter:
+   - Start: `docs/getting-started.md`.
+   - Guides: `integrate.md` (the schema, documents, building, the path),
+     `typing.md` (the sequencer, modes, keys from input), `menus.md`
+     (menus, explain and lint) and `process.md` (msgpack).
+   - Reference: `keymaps.md`, the key names spec (`myelinkey/SPEC.md`,
+     named in docs.yaml's `pages`, at `key-names`) and `performance.md`.
+   - Concepts: `design.md`.
+
+   File names, and with them `integrate.md` and `keymaps.md`'s links, stay.
+3. **The spec gets front matter, not new text.** It is a page like any
+   other. Its text, version 0.1 and vectors don't change, so a front
+   matter edit needs no new spec version.
+4. **The gate checks what the site needs** (docs_test.go): front matter
+   with a known group and no man page; one title per page; docs.yaml's
+   description equal to the README's tagline, which the site shows once;
+   relative links that reach a file, and fragments that name a heading by
+   GitHub's ids; and code lines within 80 columns, a tab counted as 4, an
+   example's output excepted.
+5. **Publishing:** web pins main's commit while everything past the latest
+   tags (v0.2.0, myelinkey/v0.1.1) is docs or tooling, and the latest
+   release's commit otherwise. Pushing main goes through gov.
