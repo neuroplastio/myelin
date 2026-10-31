@@ -47,8 +47,10 @@ Contexts run on cel-lite (D20), and the docs are written for the website
       asciicast played on the page and in hotty mode, the GIF on GitHub
       and a link to the GIF in a terminal. myelin's part is the demo app
       and its recording, asciicast with a GIF fallback, shown in the
-      README's overview through the component. Blocked until the main
-      goal has shipped: gov says when. Don't start before that.
+      README's overview through the component. The component starts from
+      two prototypes (gov ea87caf): a VT player with hotty support, and
+      kubecom's compiler from asciicast to JS. Blocked until the main goal
+      has shipped: gov says when. Don't start before that.
 
 ## Todo
 
