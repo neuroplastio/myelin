@@ -34,6 +34,22 @@ Contexts run on cel-lite (D20), and the docs are written for the website
       bytes → names, and drop `ParseHotty`. When it lands, report the
       commits to the org's design record.
 
+- [ ] **DEMO-01** A demo app and its recording, for the overview
+      status: blocked | owner: — | added: 2026-10-31
+      notes: The maintainer, 2026-10-31: "I want lib agent to build a
+      small demo app for myelin and do a recording for the overview. It
+      should be ascii based with gif fallback, rendered in both web and
+      hotty mode. Github renders a gif, TUI renders a link to gif. This
+      should be a generic component in docs that we can reuse between the
+      projects. Right now it's a bit all over the place. But only after
+      the main goal is shipped". The org's docs standard records it (gov
+      4ad1ccf): web builds `docs:screencast` once in the docs build, an
+      asciicast played on the page and in hotty mode, the GIF on GitHub
+      and a link to the GIF in a terminal. myelin's part is the demo app
+      and its recording, asciicast with a GIF fallback, shown in the
+      README's overview through the component. Blocked until the main
+      goal has shipped: gov says when. Don't start before that.
+
 ## Todo
 
 - [ ] **TINYGO-01** The root's tests under TinyGo, in the gate
