@@ -1,6 +1,6 @@
-github.com/neuroplastio/cel-lite v0.1.1 h1:0CYDl9LH5Gr7WRJV3jMlYB4DSsszlRp9X4vkCAXrL9M=
-github.com/neuroplastio/cel-lite v0.1.1/go.mod h1:hz5+3wVXTpkz7kwF1cWNXje6M0aBy4gy6Iln736tcjs=
 github.com/philhofer/fwd v1.2.0 h1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=
 github.com/philhofer/fwd v1.2.0/go.mod h1:RqIHx9QI14HlwKwm98g9Re5prTQ6LdeRQn+gXJFxsJM=
 github.com/tinylib/msgp v1.6.5 h1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=
 github.com/tinylib/msgp v1.6.5/go.mod h1:RSp0LW9oSxFut3KzESt5Voq4GVWyS+PSulT77roAqEA=
+neuroplast.io/cel-lite v0.2.0 h1:1Mqys68Cawk4BcQU5y2cq9PdYnGL+LE93ecmyhk00Bs=
+neuroplast.io/cel-lite v0.2.0/go.mod h1:LVtfbVuc0Q84/sMiNs98cF8nzqodCD+5yj2hRR4HT8I=
