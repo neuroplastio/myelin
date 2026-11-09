@@ -107,4 +107,4 @@ the bytes come from a peer, set `SetMaxStringLength`, `SetMaxElements` and
 
 - [Performance](performance.md): what a key, a match and a menu cost.
 - The data types' fields are on
-  [pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin).
+  [pkg.go.dev](https://pkg.go.dev/neuroplast.io/myelin).

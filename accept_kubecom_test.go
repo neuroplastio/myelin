@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // kubecom's default.kdl at bc2fae3 (internal/tui/keymap), as the Doc its

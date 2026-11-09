@@ -20,13 +20,13 @@ it compiles and prints what it says.
 ## Install
 
 ```sh
-go get github.com/neuroplastio/myelin
+go get neuroplast.io/myelin
 ```
 
 myelin needs Go 1.24 or later. It requires msgp's runtime, for its data
 types' codec, [cel-lite](https://github.com/neuroplastio/cel-lite), for
 contexts, and its own key names: the module
-`github.com/neuroplastio/myelin/myelinkey`, which needs only the standard
+`neuroplast.io/myelin/myelinkey`, which needs only the standard
 library.
 
 ## A first keymap

@@ -26,7 +26,7 @@ It also says how a name written by a person is read, how a sequence of keys
 is written and how a key is displayed. It is written so that a protocol,
 such as [HOTTY](https://hotty.neuroplast.io), can cite it instead of
 defining key names of its own. The Go package
-[myelinkey](https://pkg.go.dev/github.com/neuroplastio/myelin/myelinkey) is
+[myelinkey](https://pkg.go.dev/neuroplast.io/myelin/myelinkey) is
 its reference implementation, and
 [conformance/keys.json](conformance/keys.json) holds its test vectors.
 

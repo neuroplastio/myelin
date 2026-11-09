@@ -3,7 +3,7 @@ package myelin
 import (
 	"slices"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // Menu is the which-key level after a sequence on the path: one item per

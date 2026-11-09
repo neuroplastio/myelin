@@ -2,7 +2,7 @@
 
 Context-bound keymaps and which-key menus for Go programs.
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/neuroplastio/myelin.svg)](https://pkg.go.dev/github.com/neuroplastio/myelin)
+[![Go Reference](https://pkg.go.dev/badge/neuroplast.io/myelin.svg)](https://pkg.go.dev/neuroplast.io/myelin)
 [![CI](https://github.com/neuroplastio/myelin/actions/workflows/ci.yml/badge.svg)](https://github.com/neuroplastio/myelin/actions/workflows/ci.yml)
 [![Go version](https://img.shields.io/github/go-mod/go-version/neuroplastio/myelin)](go.mod)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -69,12 +69,12 @@ come from Spacemacs, and the key names from Ghostty.
 ## Install
 
 ```sh
-go get github.com/neuroplastio/myelin
+go get neuroplast.io/myelin
 ```
 
 It needs Go 1.24 or later. myelin requires msgp's runtime, cel-lite and
 its own key names. Keys are named in
-`github.com/neuroplastio/myelin/myelinkey`, a module of its own that needs
+`neuroplast.io/myelin/myelinkey`, a module of its own that needs
 only the standard library. A program that only names keys can require it
 alone.
 
@@ -200,14 +200,18 @@ config format, what wins, sequences, which-key menus and keys.
 - [How myelin works](docs/design.md): why the keymap is data, why time is a
   value, and how depth and layers decide.
 - The API reference is on pkg.go.dev:
-  [myelin](https://pkg.go.dev/github.com/neuroplastio/myelin) and
-  [myelinkey](https://pkg.go.dev/github.com/neuroplastio/myelin/myelinkey).
+  [myelin](https://pkg.go.dev/neuroplast.io/myelin) and
+  [myelinkey](https://pkg.go.dev/neuroplast.io/myelin/myelinkey).
 
 ## Status
 
 Pre-1.0. The current version is on
-[pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin) and among
-the [tags](https://github.com/neuroplastio/myelin/tags). myelin follows
+[pkg.go.dev](https://pkg.go.dev/neuroplast.io/myelin) and among
+the [tags](https://github.com/neuroplastio/myelin/tags). Up to v0.2.0
+(myelinkey v0.1.1) the modules were github.com/neuroplastio/myelin and
+.../myelinkey; from v0.3.0 (myelinkey v0.2.0) they are
+neuroplast.io/myelin and neuroplast.io/myelin/myelinkey, so upgrading
+changes the import paths. myelin follows
 semantic versioning: until 1.0, a release that breaks the API raises the
 minor version (0.1 to 0.2), and a patch release never does. Before 1.0
 the API's edges may still change, as programs that use it ask for things,

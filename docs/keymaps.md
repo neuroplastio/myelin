@@ -191,4 +191,4 @@ Each program prints its keymap in force and explains what a key does on a
 given path, with its own commands. Its docs say how.
 
 Writing a program? Start with [Getting started](getting-started.md), and
-the API on [pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin).
+the API on [pkg.go.dev](https://pkg.go.dev/neuroplast.io/myelin).

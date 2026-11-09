@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 var update = flag.Bool("update", false, "rewrite generated docs")

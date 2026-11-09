@@ -1,13 +1,13 @@
-module github.com/neuroplastio/myelin
+module neuroplast.io/myelin
 
 go 1.24.0
 
 require (
-	github.com/neuroplastio/cel-lite v0.1.1
-	github.com/neuroplastio/myelin/myelinkey v0.1.0-next.1
 	github.com/tinylib/msgp v1.6.5
+	neuroplast.io/cel-lite v0.2.0
+	neuroplast.io/myelin/myelinkey v0.0.0-00010101000000-000000000000
 )
 
 require github.com/philhofer/fwd v1.2.0 // indirect
 
-replace github.com/neuroplastio/myelin/myelinkey => ./myelinkey
+replace neuroplast.io/myelin/myelinkey => ./myelinkey

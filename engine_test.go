@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // kubeSchema is kubecom's path, declared to myelin. Its keymaps write keys

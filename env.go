@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	cellite "github.com/neuroplastio/cel-lite"
+	cellite "neuroplast.io/cel-lite"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // focusVar is the variable that names the innermost node on the path.

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // winner is the precedence of the best candidate so far.

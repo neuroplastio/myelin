@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // What wins, for bindings of the same keys whose contexts hold on the path:

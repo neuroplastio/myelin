@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // modeSchema is an imagined multiplexer's path: a window in a mode, its

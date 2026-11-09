@@ -204,4 +204,4 @@ mounted document with its own, in whichever layer it chooses.
 - [Keymaps](keymaps.md): link your users here for writing keymaps.
 
 The full API is on
-[pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/myelin).
+[pkg.go.dev](https://pkg.go.dev/neuroplast.io/myelin).

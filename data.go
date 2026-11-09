@@ -3,7 +3,7 @@ package myelin
 import (
 	"time"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // The data types: exported fields, msgpack tags and msgp's generated codec,

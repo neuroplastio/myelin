@@ -5,7 +5,7 @@ package myelin
 import (
 	"testing"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // What a key, a match and a menu allocate stays where the benchmarks put

@@ -8,7 +8,7 @@ import (
 
 	"github.com/tinylib/msgp/msgp"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // codec is what every data type has: msgp's generated streaming codec.

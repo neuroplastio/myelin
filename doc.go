@@ -47,7 +47,7 @@
 // [Env.Compile] checks a context against the schema, so a mistake fails
 // when the keymap loads and a keymap that loads never fails on a key.
 //
-// Contexts run on cel-lite (github.com/neuroplastio/cel-lite), which
+// Contexts run on cel-lite (neuroplast.io/cel-lite), which
 // implements the part of CEL they need with Go's standard library alone:
 // comparisons, the logical operators, in, size, contains, startsWith,
 // endsWith and the conversions. What it doesn't implement, such as the
@@ -104,7 +104,7 @@
 // SetMaxStringLength, SetMaxElements and SetMaxRecursionDepth on its
 // msgp.Reader.
 //
-// Keys are named in the package github.com/neuroplastio/myelin/myelinkey, a
+// Keys are named in the package neuroplast.io/myelin/myelinkey, a
 // module of its own that needs only the standard library and builds with
 // TinyGo, so a program or a library that reads input can name keys without
 // taking on CEL.

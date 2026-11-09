@@ -9,7 +9,7 @@ import (
 
 	"github.com/tinylib/msgp/msgp"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // What myelin aims to cost: a key no binding starts with is one map lookup;

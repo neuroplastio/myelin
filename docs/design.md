@@ -58,7 +58,7 @@ each key. That keeps a key one name: `ctrl+w` means "the key that types
 w" on every layout, and a game's `key_w` means the same place on every
 layout.
 
-Keys are a package of their own, `github.com/neuroplastio/myelin/myelinkey`,
+Keys are a package of their own, `neuroplast.io/myelin/myelinkey`,
 which needs only the standard library and builds with TinyGo. Whatever
 reads input can name keys with it without taking on CEL.
 

@@ -12,8 +12,8 @@ import (
 
 	"github.com/tinylib/msgp/msgp"
 
-	"github.com/neuroplastio/myelin"
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // A file manager's keymap: its defaults and a user's config, matched where

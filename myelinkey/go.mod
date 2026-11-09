@@ -1,3 +1,3 @@
-module github.com/neuroplastio/myelin/myelinkey
+module neuroplast.io/myelin/myelinkey
 
 go 1.24.0

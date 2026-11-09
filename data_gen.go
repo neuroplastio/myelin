@@ -5,8 +5,8 @@ package myelin
 import (
 	"time"
 
-	"github.com/neuroplastio/myelin/myelinkey"
 	"github.com/tinylib/msgp/msgp"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // Size limits for msgp deserialization

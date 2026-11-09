@@ -4,7 +4,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // The sequencer is functions over Pending, a value: a key, the state and

@@ -566,3 +566,17 @@ pages. D9's other points stand.
 5. **Publishing:** web pins main's commit while everything past the latest
    tags (v0.2.0, myelinkey/v0.1.1) is docs or tooling, and the latest
    release's commit otherwise. Pushing main goes through gov.
+
+### D22 — The module paths are neuroplast.io's
+**2026-11-09.** The maintainer had neuroplast.io answer `go get` for every
+repository of the org (infra 6264dce) and switched the libraries first:
+cel-lite, myelin, engram.
+1. **The modules are `neuroplast.io/myelin` and
+   `neuroplast.io/myelin/myelinkey`** (supersedes the paths in D1, D12 and
+   D13). The repository stays github.com/neuroplastio/myelin.
+2. **The root requires `neuroplast.io/cel-lite` v0.2.0,** cel-lite's first
+   release at its new path (cel-lite D10).
+3. **The path is the API, so both release again:** myelinkey/v0.2.0, then
+   v0.3.0 requiring it. v0.2.0 and myelinkey/v0.1.1 and earlier stay at
+   github.com/neuroplastio/myelin; a program moves to the new paths when
+   it upgrades, and makes the switch itself.

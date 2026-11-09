@@ -3,7 +3,7 @@ package myelinkey_test
 import (
 	"fmt"
 
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/myelin/myelinkey"
 )
 
 // A key is read the way Ghostty reads one: modifiers in any order, aliases
